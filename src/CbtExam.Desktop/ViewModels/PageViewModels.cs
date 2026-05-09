@@ -254,15 +254,13 @@ public class CreateExamViewModel(ApiClient api) : BaseViewModel, IRefreshable
             var list = JsonSerializer.Deserialize<List<QuestionCreateDto>>(JsonImport,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             if (list is null || list.Count == 0) { Status = "No questions found in JSON."; IsSuccess = false; return; }
-
-            int added = 0;
+            var resp = await api.ImportQuestionsAsync(CreatedExamId.Value, list);
+            if (!resp.IsSuccessStatusCode) { Status = "Import failed."; IsSuccess = false; return; }
+            Questions.Clear();
             foreach (var q in list)
-            {
-                var resp = await api.AddQuestionAsync(CreatedExamId.Value, q);
-                if (resp.IsSuccessStatusCode) { Questions.Add(q); added++; }
-            }
+                Questions.Add(q);
             JsonImport = string.Empty;
-            Status = $"{added} question(s) imported.";
+            Status = $"{list.Count} question(s) processed.";
             IsSuccess = true;
         }
         catch
@@ -359,6 +357,7 @@ public class SessionViewModel(ApiClient api) : BaseViewModel, IRefreshable
     public RelayCommand RefreshCommand => new(async () => await LoadAsync());
     public RelayCommand StartCommand => new(async () => await StartAsync());
     public RelayCommand StopCommand => new(async () => await StopAsync());
+    public RelayCommand EndAllCommand => new(async () => await EndAllAsync());
 
     public async Task LoadAsync()
     {
@@ -384,6 +383,12 @@ public class SessionViewModel(ApiClient api) : BaseViewModel, IRefreshable
     {
         if (ActiveSession is null) return;
         await api.StopSessionAsync(ActiveSession.Id);
+        await LoadAsync();
+    }
+
+    private async Task EndAllAsync()
+    {
+        await api.EndAllSessionsAsync();
         await LoadAsync();
     }
 }
@@ -497,15 +502,16 @@ public class DevicesViewModel(ApiClient api) : BaseViewModel, IRefreshable
             Devices.Add(new DeviceRow(
                 s.FullName, s.StudentId,
                 s.JoinedAt.ToLocalTime().ToString("HH:mm:ss"),
-                s.IsSubmitted ? "Submitted" : "Online",
-                s.TabSwitchCount));
+                s.IsSubmitted ? "Submitted" : s.ConnectionState,
+                s.TabSwitchCount,
+                s.BatteryLevel));
         }
         Total  = students.Count;
-        Online = students.Count(s => !s.IsSubmitted);
+        Online = students.Count(s => !s.IsSubmitted && s.IsOnline);
     }
 }
 
-public record DeviceRow(string Name, string StudentId, string ConnectedAt, string Status, int Violations);
+public record DeviceRow(string Name, string StudentId, string ConnectedAt, string Status, int Violations, int BatteryLevel);
 
 // ─── Results ─────────────────────────────────────────────────────────────────
 public class ResultsViewModel(ApiClient api) : BaseViewModel, IRefreshable

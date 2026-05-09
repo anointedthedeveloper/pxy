@@ -24,6 +24,7 @@ public class ApiClient
     public Task<HttpResponseMessage> CreateExamAsync(ExamCreateDto dto) => _http.PostAsJsonAsync("api/exams", dto);
     public Task<HttpResponseMessage> DeleteExamAsync(int id) => _http.DeleteAsync($"api/exams/{id}");
     public Task<HttpResponseMessage> AddQuestionAsync(int examId, QuestionCreateDto dto) => _http.PostAsJsonAsync($"api/exams/{examId}/questions", dto);
+    public Task<HttpResponseMessage> ImportQuestionsAsync(int examId, List<QuestionCreateDto> dto) => _http.PostAsJsonAsync($"api/exams/{examId}/questions/import", dto);
     public Task<HttpResponseMessage> DeleteQuestionAsync(int questionId) => _http.DeleteAsync($"api/exams/questions/{questionId}");
 
     // Sessions
@@ -31,6 +32,7 @@ public class ApiClient
     public Task<HttpResponseMessage> StartSessionAsync(int examId) => _http.PostAsJsonAsync("api/sessions/start", new SessionStartDto(examId));
     public Task<HttpResponseMessage> StopSessionAsync(int sessionId) => _http.PostAsync($"api/sessions/{sessionId}/stop", content: null);
     public Task<HttpResponseMessage> EndAllSessionsAsync() => _http.PostAsync("api/sessions/end-all", content: null);
+    public Task<HttpResponseMessage> ExportSnapshotAsync() => _http.PostAsync("api/sessions/export", content: null);
     public Task<List<StudentStatusDto>?> GetStudentsAsync(int sessionId) => _http.GetFromJsonAsync<List<StudentStatusDto>>($"api/sessions/{sessionId}/students");
     public Task<List<ResultDto>?> GetResultsAsync(int sessionId) => _http.GetFromJsonAsync<List<ResultDto>>($"api/sessions/{sessionId}/results");
 }

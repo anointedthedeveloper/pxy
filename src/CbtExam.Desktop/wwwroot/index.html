@@ -31,6 +31,16 @@
   </div>
 </div>
 
+<!-- ── WAITING PAGE ── -->
+<div id="page-waiting" class="page">
+  <div class="join-card">
+    <h2>Waiting Room</h2>
+    <p class="subtitle">Exam access is being prepared. Stay on this page.</p>
+    <p id="waiting-status">Connecting...</p>
+    <button class="btn btn-outline btn-full" onclick="continueFromWaiting()">Continue</button>
+  </div>
+</div>
+
 <!-- ── EXAM PAGE ── -->
 <div id="page-exam" class="page">
   <header class="exam-header">
@@ -56,9 +66,28 @@
       <div class="nav-buttons">
         <button class="btn btn-outline" id="btn-prev" onclick="prevQuestion()">← Previous</button>
         <button class="btn btn-outline" id="btn-next" onclick="nextQuestion()">Next →</button>
+        <button class="btn btn-outline" onclick="toggleFlagCurrent()">Flag</button>
+        <button class="btn btn-outline" onclick="clearCurrentAnswer()">Clear</button>
+        <button class="btn btn-outline" onclick="saveAndExit()">Save & Exit</button>
+        <button class="btn btn-outline" onclick="toggleCalculator()">Calculator</button>
         <button class="btn btn-danger" id="btn-submit" onclick="confirmSubmit()">Submit Exam</button>
       </div>
+      <div id="camera-panel" style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <video id="camera-preview" width="220" height="140" autoplay muted playsinline style="background:#111827;border-radius:8px;"></video>
+        <canvas id="camera-canvas" width="220" height="140" style="display:none;"></canvas>
+        <button class="btn btn-outline" onclick="captureSnapshot()">Capture Snapshot</button>
+      </div>
     </main>
+  </div>
+</div>
+
+<!-- ── RESUME PAGE ── -->
+<div id="page-resume" class="page">
+  <div class="join-card">
+    <h2>Resume Exam</h2>
+    <p class="subtitle">We found saved progress for this exam.</p>
+    <div id="resume-status"></div>
+    <button class="btn btn-primary btn-full" onclick="resumeExam()">Resume Now</button>
   </div>
 </div>
 
@@ -72,6 +101,27 @@
     </div>
     <div class="score-pct" id="result-pct">0%</div>
     <p id="result-msg" class="result-msg"></p>
+  </div>
+</div>
+
+<!-- ── REVIEW PAGE ── -->
+<div id="page-review" class="page">
+  <div class="join-card">
+    <h2>Answer Review</h2>
+    <div id="review-list"></div>
+    <button class="btn btn-outline btn-full" onclick="showPage('page-result')">Back to Result</button>
+  </div>
+</div>
+
+<div id="calculator-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <h3>Calculator</h3>
+    <input id="calc-input" type="text" placeholder="e.g. (4+7)*2" style="width:100%;padding:8px;" />
+    <p id="calc-output"></p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeCalculator()">Close</button>
+      <button class="btn btn-primary" onclick="runCalculator()">Calculate</button>
+    </div>
   </div>
 </div>
 

@@ -72,6 +72,9 @@
                             <DataGridTextColumn Header="Student ID" Binding="{Binding StudentId, Mode=OneWay}" Width="130"/>
                             <DataGridTextColumn Header="Joined" Binding="{Binding JoinedAt, Mode=OneWay, StringFormat='HH:mm:ss'}" Width="100"/>
                             <DataGridTextColumn Header="Answered" Binding="{Binding AnsweredCount, Mode=OneWay}" Width="100"/>
+                            <DataGridTextColumn Header="Current Q" Binding="{Binding CurrentQuestion, Mode=OneWay}" Width="100"/>
+                            <DataGridTextColumn Header="Battery" Binding="{Binding BatteryLevel, Mode=OneWay, StringFormat='{}{0}%'}" Width="90"/>
+                            <DataGridTextColumn Header="Connection" Binding="{Binding ConnectionState, Mode=OneWay}" Width="110"/>
                             <DataGridTextColumn Header="Tab Switches" Binding="{Binding TabSwitchCount, Mode=OneWay}" Width="120"/>
                             <DataGridTemplateColumn Header="Status" Width="130">
                                 <DataGridTemplateColumn.CellTemplate>

@@ -12,9 +12,10 @@ public static class QuestionShuffler
     /// Shuffles options and returns the new correct index.
     /// The correct answer identity is preserved by value, not position.
     /// </summary>
-    public static ShuffledQuestionDto Shuffle(Question q, bool shuffleOptions)
+    public static ShuffledQuestionDto Shuffle(Question q, bool shuffleOptions, Random? rng = null)
     {
         var options = JsonSerializer.Deserialize<List<string>>(q.OptionsJson, _json) ?? [];
+        rng ??= Random.Shared;
 
         if (!shuffleOptions)
         {
@@ -24,7 +25,6 @@ public static class QuestionShuffler
 
         // Fisher-Yates shuffle on a copy
         var shuffled = options.ToList();
-        var rng = Random.Shared;
         for (int i = shuffled.Count - 1; i > 0; i--)
         {
             int j = rng.Next(i + 1);
@@ -35,12 +35,12 @@ public static class QuestionShuffler
         return new ShuffledQuestionDto(q.Id, q.QuestionNumber, q.Text, shuffled, correctIndex < 0 ? 0 : correctIndex);
     }
 
-    public static List<ShuffledQuestionDto> ShuffleAll(IEnumerable<Question> questions, bool shuffleQuestions, bool shuffleOptions)
+    public static List<ShuffledQuestionDto> ShuffleAll(IEnumerable<Question> questions, bool shuffleQuestions, bool shuffleOptions, int? seed = null)
     {
         var list = questions.ToList();
+        var rng = seed.HasValue ? new Random(seed.Value) : Random.Shared;
         if (shuffleQuestions)
         {
-            var rng = Random.Shared;
             for (int i = list.Count - 1; i > 0; i--)
             {
                 int j = rng.Next(i + 1);
@@ -49,6 +49,6 @@ public static class QuestionShuffler
             // Re-number after shuffle
             for (int i = 0; i < list.Count; i++) list[i].QuestionNumber = i + 1;
         }
-        return list.Select(q => Shuffle(q, shuffleOptions)).ToList();
+        return list.Select(q => Shuffle(q, shuffleOptions, rng)).ToList();
     }
 }

@@ -1,4 +1,5 @@
 using CbtExam.Data;
+using CbtExam.Api.Services;
 using CbtExam.Shared.DTOs;
 using CbtExam.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +9,7 @@ namespace CbtExam.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class SessionsController(AppDbContext db) : ControllerBase
+public class SessionsController(AppDbContext db, SnapshotExportService exports) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAll() =>
@@ -46,7 +47,9 @@ public class SessionsController(AppDbContext db) : ControllerBase
         if (session is null) return NotFound();
         session.IsActive = false;
         session.EndedAt = DateTime.UtcNow;
+        await AutoSubmitUnsubmittedAsync(session.Id);
         await db.SaveChangesAsync();
+        await exports.ExportAllAsync();
         return Ok();
     }
 
@@ -59,9 +62,11 @@ public class SessionsController(AppDbContext db) : ControllerBase
         {
             session.IsActive = false;
             session.EndedAt = DateTime.UtcNow;
+            await AutoSubmitUnsubmittedAsync(session.Id);
         }
 
         await db.SaveChangesAsync();
+        await exports.ExportAllAsync();
         return Ok(active.Count);
     }
 
@@ -88,6 +93,32 @@ public class SessionsController(AppDbContext db) : ControllerBase
                 se.SubmittedAt))
             .ToListAsync());
 
+    [HttpPost("export")]
+    public async Task<IActionResult> Export()
+    {
+        await exports.ExportAllAsync();
+        return Ok(new { exportedAt = DateTime.UtcNow });
+    }
+
     private static string GenerateCode() =>
         Guid.NewGuid().ToString("N").Substring(0, 6).ToUpper();
+
+    private async Task AutoSubmitUnsubmittedAsync(int sessionId)
+    {
+        var studentExams = await db.StudentExams
+            .Include(se => se.Session).ThenInclude(s => s!.Exam).ThenInclude(e => e!.Questions)
+            .Include(se => se.Answers)
+            .Where(se => se.SessionId == sessionId && !se.IsSubmitted)
+            .ToListAsync();
+
+        foreach (var se in studentExams)
+        {
+            var questions = se.Session!.Exam!.Questions.ToDictionary(q => q.Id);
+            var score = se.Answers.Count(a => questions.TryGetValue(a.QuestionId, out var q) &&
+                string.Equals(a.SelectedAnswer, q.CorrectAnswer, StringComparison.OrdinalIgnoreCase));
+            se.Score = score;
+            se.IsSubmitted = true;
+            se.SubmittedAt = DateTime.UtcNow;
+        }
+    }
 }

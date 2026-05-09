@@ -4,10 +4,12 @@ const state = {
   sessionId: null,
   examId: null,
   durationMinutes: 0,
-  questions: [],       // ShuffledQuestionDto[]
-  answers: {},         // { questionId: selectedAnswer }
+  questions: [],
+  answers: {},
+  flagged: {},
   currentIndex: 0,
   timerInterval: null,
+  heartbeatInterval: null,
   secondsLeft: 0,
   submitted: false
 };
@@ -19,10 +21,13 @@ const showPage = id => {
   $(id).classList.add('active');
 };
 
-// Pre-fill session code from URL ?code=XXXXXX
+const storageKey = () => `cbt-progress-${state.studentExamId || 'draft'}`;
+
 window.addEventListener('DOMContentLoaded', () => {
   const code = new URLSearchParams(location.search).get('code');
   if (code) $('inp-code').value = code.toUpperCase();
+  $('waiting-status').textContent = 'Ready to continue when admin starts the exam.';
+  initCamera();
 });
 
 // ── Anti-cheat: Tab Switch Detection ──────────────────────────────────────
@@ -33,7 +38,7 @@ document.addEventListener('visibilitychange', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ studentExamId: state.studentExamId })
     });
-    showWarning('⚠ Tab switching detected and logged!');
+    showWarning('Tab switching detected and logged.');
   }
 });
 
@@ -46,7 +51,7 @@ function requestFullscreen() {
 
 document.addEventListener('fullscreenchange', () => {
   if (!document.fullscreenElement && state.studentExamId && !state.submitted) {
-    showWarning('⚠ Please stay in fullscreen mode!');
+    showWarning('Please stay in fullscreen mode.');
     setTimeout(requestFullscreen, 1500);
   }
 });
@@ -100,11 +105,10 @@ async function joinExam() {
 
     $('exam-title').textContent = data.examTitle;
     errEl.classList.add('hidden');
-
+    showPage('page-waiting');
     await loadQuestions();
-    requestFullscreen();
-    showPage('page-exam');
-    startTimer(state.durationMinutes * 60);
+    await loadServerProgress();
+    maybeResumePage();
 
   } catch (err) {
     showError(errEl, 'Connection error. Is the server running?');
@@ -112,6 +116,40 @@ async function joinExam() {
     $('btn-join').disabled = false;
     $('btn-join').textContent = 'Join Exam →';
   }
+}
+
+function continueFromWaiting() {
+  if (!state.questions.length) return;
+  startExamNow();
+}
+
+function maybeResumePage() {
+  const saved = loadLocalProgress();
+  if (saved && Object.keys(saved.answers || {}).length > 0) {
+    $('resume-status').textContent = `Saved answers found: ${Object.keys(saved.answers).length}`;
+    showPage('page-resume');
+    return;
+  }
+  startExamNow();
+}
+
+function resumeExam() {
+  const saved = loadLocalProgress();
+  if (saved) {
+    state.answers = saved.answers || {};
+    state.flagged = saved.flagged || {};
+    state.currentIndex = saved.currentIndex || 0;
+  }
+  startExamNow();
+}
+
+function startExamNow() {
+  requestFullscreen();
+  showPage('page-exam');
+  if (!state.timerInterval) startTimer(state.durationMinutes * 60);
+  startHeartbeat();
+  renderNavigator();
+  renderQuestion();
 }
 
 // ── Load Questions ─────────────────────────────────────────────────────────
@@ -145,6 +183,7 @@ function updateNavigator() {
     if (!btn) return;
     btn.className = 'nav-btn';
     if (state.answers[q.questionId] !== undefined) btn.classList.add('answered');
+    if (state.flagged[q.questionId]) btn.classList.add('warning');
     if (i === state.currentIndex) btn.classList.add('current');
   });
   const answered = Object.keys(state.answers).length;
@@ -163,6 +202,7 @@ function renderQuestion() {
     <div class="question-card">
       <div class="question-number">Question ${state.currentIndex + 1} of ${state.questions.length}</div>
       <div class="question-text">${escapeHtml(q.text)}</div>
+      <div style="margin:8px 0;color:#64748B;">${state.flagged[q.questionId] ? 'Flagged for review' : ''}</div>
       <div class="options-list">
         ${q.options.map((opt, i) => `
           <div class="option-item ${selected === opt ? 'selected' : ''}" onclick="selectAnswer('${escapeAttr(opt)}')">
@@ -182,13 +222,29 @@ function renderQuestion() {
 function selectAnswer(optionText) {
   const q = state.questions[state.currentIndex];
   state.answers[q.questionId] = optionText;
+  saveProgressForQuestion(q.questionId, optionText);
+  persistLocalProgress();
+  renderQuestion();
+}
+
+function clearCurrentAnswer() {
+  const q = state.questions[state.currentIndex];
+  delete state.answers[q.questionId];
+  persistLocalProgress();
+  renderQuestion();
+}
+
+function toggleFlagCurrent() {
+  const q = state.questions[state.currentIndex];
+  state.flagged[q.questionId] = !state.flagged[q.questionId];
+  persistLocalProgress();
   renderQuestion();
 }
 
 // ── Navigation ─────────────────────────────────────────────────────────────
 function goToQuestion(i) { state.currentIndex = i; renderQuestion(); }
-function prevQuestion() { if (state.currentIndex > 0) { state.currentIndex--; renderQuestion(); } }
-function nextQuestion() { if (state.currentIndex < state.questions.length - 1) { state.currentIndex++; renderQuestion(); } }
+function prevQuestion() { if (state.currentIndex > 0) { state.currentIndex--; persistLocalProgress(); renderQuestion(); } }
+function nextQuestion() { if (state.currentIndex < state.questions.length - 1) { state.currentIndex++; persistLocalProgress(); renderQuestion(); } }
 
 // ── Timer ──────────────────────────────────────────────────────────────────
 function startTimer(seconds) {
@@ -197,6 +253,7 @@ function startTimer(seconds) {
   state.timerInterval = setInterval(() => {
     state.secondsLeft--;
     updateTimerDisplay();
+    if (state.secondsLeft % 15 === 0) persistLocalProgress();
     if (state.secondsLeft <= 300) $('timer').parentElement.classList.add('warning');
     if (state.secondsLeft <= 0) { clearInterval(state.timerInterval); submitExam(); }
   }, 1000);
@@ -224,6 +281,7 @@ async function submitExam() {
   if (state.submitted) return;
   state.submitted = true;
   clearInterval(state.timerInterval);
+  clearInterval(state.heartbeatInterval);
 
   const answers = Object.entries(state.answers).map(([qId, ans]) => ({
     questionId: parseInt(qId),
@@ -237,6 +295,7 @@ async function submitExam() {
       body: JSON.stringify({ studentExamId: state.studentExamId, answers })
     });
     const result = await res.json();
+    localStorage.removeItem(storageKey());
     showResult(result);
   } catch {
     showResult({ score: 0, total: state.questions.length, percentage: 0 });
@@ -251,7 +310,144 @@ function showResult(result) {
   const pct = result.percentage;
   $('result-icon').textContent = pct >= 70 ? '🎉' : pct >= 50 ? '👍' : '📚';
   $('result-msg').textContent = pct >= 70 ? 'Excellent work!' : pct >= 50 ? 'Good effort!' : 'Keep studying!';
+  renderReview();
   showPage('page-result');
+}
+
+function renderReview() {
+  const host = $('review-list');
+  host.innerHTML = state.questions.map((q, idx) => {
+    const answer = state.answers[q.questionId] || 'No answer';
+    return `<div style="margin:8px 0;padding:8px;border:1px solid #E5E7EB;border-radius:8px;">
+      <strong>Q${idx + 1}:</strong> ${escapeHtml(q.text)}<br/>
+      <span><strong>Your answer:</strong> ${escapeHtml(answer)}</span>
+    </div>`;
+  }).join('');
+}
+
+function saveAndExit() {
+  persistLocalProgress();
+  showWarning('Progress saved locally.');
+  showPage('page-join');
+}
+
+async function saveProgressForQuestion(questionId, selectedAnswer) {
+  if (!state.studentExamId) return;
+  try {
+    await fetch('/api/student/progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ studentExamId: state.studentExamId, questionId, selectedAnswer })
+    });
+  } catch { /* fallback to local storage */ }
+}
+
+async function loadServerProgress() {
+  if (!state.studentExamId) return;
+  try {
+    const res = await fetch(`/api/student/${state.studentExamId}/progress`);
+    if (!res.ok) return;
+    const data = await res.json();
+    (data.answers || []).forEach(a => { state.answers[a.questionId] = a.selectedAnswer; });
+    persistLocalProgress();
+  } catch { /* ignore */ }
+}
+
+function persistLocalProgress() {
+  if (!state.studentExamId) return;
+  localStorage.setItem(storageKey(), JSON.stringify({
+    answers: state.answers,
+    flagged: state.flagged,
+    currentIndex: state.currentIndex
+  }));
+}
+
+function loadLocalProgress() {
+  try {
+    const raw = localStorage.getItem(storageKey());
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function toggleCalculator() {
+  $('calculator-modal').classList.remove('hidden');
+}
+
+function closeCalculator() {
+  $('calculator-modal').classList.add('hidden');
+}
+
+function runCalculator() {
+  const expr = $('calc-input').value.trim();
+  if (!expr) return;
+  try {
+    const val = Function(`"use strict"; return (${expr})`)();
+    $('calc-output').textContent = `Result: ${val}`;
+  } catch {
+    $('calc-output').textContent = 'Invalid expression.';
+  }
+}
+
+async function initCamera() {
+  const el = $('camera-preview');
+  if (!el || !navigator.mediaDevices?.getUserMedia) return;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    el.srcObject = stream;
+  } catch {
+    // No camera available; preview remains empty.
+  }
+}
+
+async function captureSnapshot() {
+  const video = $('camera-preview');
+  const canvas = $('camera-canvas');
+  if (!video || !canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+  try {
+    await fetch('/api/student/snapshot', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ studentExamId: state.studentExamId, imageBase64: dataUrl })
+    });
+    showWarning('Snapshot captured.');
+  } catch {
+    showWarning('Snapshot saved locally only.');
+  }
+}
+
+function startHeartbeat() {
+  clearInterval(state.heartbeatInterval);
+  state.heartbeatInterval = setInterval(async () => {
+    if (!state.studentExamId || state.submitted) return;
+    const battery = await getBatteryLevel();
+    await fetch('/api/student/heartbeat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        studentExamId: state.studentExamId,
+        currentQuestion: state.currentIndex + 1,
+        batteryLevel: battery,
+        isOnline: navigator.onLine,
+        connectionState: navigator.onLine ? 'online' : 'offline'
+      })
+    });
+  }, 10000);
+}
+
+async function getBatteryLevel() {
+  try {
+    if (!navigator.getBattery) return -1;
+    const b = await navigator.getBattery();
+    return Math.round((b.level || 0) * 100);
+  } catch {
+    return -1;
+  }
 }
 
 // ── Utilities ──────────────────────────────────────────────────────────────

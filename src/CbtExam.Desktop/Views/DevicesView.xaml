@@ -101,6 +101,7 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Battery" Binding="{Binding BatteryLevel, Mode=OneWay, StringFormat='{}{0}%'}" Width="90"/>
                 </DataGrid.Columns>
             </DataGrid>
         </Border>

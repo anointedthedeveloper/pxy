@@ -39,6 +39,7 @@ public static class ApiBootstrap
 
         builder.Services.AddControllers();
         builder.Services.AddSignalR();
+        builder.Services.AddScoped<SnapshotExportService>();
 
         var app = builder.Build();
         var adminKey = Environment.GetEnvironmentVariable("CBT_ADMIN_KEY") ?? "admin123";

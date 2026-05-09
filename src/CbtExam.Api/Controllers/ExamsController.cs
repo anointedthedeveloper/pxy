@@ -54,6 +54,11 @@ public class ExamsController(AppDbContext db) : ControllerBase
     {
         var exam = await db.Exams.FindAsync(id);
         if (exam is null) return NotFound();
+        if (string.IsNullOrWhiteSpace(dto.Text)) return BadRequest("Question text is required.");
+        if (dto.Options is null || dto.Options.Count < 2) return BadRequest("At least two options are required.");
+        if (dto.Options.Any(o => string.IsNullOrWhiteSpace(o))) return BadRequest("Options cannot be blank.");
+        if (!dto.Options.Contains(dto.CorrectAnswer, StringComparer.OrdinalIgnoreCase))
+            return BadRequest("Correct answer must match one of the options.");
         var q = new Question
         {
             ExamId = id,
@@ -65,6 +70,34 @@ public class ExamsController(AppDbContext db) : ControllerBase
         db.Questions.Add(q);
         await db.SaveChangesAsync();
         return Ok(q.Id);
+    }
+
+    [HttpPost("{id}/questions/import")]
+    public async Task<IActionResult> ImportQuestions(int id, List<QuestionCreateDto> questions)
+    {
+        var exam = await db.Exams.FindAsync(id);
+        if (exam is null) return NotFound();
+        if (questions.Count == 0) return BadRequest("No questions provided.");
+
+        var valid = new List<Question>();
+        foreach (var dto in questions)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Text)) continue;
+            if (dto.Options is null || dto.Options.Count < 2) continue;
+            if (!dto.Options.Contains(dto.CorrectAnswer, StringComparer.OrdinalIgnoreCase)) continue;
+            valid.Add(new Question
+            {
+                ExamId = id,
+                QuestionNumber = dto.QuestionNumber <= 0 ? valid.Count + 1 : dto.QuestionNumber,
+                Text = dto.Text,
+                OptionsJson = JsonSerializer.Serialize(dto.Options),
+                CorrectAnswer = dto.CorrectAnswer
+            });
+        }
+
+        db.Questions.AddRange(valid);
+        await db.SaveChangesAsync();
+        return Ok(new { imported = valid.Count, skipped = questions.Count - valid.Count });
     }
 
     [HttpGet("{id}/questions")]

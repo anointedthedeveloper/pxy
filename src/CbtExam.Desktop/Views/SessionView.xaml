@@ -45,6 +45,9 @@
                                     <TextBlock Text="Stop Session"/>
                                 </StackPanel>
                             </Button>
+                            <Button Command="{Binding EndAllCommand}" Style="{StaticResource PrimaryBtn}" Background="#FFF7ED" Foreground="#C2410C" Padding="16,10" Margin="8,0,0,0">
+                                <TextBlock Text="End All"/>
+                            </Button>
                         </StackPanel>
                     </StackPanel>
                 </Border>

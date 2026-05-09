@@ -11,7 +11,7 @@ namespace CbtExam.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class StudentController(AppDbContext db, IHubContext<ExamHub> hub) : ControllerBase
+public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, SnapshotExportService exports) : ControllerBase
 {
     // POST /api/student/join
     [HttpPost("join")]
@@ -57,7 +57,7 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub) : Cont
         if (se.IsSubmitted) return BadRequest("Exam already submitted.");
 
         var exam = se.Session!.Exam!;
-        var shuffled = QuestionShuffler.ShuffleAll(exam.Questions, exam.ShuffleQuestions, exam.ShuffleOptions);
+        var shuffled = QuestionShuffler.ShuffleAll(exam.Questions, exam.ShuffleQuestions, exam.ShuffleOptions, se.Id);
         return Ok(shuffled);
     }
 
@@ -104,6 +104,7 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub) : Cont
         }
 
         await db.SaveChangesAsync();
+        await exports.ExportAllAsync();
         await NotifyAdmin(se.Session!.SessionCode, se.SessionId);
         return Ok();
     }
@@ -150,6 +151,7 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub) : Cont
         se.SubmittedAt = DateTime.UtcNow;
         se.Score = score;
         await db.SaveChangesAsync();
+        await exports.ExportAllAsync();
 
         var total = questions.Count;
         await NotifyAdmin(se.Session.SessionCode, se.SessionId);
@@ -175,6 +177,21 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub) : Cont
         if (se is null) return NotFound();
         await NotifyAdmin(se.Session!.SessionCode, se.SessionId, dto);
         return Ok();
+    }
+
+    [HttpPost("snapshot")]
+    public async Task<IActionResult> Snapshot(SnapshotDto dto)
+    {
+        if (dto.StudentExamId <= 0 || string.IsNullOrWhiteSpace(dto.ImageBase64)) return BadRequest();
+        try
+        {
+            await exports.SaveSnapshotAsync(dto.StudentExamId, dto.ImageBase64);
+            return Ok();
+        }
+        catch
+        {
+            return BadRequest("Invalid snapshot payload.");
+        }
     }
 
     private async Task NotifyAdmin(string sessionCode, int sessionId, DeviceHeartbeatDto? heartbeat = null)

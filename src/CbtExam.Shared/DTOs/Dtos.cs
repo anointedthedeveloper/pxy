@@ -49,3 +49,4 @@ public record ActivityLogDto(int StudentExamId, string Activity, DateTime Timest
 // --- Tab switch report ---
 public record TabSwitchDto(int StudentExamId);
 public record DeviceHeartbeatDto(int StudentExamId, int CurrentQuestion, int BatteryLevel, bool IsOnline, string ConnectionState);
+public record SnapshotDto(int StudentExamId, string ImageBase64);
