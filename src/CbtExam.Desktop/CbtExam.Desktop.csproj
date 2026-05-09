@@ -17,6 +17,9 @@
   <ItemGroup>
     <ProjectReference Include="..\CbtExam.Api\CbtExam.Api.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.0" />
+  </ItemGroup>
   <!-- Copy app icon -->
   <ItemGroup>
     <Content Include="..\..\appicon.ico" Link="appicon.ico" CopyToOutputDirectory="PreserveNewest" />

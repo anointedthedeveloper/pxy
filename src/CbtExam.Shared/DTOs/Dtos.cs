@@ -14,6 +14,7 @@ public record SessionDto(int Id, int ExamId, string ExamTitle, string SessionCod
 // --- Student DTOs ---
 public record JoinExamDto(string SessionCode, string FullName, string StudentId);
 public record JoinResultDto(int StudentExamId, int SessionId, int ExamId, string ExamTitle, int DurationMinutes);
+public record JoinRequestDto(int StudentExamId, int SessionId, string FullName, string StudentId, DateTime RequestedAt, bool IsApproved);
 
 // --- Question for student (shuffled) ---
 public record ShuffledQuestionDto(int QuestionId, int QuestionNumber, string Text, List<string> Options, int CorrectIndex);
@@ -22,9 +23,22 @@ public record ShuffledQuestionDto(int QuestionId, int QuestionNumber, string Tex
 public record AnswerSubmitDto(int QuestionId, string SelectedAnswer);
 public record ExamSubmitDto(int StudentExamId, List<AnswerSubmitDto> Answers);
 public record SubmitResultDto(int Score, int Total, double Percentage);
+public record ProgressSaveDto(int StudentExamId, int QuestionId, string SelectedAnswer);
+public record StudentProgressDto(int StudentExamId, bool IsSubmitted, List<AnswerSubmitDto> Answers);
 
 // --- Monitor ---
-public record StudentStatusDto(int StudentExamId, string FullName, string StudentId, DateTime JoinedAt, bool IsSubmitted, int TabSwitchCount, int AnsweredCount);
+public record StudentStatusDto(
+    int StudentExamId,
+    string FullName,
+    string StudentId,
+    DateTime JoinedAt,
+    bool IsSubmitted,
+    int TabSwitchCount,
+    int AnsweredCount,
+    int CurrentQuestion,
+    int BatteryLevel,
+    bool IsOnline,
+    string ConnectionState);
 
 // --- Results ---
 public record ResultDto(int StudentExamId, string FullName, string StudentId, int Score, int Total, double Percentage, DateTime? SubmittedAt);
@@ -34,3 +48,4 @@ public record ActivityLogDto(int StudentExamId, string Activity, DateTime Timest
 
 // --- Tab switch report ---
 public record TabSwitchDto(int StudentExamId);
+public record DeviceHeartbeatDto(int StudentExamId, int CurrentQuestion, int BatteryLevel, bool IsOnline, string ConnectionState);

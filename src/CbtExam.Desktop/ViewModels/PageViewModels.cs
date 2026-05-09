@@ -388,7 +388,7 @@ public class SessionViewModel(ApiClient api) : BaseViewModel, IRefreshable
     }
 }
 
-public class MonitorViewModel(ApiClient api) : BaseViewModel, IRefreshable
+public class MonitorViewModel(ApiClient api, MonitorRealtimeService realtime) : BaseViewModel, IRefreshable
 {
     public ObservableCollection<StudentStatusDto> Students { get; } = [];
 
@@ -397,6 +397,7 @@ public class MonitorViewModel(ApiClient api) : BaseViewModel, IRefreshable
 
     private int _sessionId;
     private System.Timers.Timer? _autoRefresh;
+    private string _sessionCode = string.Empty;
 
     public bool AutoRefresh { get; set; } = true;
 
@@ -411,14 +412,34 @@ public class MonitorViewModel(ApiClient api) : BaseViewModel, IRefreshable
             Students.Clear();
             SessionInfo = "No active session";
             StopAutoRefresh();
+            await realtime.DisconnectAsync();
             return;
         }
         _sessionId  = active.Id;
+        _sessionCode = active.SessionCode;
         SessionInfo = $"{active.ExamTitle}  ·  Code: {active.SessionCode}";
         var list = await api.GetStudentsAsync(_sessionId);
         Students.Clear();
         list?.ForEach(Students.Add);
+        await ConnectRealtimeAsync();
         StartAutoRefresh();
+    }
+
+    private async Task ConnectRealtimeAsync()
+    {
+        realtime.StudentUpdated -= RealtimeOnStudentUpdated;
+        realtime.StudentUpdated += RealtimeOnStudentUpdated;
+        await realtime.ConnectAsync(api.BaseUrl, _sessionCode);
+    }
+
+    private void RealtimeOnStudentUpdated(IReadOnlyList<StudentStatusDto> payload)
+    {
+        App.Current.Dispatcher.Invoke(() =>
+        {
+            Students.Clear();
+            foreach (var row in payload)
+                Students.Add(row);
+        });
     }
 
     private void StartAutoRefresh()

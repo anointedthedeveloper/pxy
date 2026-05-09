@@ -8,6 +8,7 @@ namespace CbtExam.Desktop.ViewModels;
 public class MainViewModel : BaseViewModel
 {
     private readonly EmbeddedServerService _server;
+    private readonly MonitorRealtimeService _monitorRealtime;
     public ApiClient Api { get; }
 
     private BaseViewModel _currentPage;
@@ -53,13 +54,14 @@ public class MainViewModel : BaseViewModel
     public MainViewModel()
     {
         _server = new EmbeddedServerService();
+        _monitorRealtime = new MonitorRealtimeService();
         Api = new ApiClient();
 
         Dashboard  = new DashboardViewModel(Api);
         CreateExam = new CreateExamViewModel(Api);
         Exams      = new ExamsViewModel(Api);
         Sessions   = new SessionViewModel(Api);
-        Monitor    = new MonitorViewModel(Api);
+        Monitor    = new MonitorViewModel(Api, _monitorRealtime);
         Devices    = new DevicesViewModel(Api);
         Results    = new ResultsViewModel(Api);
         Reports    = new ReportsViewModel(Api);

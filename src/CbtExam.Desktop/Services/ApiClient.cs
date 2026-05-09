@@ -12,7 +12,12 @@ public class ApiClient
     private readonly HttpClient _http = new();
     public string BaseUrl => _http.BaseAddress?.ToString().TrimEnd('/') ?? string.Empty;
 
-    public void SetBaseUrl(string url) => _http.BaseAddress = new Uri(url + "/");
+    public void SetBaseUrl(string url)
+    {
+        _http.BaseAddress = new Uri(url + "/");
+        _http.DefaultRequestHeaders.Remove("X-Admin-Key");
+        _http.DefaultRequestHeaders.Add("X-Admin-Key", Environment.GetEnvironmentVariable("CBT_ADMIN_KEY") ?? "admin123");
+    }
 
     // Exams
     public Task<List<ExamDto>?> GetExamsAsync() => _http.GetFromJsonAsync<List<ExamDto>>("api/exams");
@@ -24,7 +29,8 @@ public class ApiClient
     // Sessions
     public Task<List<SessionDto>?> GetSessionsAsync() => _http.GetFromJsonAsync<List<SessionDto>>("api/sessions");
     public Task<HttpResponseMessage> StartSessionAsync(int examId) => _http.PostAsJsonAsync("api/sessions/start", new SessionStartDto(examId));
-    public Task<HttpResponseMessage> StopSessionAsync(int sessionId) => _http.DeleteAsync($"api/sessions/{sessionId}/stop");
+    public Task<HttpResponseMessage> StopSessionAsync(int sessionId) => _http.PostAsync($"api/sessions/{sessionId}/stop", content: null);
+    public Task<HttpResponseMessage> EndAllSessionsAsync() => _http.PostAsync("api/sessions/end-all", content: null);
     public Task<List<StudentStatusDto>?> GetStudentsAsync(int sessionId) => _http.GetFromJsonAsync<List<StudentStatusDto>>($"api/sessions/{sessionId}/students");
     public Task<List<ResultDto>?> GetResultsAsync(int sessionId) => _http.GetFromJsonAsync<List<ResultDto>>($"api/sessions/{sessionId}/results");
 }

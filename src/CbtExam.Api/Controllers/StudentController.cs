@@ -61,6 +61,53 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub) : Cont
         return Ok(shuffled);
     }
 
+    // GET /api/student/{studentExamId}/progress
+    [HttpGet("{studentExamId}/progress")]
+    public async Task<IActionResult> GetProgress(int studentExamId)
+    {
+        var se = await db.StudentExams
+            .Include(x => x.Answers)
+            .FirstOrDefaultAsync(x => x.Id == studentExamId);
+        if (se is null) return NotFound();
+
+        var answers = se.Answers
+            .Select(a => new AnswerSubmitDto(a.QuestionId, a.SelectedAnswer))
+            .ToList();
+        return Ok(new StudentProgressDto(se.Id, se.IsSubmitted, answers));
+    }
+
+    // POST /api/student/progress
+    [HttpPost("progress")]
+    public async Task<IActionResult> SaveProgress(ProgressSaveDto dto)
+    {
+        var se = await db.StudentExams
+            .Include(x => x.Session)
+            .Include(x => x.Answers)
+            .FirstOrDefaultAsync(x => x.Id == dto.StudentExamId);
+        if (se is null) return NotFound();
+        if (se.IsSubmitted) return BadRequest("Exam already submitted.");
+
+        var existing = se.Answers.FirstOrDefault(a => a.QuestionId == dto.QuestionId);
+        if (existing is null)
+        {
+            db.Answers.Add(new Answer
+            {
+                StudentExamId = se.Id,
+                QuestionId = dto.QuestionId,
+                SelectedAnswer = dto.SelectedAnswer,
+                IsCorrect = false
+            });
+        }
+        else
+        {
+            existing.SelectedAnswer = dto.SelectedAnswer;
+        }
+
+        await db.SaveChangesAsync();
+        await NotifyAdmin(se.Session!.SessionCode, se.SessionId);
+        return Ok();
+    }
+
     // POST /api/student/submit
     [HttpPost("submit")]
     public async Task<IActionResult> Submit(ExamSubmitDto dto)
@@ -76,18 +123,27 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub) : Cont
         var questions = se.Session!.Exam!.Questions.ToDictionary(q => q.Id);
         int score = 0;
 
-        foreach (var ans in dto.Answers)
+        foreach (var ans in dto.Answers.DistinctBy(a => a.QuestionId))
         {
             if (!questions.TryGetValue(ans.QuestionId, out var q)) continue;
             bool correct = q.CorrectAnswer.Equals(ans.SelectedAnswer, StringComparison.OrdinalIgnoreCase);
             if (correct) score++;
-            db.Answers.Add(new Answer
+
+            var existing = se.Answers.FirstOrDefault(a => a.QuestionId == ans.QuestionId);
+            if (existing is null)
             {
-                StudentExamId = se.Id,
-                QuestionId = ans.QuestionId,
-                SelectedAnswer = ans.SelectedAnswer,
-                IsCorrect = correct
-            });
+                db.Answers.Add(new Answer
+                {
+                    StudentExamId = se.Id,
+                    QuestionId = ans.QuestionId,
+                    SelectedAnswer = ans.SelectedAnswer,
+                    IsCorrect = correct
+                });
+                continue;
+            }
+
+            existing.SelectedAnswer = ans.SelectedAnswer;
+            existing.IsCorrect = correct;
         }
 
         se.IsSubmitted = true;
@@ -112,13 +168,38 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub) : Cont
         return Ok();
     }
 
-    private async Task NotifyAdmin(string sessionCode, int sessionId)
+    [HttpPost("heartbeat")]
+    public async Task<IActionResult> Heartbeat(DeviceHeartbeatDto dto)
+    {
+        var se = await db.StudentExams.Include(x => x.Session).FirstOrDefaultAsync(x => x.Id == dto.StudentExamId);
+        if (se is null) return NotFound();
+        await NotifyAdmin(se.Session!.SessionCode, se.SessionId, dto);
+        return Ok();
+    }
+
+    private async Task NotifyAdmin(string sessionCode, int sessionId, DeviceHeartbeatDto? heartbeat = null)
     {
         var students = await db.StudentExams
             .Include(se => se.Student)
             .Where(se => se.SessionId == sessionId)
-            .Select(se => new StudentStatusDto(se.Id, se.Student!.FullName, se.Student.StudentId, se.JoinedAt, se.IsSubmitted, se.TabSwitchCount, se.Answers.Count))
+            .Select(se => new StudentStatusDto(
+                se.Id, se.Student!.FullName, se.Student.StudentId, se.JoinedAt, se.IsSubmitted, se.TabSwitchCount,
+                se.Answers.Count, se.Answers.Count, 0, !se.IsSubmitted, se.IsSubmitted ? "submitted" : "online"))
             .ToListAsync();
+        if (heartbeat is not null)
+        {
+            students = students
+                .Select(s => s.StudentExamId == heartbeat.StudentExamId
+                    ? s with
+                    {
+                        CurrentQuestion = heartbeat.CurrentQuestion,
+                        BatteryLevel = heartbeat.BatteryLevel,
+                        IsOnline = heartbeat.IsOnline,
+                        ConnectionState = heartbeat.ConnectionState
+                    }
+                    : s)
+                .ToList();
+        }
         await ExamHub.NotifyStudentUpdate(hub, sessionCode, students);
     }
 }

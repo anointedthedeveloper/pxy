@@ -50,6 +50,21 @@ public class SessionsController(AppDbContext db) : ControllerBase
         return Ok();
     }
 
+    [HttpPost("end-all")]
+    public async Task<IActionResult> EndAll()
+    {
+        var active = await db.ExamSessions.Where(s => s.IsActive).ToListAsync();
+        if (active.Count == 0) return Ok(0);
+        foreach (var session in active)
+        {
+            session.IsActive = false;
+            session.EndedAt = DateTime.UtcNow;
+        }
+
+        await db.SaveChangesAsync();
+        return Ok(active.Count);
+    }
+
     [HttpGet("{id}/students")]
     public async Task<IActionResult> GetStudents(int id) =>
         Ok(await db.StudentExams
@@ -58,7 +73,7 @@ public class SessionsController(AppDbContext db) : ControllerBase
             .Select(se => new StudentStatusDto(
                 se.Id, se.Student!.FullName, se.Student.StudentId,
                 se.JoinedAt, se.IsSubmitted, se.TabSwitchCount,
-                se.Answers.Count))
+                se.Answers.Count, se.Answers.Count, 0, !se.IsSubmitted, se.IsSubmitted ? "submitted" : "online"))
             .ToListAsync());
 
     [HttpGet("{id}/results")]

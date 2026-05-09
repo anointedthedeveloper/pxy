@@ -41,6 +41,7 @@ public static class ApiBootstrap
         builder.Services.AddSignalR();
 
         var app = builder.Build();
+        var adminKey = Environment.GetEnvironmentVariable("CBT_ADMIN_KEY") ?? "admin123";
 
         // Auto-migrate and seed on startup
         using (var scope = app.Services.CreateScope())
@@ -62,6 +63,25 @@ public static class ApiBootstrap
         }
 
         app.UseCors();
+        app.Use(async (ctx, next) =>
+        {
+            if (!ctx.Request.Path.StartsWithSegments("/api/exams") &&
+                !ctx.Request.Path.StartsWithSegments("/api/sessions"))
+            {
+                await next();
+                return;
+            }
+
+            if (ctx.Request.Headers.TryGetValue("X-Admin-Key", out var provided) &&
+                string.Equals(provided.ToString(), adminKey, StringComparison.Ordinal))
+            {
+                await next();
+                return;
+            }
+
+            ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await ctx.Response.WriteAsync("Unauthorized admin request.");
+        });
         app.UseDefaultFiles();
         app.UseStaticFiles();
         app.MapControllers();
