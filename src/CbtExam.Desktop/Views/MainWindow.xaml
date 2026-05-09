@@ -6,6 +6,7 @@
         Title="CBT Exam System - Admin" Height="720" Width="1240"
         MinHeight="640" MinWidth="1080"
         WindowStartupLocation="CenterScreen"
+        WindowState="Maximized"
         Background="{DynamicResource BgBrush}"
         FontFamily="Segoe UI"
         Loaded="Window_Loaded">
@@ -68,16 +69,14 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <Border Width="42" Height="42" CornerRadius="12" Background="#ECFDF5" BorderBrush="#BBF7D0" BorderThickness="1">
-                            <TextBlock Text="CB" FontWeight="Bold" Foreground="#047857" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
+                        <Image Source="pack://application:,,,/res/jamb.png" Width="42" Height="42" RenderOptions.BitmapScalingMode="HighQuality"/>
                         <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
                             <TextBlock Text="CBT Exam System" FontSize="16" FontWeight="Bold" Foreground="#111827"/>
                             <TextBlock Text="Admin Console" FontSize="12" Foreground="#6B7280"/>
                         </StackPanel>
                         <Button Grid.Column="2" Command="{Binding ToggleSidebarCommand}" Style="{StaticResource NavBtn}"
                                 Padding="6" ToolTip="Collapse sidebar">
-                            <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets"/>
+                            <TextBlock Text="&#xE76B;" FontFamily="Segoe MDL2 Assets"/>
                         </Button>
                     </Grid>
                 </Border>
@@ -141,8 +140,12 @@
         <Border Grid.Column="0" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0"
                 Style="{StaticResource RailOnlyWhenClosed}">
             <DockPanel>
-                <Button DockPanel.Dock="Top" Command="{Binding ToggleSidebarCommand}" Content="&#xE72A;"
-                        ToolTip="Expand sidebar" Style="{StaticResource RailBtn}" Margin="10,16,10,12"/>
+                <DockPanel DockPanel.Dock="Top" Margin="0,14,0,10" LastChildFill="False">
+                    <Image DockPanel.Dock="Top" Source="pack://application:,,,/res/jamb.png" Width="38" Height="38"
+                           RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                    <Button DockPanel.Dock="Top" Command="{Binding ToggleSidebarCommand}" Content="&#xE76C;"
+                            ToolTip="Expand sidebar" Style="{StaticResource RailBtn}" HorizontalAlignment="Center"/>
+                </DockPanel>
                 <StackPanel Margin="10,8,10,0">
                     <Button Content="&#xE80F;" ToolTip="Dashboard" Command="{Binding NavigateCommand}" CommandParameter="Dashboard" Style="{StaticResource RailBtn}"/>
                     <Button Content="&#xE8A5;" ToolTip="Exams" Command="{Binding NavigateCommand}" CommandParameter="Exams" Style="{StaticResource RailBtn}"/>

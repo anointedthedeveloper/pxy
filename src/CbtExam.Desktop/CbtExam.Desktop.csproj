@@ -24,4 +24,7 @@
   <ItemGroup>
     <Content Include="..\..\appicon.ico" Link="appicon.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\res\jamb.png" Link="res/jamb.png" />
+  </ItemGroup>
 </Project>
