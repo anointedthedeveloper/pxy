@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CBT Exam System</title>
+<link rel="stylesheet" href="/css/style.css"/>
+</head>
+<body>
+
+<!-- ── JOIN PAGE ── -->
+<div id="page-join" class="page active">
+  <div class="join-card">
+    <div class="logo">📋</div>
+    <h1>CBT Exam System</h1>
+    <p class="subtitle">Enter your details to join the exam</p>
+    <div class="form-group">
+      <label>Session Code</label>
+      <input id="inp-code" type="text" placeholder="e.g. A1B2C3" maxlength="6" autocomplete="off"/>
+    </div>
+    <div class="form-group">
+      <label>Full Name</label>
+      <input id="inp-name" type="text" placeholder="Your full name" autocomplete="off"/>
+    </div>
+    <div class="form-group">
+      <label>Student ID</label>
+      <input id="inp-id" type="text" placeholder="Your student ID" autocomplete="off"/>
+    </div>
+    <div id="join-error" class="error-msg hidden"></div>
+    <button id="btn-join" class="btn btn-primary btn-full" onclick="joinExam()">Join Exam →</button>
+  </div>
+</div>
+
+<!-- ── EXAM PAGE ── -->
+<div id="page-exam" class="page">
+  <header class="exam-header">
+    <div class="exam-title" id="exam-title">Exam</div>
+    <div class="header-right">
+      <div class="timer-box">
+        <span class="timer-icon">⏱</span>
+        <span id="timer">00:00</span>
+      </div>
+      <div class="progress-info">
+        <span id="progress-text">0 / 0</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="exam-body">
+    <!-- Question Navigator -->
+    <aside class="question-nav" id="question-nav"></aside>
+
+    <!-- Question Panel -->
+    <main class="question-panel">
+      <div id="question-container"></div>
+      <div class="nav-buttons">
+        <button class="btn btn-outline" id="btn-prev" onclick="prevQuestion()">← Previous</button>
+        <button class="btn btn-outline" id="btn-next" onclick="nextQuestion()">Next →</button>
+        <button class="btn btn-danger" id="btn-submit" onclick="confirmSubmit()">Submit Exam</button>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ── RESULT PAGE ── -->
+<div id="page-result" class="page">
+  <div class="result-card">
+    <div class="result-icon" id="result-icon">🎉</div>
+    <h2>Exam Submitted!</h2>
+    <div class="score-display">
+      <span id="result-score">0</span>/<span id="result-total">0</span>
+    </div>
+    <div class="score-pct" id="result-pct">0%</div>
+    <p id="result-msg" class="result-msg"></p>
+  </div>
+</div>
+
+<!-- ── SUBMIT CONFIRM MODAL ── -->
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div class="modal">
+    <h3>Submit Exam?</h3>
+    <p id="modal-msg">Are you sure you want to submit? You cannot change answers after submission.</p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="submitExam()">Yes, Submit</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

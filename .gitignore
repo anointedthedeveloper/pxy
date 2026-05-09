@@ -1,0 +1,40 @@
+# Build results
+[Bb]in/
+[Oo]bj/
+publish/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+
+# Visual Studio Code
+.vscode/
+
+# Rider
+.idea/
+
+# Test results
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# NuGet
+*.nupkg
+packages/
+project.lock.json
+project.assets.json
+
+# Logs and local data
+*.log
+*.db
+*.sqlite
+*.sqlite3
+
+# OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini

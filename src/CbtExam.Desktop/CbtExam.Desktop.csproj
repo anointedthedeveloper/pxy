@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>..\..\appicon.ico</ApplicationIcon>
+    <AssemblyName>CbtExam</AssemblyName>
+    <RootNamespace>CbtExam.Desktop</RootNamespace>
+    <!-- Single-file self-contained publish settings -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CbtExam.Api\CbtExam.Api.csproj" />
+  </ItemGroup>
+  <!-- Copy app icon -->
+  <ItemGroup>
+    <Content Include="..\..\appicon.ico" Link="appicon.ico" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

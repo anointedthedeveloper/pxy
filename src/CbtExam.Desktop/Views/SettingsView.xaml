@@ -1,0 +1,96 @@
+<UserControl x:Class="CbtExam.Desktop.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer Background="{StaticResource BgBrush}">
+        <StackPanel Margin="26">
+            <TextBlock Text="Settings" FontSize="28" FontWeight="Bold" Foreground="#111827"/>
+            <TextBlock Text="Manage system configuration and preferences." FontSize="14" Foreground="#64748B" Margin="0,8,0,22"/>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="220"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="300"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Background="White" CornerRadius="14" BorderBrush="#E5E7EB" BorderThickness="1" Padding="12" Margin="0,0,18,0">
+                    <StackPanel>
+                        <Border CornerRadius="9" Background="#ECFDF5" Padding="12,10" Margin="0,0,0,8">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" Foreground="#047857" Margin="0,0,10,0"/><TextBlock Text="General" FontWeight="Bold" Foreground="#047857"/></StackPanel>
+                        </Border>
+                        <Border CornerRadius="9" Padding="12,10" Margin="0,0,0,8">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A7;" FontFamily="Segoe MDL2 Assets" Foreground="#64748B" Margin="0,0,10,0"/><TextBlock Text="System" Foreground="#334155"/></StackPanel>
+                        </Border>
+                        <Border CornerRadius="9" Padding="12,10" Margin="0,0,0,8">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE9F5;" FontFamily="Segoe MDL2 Assets" Foreground="#64748B" Margin="0,0,10,0"/><TextBlock Text="Database" Foreground="#334155"/></StackPanel>
+                        </Border>
+                        <Border CornerRadius="9" Padding="12,10">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8F6;" FontFamily="Segoe MDL2 Assets" Foreground="#64748B" Margin="0,0,10,0"/><TextBlock Text="Backup" Foreground="#334155"/></StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <StackPanel Grid.Column="1" Margin="0,0,18,0">
+                    <Border Background="White" CornerRadius="14" BorderBrush="#E5E7EB" BorderThickness="1" Padding="18" Margin="0,0,0,18">
+                        <StackPanel>
+                            <TextBlock Text="General Settings" FontSize="18" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,16"/>
+                            <TextBlock Text="System Name" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,6"/>
+                            <TextBox Text="CBT Exam System" Margin="0,0,0,12"/>
+                            <TextBlock Text="Admin Email" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,6"/>
+                            <TextBox Text="admin@example.com" Margin="0,0,0,12"/>
+                            <TextBlock Text="Server Port" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,6"/>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBox Text="{Binding Port}" Width="110" Margin="0,0,10,0"/>
+                                <TextBlock Text="Restart server to apply" Foreground="#64748B" FontSize="12" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="White" CornerRadius="14" BorderBrush="#E5E7EB" BorderThickness="1" Padding="18">
+                        <StackPanel>
+                            <TextBlock Text="Appearance" FontSize="18" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,16"/>
+                            <TextBlock Text="Theme" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,6"/>
+                            <ComboBox Margin="0,0,0,12"><ComboBoxItem Content="Light" IsSelected="True"/></ComboBox>
+                            <TextBlock Text="Primary Color" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,6"/>
+                            <Border Width="32" Height="24" CornerRadius="6" Background="#059669" HorizontalAlignment="Left"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2">
+                    <Border Background="White" CornerRadius="14" BorderBrush="#E5E7EB" BorderThickness="1" Padding="18" Margin="0,0,0,18">
+                        <StackPanel>
+                            <TextBlock Text="Notifications" FontSize="18" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,16"/>
+                            <CheckBox Content="Email Notifications" IsChecked="True" Margin="0,0,0,10"/>
+                            <CheckBox Content="Session Alerts" IsChecked="True" Margin="0,0,0,10"/>
+                            <CheckBox Content="Exam Alerts" IsChecked="True" Margin="0,0,0,10"/>
+                            <CheckBox Content="System Alerts" IsChecked="True"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Background="White" CornerRadius="14" BorderBrush="#E5E7EB" BorderThickness="1" Padding="18">
+                        <StackPanel>
+                            <TextBlock Text="System Information" FontSize="18" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,16"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="110"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Version" FontWeight="SemiBold" Margin="0,0,0,10"/><TextBlock Grid.Column="1" Text="1.0.0" Foreground="#64748B"/>
+                                <TextBlock Grid.Row="1" Text="Environment" FontWeight="SemiBold" Margin="0,0,0,10"/><TextBlock Grid.Row="1" Grid.Column="1" Text="Production" Foreground="#64748B"/>
+                                <TextBlock Grid.Row="2" Text="Database" FontWeight="SemiBold" Margin="0,0,0,10"/><TextBlock Grid.Row="2" Grid.Column="1" Text="SQLite" Foreground="#64748B"/>
+                                <TextBlock Grid.Row="3" Text="Local IP" FontWeight="SemiBold" Margin="0,0,0,10"/><TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding LocalIp}" Foreground="#64748B"/>
+                                <TextBlock Grid.Row="4" Text="Server URL" FontWeight="SemiBold"/><TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding ServerUrl}" TextWrapping="Wrap" Foreground="#2563EB"/>
+                            </Grid>
+                            <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                                <Button Content="Copy URL" Command="{Binding CopyUrlCommand}" Style="{StaticResource PrimaryBtn}" Background="#059669" Padding="14,8" Margin="0,0,8,0"/>
+                                <Button Content="Allow Firewall" Command="{Binding OpenFirewallCommand}" Style="{StaticResource PrimaryBtn}" Background="#F8FAFC" Foreground="#111827" Padding="14,8"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding CopyStatus}" Foreground="#059669" FontSize="12" Margin="0,10,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
