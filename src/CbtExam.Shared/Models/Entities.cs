@@ -42,6 +42,8 @@ public class Student
     public int Id { get; set; }
     public string FullName { get; set; } = string.Empty;
     public string StudentId { get; set; } = string.Empty;
+    public string Password { get; set; } = "1234";
+    public bool IsActive { get; set; } = true;
     public ICollection<StudentExam> StudentExams { get; set; } = new List<StudentExam>();
 }
 

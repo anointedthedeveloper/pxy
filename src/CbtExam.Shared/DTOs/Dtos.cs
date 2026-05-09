@@ -50,3 +50,11 @@ public record ActivityLogDto(int StudentExamId, string Activity, DateTime Timest
 public record TabSwitchDto(int StudentExamId);
 public record DeviceHeartbeatDto(int StudentExamId, int CurrentQuestion, int BatteryLevel, bool IsOnline, string ConnectionState);
 public record SnapshotDto(int StudentExamId, string ImageBase64);
+
+// --- Student admin management ---
+public record StudentAdminDto(int Id, string FullName, string StudentId, bool IsActive);
+public record StudentUpsertDto(int? Id, string FullName, string StudentId, bool IsActive);
+public record StudentPasswordUpdateDto(int StudentId, string NewPassword);
+
+// --- Notifications ---
+public record NotificationDto(string Title, string Message, DateTime CreatedAt, string Level);
