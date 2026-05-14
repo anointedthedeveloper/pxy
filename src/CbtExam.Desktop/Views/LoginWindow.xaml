@@ -250,8 +250,8 @@
                 </Canvas>
                 
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="40,0">
-                    <Border Width="120" Height="120" CornerRadius="60" Background="White" Margin="0,0,0,30" HorizontalAlignment="Center">
-                        <Image Stretch="Uniform" Margin="20" 
+                    <Border Width="160" Height="160" Background="Transparent" Margin="0,0,0,30" HorizontalAlignment="Center">
+                        <Image Stretch="Uniform" Margin="0" 
                                Source="{Binding SchoolLogoPath, TargetNullValue='pack://application:,,,/res/jamb.png', FallbackValue='pack://application:,,,/res/jamb.png'}"/>
                     </Border>
                     
