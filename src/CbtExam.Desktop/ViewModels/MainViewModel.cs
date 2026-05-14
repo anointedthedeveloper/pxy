@@ -49,7 +49,7 @@ public class MainViewModel : BaseViewModel
     private string _startupStatus = "Starting server…";
     public string StartupStatus { get => _startupStatus; set => Set(ref _startupStatus, value); }
 
-    public string ServerStatusText => ServerRunning ? "● Server Running" : "○ Server Stopped";
+    public string ServerStatusText => ServerRunning ? "Server Running" : "Server Stopped";
 
     private bool _sidebarOpen = true;
     public bool SidebarOpen { get => _sidebarOpen; set { Set(ref _sidebarOpen, value); OnPropertyChanged(nameof(SidebarWidth)); } }
