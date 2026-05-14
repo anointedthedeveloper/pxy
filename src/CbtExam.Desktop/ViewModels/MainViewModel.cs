@@ -213,18 +213,18 @@ public class MainViewModel : BaseViewModel
         
         CurrentPath = CurrentPageKey switch
         {
-            "Dashboard" => "Dashboard",
-            "Exams" => "Dashboard > Exams",
-            "Questions" => "Dashboard > Questions",
-            "Students" => "Dashboard > Students",
-            "Sessions" => "Dashboard > Active Sessions",
-            "Results" => "Dashboard > Results",
-            "Reports" => "Dashboard > Reports",
-            "Notifications" => "Dashboard > Notifications",
-            "Settings" => "Dashboard > Settings",
-            "SearchResults" => "Dashboard > Search Results",
-            "ErrorGuide" => "Dashboard > Error Guide",
-            _ => $"Dashboard > {CurrentPageKey}"
+            "Dashboard" => "Dashboard Overview",
+            "Exams" => "Exam Management",
+            "Questions" => "Question Bank",
+            "Students" => "Student Database",
+            "Sessions" => "Active Exam Sessions",
+            "Results" => "Candidate Results",
+            "Reports" => "Analytics & Reports",
+            "Notifications" => "System Notifications",
+            "Settings" => "Global Settings",
+            "SearchResults" => "Search Results",
+            "ErrorGuide" => "Troubleshooting Guide",
+            _ => CurrentPageKey
         };
 
         CurrentPage = page switch

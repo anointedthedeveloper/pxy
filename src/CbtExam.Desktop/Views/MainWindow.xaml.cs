@@ -31,39 +31,4 @@ public partial class MainWindow : Window
                 "Startup Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
-
-    private void SearchBox_GotFocus(object sender, RoutedEventArgs e)
-    {
-        if (SearchPlaceholder != null)
-            SearchPlaceholder.Visibility = Visibility.Collapsed;
-    }
-
-    private void SearchBox_LostFocus(object sender, RoutedEventArgs e)
-    {
-        if (SearchBox != null && string.IsNullOrWhiteSpace(SearchBox.Text) && SearchPlaceholder != null)
-            SearchPlaceholder.Visibility = Visibility.Visible;
-    }
-
-    private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (ClearSearchButton != null)
-        {
-            ClearSearchButton.Visibility = string.IsNullOrWhiteSpace(SearchBox.Text) ? Visibility.Hidden : Visibility.Visible;
-        }
-    }
-
-    private void ClearSearchButton_Click(object sender, RoutedEventArgs e)
-    {
-        SearchBox.Text = string.Empty;
-        SearchBox.Focus();
-    }
-
-    private void QuickActions_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is Button btn && btn.ContextMenu != null)
-        {
-            btn.ContextMenu.PlacementTarget = btn;
-            btn.ContextMenu.IsOpen = true;
-        }
-    }
 }
