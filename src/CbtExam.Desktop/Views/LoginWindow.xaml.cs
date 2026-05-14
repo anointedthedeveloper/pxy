@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Diagnostics;
 
 namespace CbtExam.Desktop.Views;
 
@@ -11,6 +12,7 @@ public partial class LoginWindow : Window
     private LoginViewModel ViewModel => (LoginViewModel)DataContext;
     private bool _isPasswordVisible = false;
     private bool _isDarkTheme = false;
+    private bool _isUserTypingPassword = false;
 
     public LoginWindow()
     {
@@ -32,6 +34,11 @@ public partial class LoginWindow : Window
 
     private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
     {
+        if (CodeBox.IsFocused) 
+        {
+            _isUserTypingPassword = true;
+        }
+
         if (DataContext is LoginViewModel vm && !_isPasswordVisible)
         {
             vm.AccessCode = CodeBox.Password;
@@ -48,20 +55,26 @@ public partial class LoginWindow : Window
 
     private void TogglePasswordBtn_Click(object sender, RoutedEventArgs e)
     {
+        if (!_isUserTypingPassword && CodeBox.Password.Length > 0)
+        {
+            MessageBox.Show("For security reasons, saved credentials cannot be revealed. Please clear the field to enter a new password.", "Security", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
         _isPasswordVisible = !_isPasswordVisible;
         if (_isPasswordVisible)
         {
             VisibleCodeBox.Text = CodeBox.Password;
             CodeBox.Visibility = Visibility.Collapsed;
             VisibleCodeBox.Visibility = Visibility.Visible;
-            TogglePasswordIcon.Text = "\uECE4"; // Hide icon
+            TogglePasswordIcon.Text = "\uE8D4"; // Hide icon
         }
         else
         {
             CodeBox.Password = VisibleCodeBox.Text;
             VisibleCodeBox.Visibility = Visibility.Collapsed;
             CodeBox.Visibility = Visibility.Visible;
-            TogglePasswordIcon.Text = "\uE7B3"; // Reveal icon
+            TogglePasswordIcon.Text = "\uE18B"; // Reveal icon
         }
     }
 
@@ -101,5 +114,18 @@ public partial class LoginWindow : Window
             DragMove();
         }
         base.OnMouseDown(e);
+    }
+
+    private void ContactDeveloper_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://wa.me/2348101209470",
+                UseShellExecute = true
+            });
+        }
+        catch { }
     }
 }

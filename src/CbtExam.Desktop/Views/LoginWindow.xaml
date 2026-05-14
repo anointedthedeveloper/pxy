@@ -153,9 +153,9 @@
 
         <Style x:Key="LoginButtonStyle" TargetType="Button">
             <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontSize" Value="16"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Padding" Value="0,16"/>
+            <Setter Property="Padding" Value="0,18"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="Template">
@@ -267,6 +267,49 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <Style x:Key="RevealButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#A1A1AA"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="12">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="#10B981"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="CloseButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#A1A1AA"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="15">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#EF4444"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
     <!-- Main Container -->
@@ -309,22 +352,56 @@
                     <TextBlock Text="accessing the admin dashboard." FontSize="14"
                                Foreground="#D1D5DB" HorizontalAlignment="Center" Margin="0,0,0,60"/>
                                
-                    <Border Background="#022C22" CornerRadius="12" Padding="20" BorderThickness="1" BorderBrush="#065F46" HorizontalAlignment="Center" Width="300">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Border Width="32" Height="32" CornerRadius="8" Background="#064E3B" Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#10B981" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="Secure Access" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,4"/>
-                                <TextBlock Text="All access is monitored and logged" FontSize="12" Foreground="#A1A1AA"/>
-                                <TextBlock Text="for your security." FontSize="12" Foreground="#A1A1AA"/>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
+                    <Grid HorizontalAlignment="Center" Width="300">
+                        <Border x:Name="CarouselItem1" Background="#022C22" CornerRadius="12" Padding="20" BorderThickness="1" BorderBrush="#065F46" Opacity="1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Width="32" Height="32" CornerRadius="8" Background="#064E3B" Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#10B981" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Secure Access" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,4"/>
+                                    <TextBlock Text="All access is monitored and logged" FontSize="12" Foreground="#A1A1AA"/>
+                                    <TextBlock Text="for your security." FontSize="12" Foreground="#A1A1AA"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        
+                        <Border x:Name="CarouselItem2" Background="#022C22" CornerRadius="12" Padding="20" BorderThickness="1" BorderBrush="#065F46" Opacity="0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Width="32" Height="32" CornerRadius="8" Background="#064E3B" Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock Text="&#xE8B1;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#10B981" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="Offline Capable" FontSize="14" FontWeight="SemiBold" Foreground="White" Margin="0,0,0,4"/>
+                                    <TextBlock Text="System operates seamlessly even" FontSize="12" Foreground="#A1A1AA"/>
+                                    <TextBlock Text="without an internet connection." FontSize="12" Foreground="#A1A1AA"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <Grid.Triggers>
+                            <EventTrigger RoutedEvent="Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard RepeatBehavior="Forever">
+                                        <DoubleAnimation Storyboard.TargetName="CarouselItem1" Storyboard.TargetProperty="Opacity" From="1" To="0" BeginTime="0:0:4" Duration="0:0:0.5"/>
+                                        <DoubleAnimation Storyboard.TargetName="CarouselItem2" Storyboard.TargetProperty="Opacity" From="0" To="1" BeginTime="0:0:4" Duration="0:0:0.5"/>
+                                        
+                                        <DoubleAnimation Storyboard.TargetName="CarouselItem2" Storyboard.TargetProperty="Opacity" From="1" To="0" BeginTime="0:0:9" Duration="0:0:0.5"/>
+                                        <DoubleAnimation Storyboard.TargetName="CarouselItem1" Storyboard.TargetProperty="Opacity" From="0" To="1" BeginTime="0:0:9" Duration="0:0:0.5"/>
+                                        
+                                        <DoubleAnimation Storyboard.TargetName="CarouselItem1" Storyboard.TargetProperty="Opacity" To="1" BeginTime="0:0:10" Duration="0:0:0"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Grid.Triggers>
+                    </Grid>
                 </StackPanel>
             </Grid>
 
@@ -362,7 +439,7 @@
                             </StackPanel>
                         </Border>
                         <!-- Close Button -->
-                        <Button Background="Transparent" BorderThickness="0" Foreground="#A1A1AA" Width="30" Height="30" Click="CloseButton_Click" Cursor="Hand">
+                        <Button Style="{StaticResource CloseButtonStyle}" Width="30" Height="30" Click="CloseButton_Click">
                             <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Button>
                     </StackPanel>
@@ -414,13 +491,13 @@
                                      Style="{StaticResource InputFieldStyle}" Visibility="Collapsed" TextChanged="VisibleCodeBox_TextChanged"/>
                             <TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#A1A1AA" 
                                        HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,0,0,0" IsHitTestVisible="False"/>
-                            <Button x:Name="TogglePasswordBtn" Background="Transparent" BorderThickness="0" Foreground="#A1A1AA" 
-                                    HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0" Cursor="Hand" Click="TogglePasswordBtn_Click">
-                                <TextBlock x:Name="TogglePasswordIcon" Text="&#xE7B3;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                            <Button x:Name="TogglePasswordBtn" Style="{StaticResource RevealButtonStyle}" 
+                                    HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0" Click="TogglePasswordBtn_Click">
+                                <TextBlock x:Name="TogglePasswordIcon" Text="&#xE18B;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
                             </Button>
                         </Grid>
 
-                        <CheckBox Content="Remember this device" IsChecked="{Binding RememberMe}"
+                        <CheckBox Content="Remember credentials" IsChecked="{Binding RememberMe}"
                                   Foreground="{DynamicResource TextSub}" FontSize="13">
                             <CheckBox.Template>
                                 <ControlTemplate TargetType="CheckBox">
@@ -432,7 +509,7 @@
                                         </Border>
                                         <StackPanel>
                                             <TextBlock Text="{TemplateBinding Content}" Foreground="{DynamicResource TextMain}" FontSize="13" FontWeight="Medium"/>
-                                            <TextBlock Text="We'll remember your device, not your credentials." Foreground="{DynamicResource TextSub}" FontSize="11" Margin="0,2,0,0"/>
+                                            <TextBlock Text="We'll store your username and password securely." Foreground="{DynamicResource TextSub}" FontSize="11" Margin="0,2,0,0"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </ControlTemplate>
@@ -447,12 +524,17 @@
                             <Button.ContentTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal">
+                                        <TextBlock x:Name="SpinnerIcon" Text="&#xE895;" FontFamily="Segoe MDL2 Assets" Margin="0,0,12,0" VerticalAlignment="Center" Visibility="Collapsed" RenderTransformOrigin="0.5,0.5">
+                                            <TextBlock.RenderTransform>
+                                                <RotateTransform Angle="0"/>
+                                            </TextBlock.RenderTransform>
+                                        </TextBlock>
                                         <TextBlock x:Name="ArrowIcon" Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" Margin="0,0,12,0" VerticalAlignment="Center">
                                             <TextBlock.RenderTransform>
                                                 <TranslateTransform X="0" Y="0"/>
                                             </TextBlock.RenderTransform>
                                         </TextBlock>
-                                        <TextBlock Text="Access Admin Portal" FontFamily="Segoe UI" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Sign In" FontFamily="Segoe UI" VerticalAlignment="Center"/>
                                     </StackPanel>
                                     <DataTemplate.Triggers>
                                         <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Button}}" Value="True">
@@ -471,17 +553,33 @@
                                                 </BeginStoryboard>
                                             </DataTrigger.ExitActions>
                                         </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsLoggingIn}" Value="True">
+                                            <Setter TargetName="ArrowIcon" Property="Visibility" Value="Collapsed"/>
+                                            <Setter TargetName="SpinnerIcon" Property="Visibility" Value="Visible"/>
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard Name="SpinStoryboard">
+                                                    <Storyboard RepeatBehavior="Forever">
+                                                        <DoubleAnimation Storyboard.TargetName="SpinnerIcon" Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)" From="0" To="360" Duration="0:0:1"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </DataTrigger.EnterActions>
+                                            <DataTrigger.ExitActions>
+                                                <StopStoryboard BeginStoryboardName="SpinStoryboard"/>
+                                            </DataTrigger.ExitActions>
+                                        </DataTrigger>
                                     </DataTemplate.Triggers>
                                 </DataTemplate>
                             </Button.ContentTemplate>
                         </Button>
                     </StackPanel>
-                    
-                    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
-                        <TextBlock Text="Need help? " FontSize="12" Foreground="{DynamicResource TextSub}"/>
-                        <Button Background="Transparent" BorderThickness="0" Foreground="#10B981" FontSize="12" Cursor="Hand">
-                            <TextBlock Text="Contact system administrator"/>
-                        </Button>
+                    <StackPanel Grid.Row="4" Margin="0,10,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <TextBlock Text="Need assistance? " FontSize="12" Foreground="{DynamicResource TextSub}"/>
+                            <Button Background="Transparent" BorderThickness="0" Foreground="#10B981" FontSize="12" Cursor="Hand" Click="ContactDeveloper_Click">
+                                <TextBlock Text="Contact Developer"/>
+                            </Button>
+                        </StackPanel>
+                        <TextBlock Text="Powered by Anobyte Technologies" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSub}" HorizontalAlignment="Center" Margin="0,10,0,0" Opacity="0.7"/>
                     </StackPanel>
                     </Grid>
                 </Grid>
