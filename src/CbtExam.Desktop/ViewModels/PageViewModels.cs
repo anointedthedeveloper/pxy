@@ -705,6 +705,12 @@ public class QuestionsViewModel(ApiClient api) : BaseViewModel, IRefreshable
 
     public ObservableCollection<string> Subjects { get; } = [];
 
+    private bool _isAddingSubject;
+    public bool IsAddingSubject { get => _isAddingSubject; set => Set(ref _isAddingSubject, value); }
+
+    private string _newSubjectName = string.Empty;
+    public string NewSubjectName { get => _newSubjectName; set => Set(ref _newSubjectName, value); }
+
     public RelayCommand RefreshCommand => new(async () => await LoadAsync());
     public RelayCommand SaveCommand => new(async () => await SaveAsync());
     public RelayCommand DeleteCommand => new(async () => await DeleteAsync());
@@ -712,6 +718,16 @@ public class QuestionsViewModel(ApiClient api) : BaseViewModel, IRefreshable
     public RelayCommand<QuestionBankRow> PickCommand => new(q => Pick(_all.FirstOrDefault(x => x.Id == q.Id)));
     public RelayCommand ImportJsonCommand => new(async () => await ImportJsonAsync());
     public RelayCommand CopyTemplateCommand => new(() => { Clipboard.SetText(BulkJsonTemplate); Status = "Template copied to clipboard!"; StatusOk = true; });
+    public RelayCommand AddSubjectCommand => new(() => { IsAddingSubject = true; NewSubjectName = string.Empty; });
+    public RelayCommand ConfirmAddSubjectCommand => new(() => {
+        if (!string.IsNullOrWhiteSpace(NewSubjectName)) {
+            var name = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(NewSubjectName.Trim().ToLower());
+            if (!Subjects.Contains(name)) Subjects.Add(name);
+            Subject = name;
+        }
+        IsAddingSubject = false;
+    });
+    public RelayCommand CancelAddSubjectCommand => new(() => IsAddingSubject = false);
 
     public async Task LoadAsync()
     {
