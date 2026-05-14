@@ -43,4 +43,18 @@ public partial class MainWindow : Window
         if (SearchBox != null && string.IsNullOrWhiteSpace(SearchBox.Text) && SearchPlaceholder != null)
             SearchPlaceholder.Visibility = Visibility.Visible;
     }
+
+    private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (ClearSearchButton != null)
+        {
+            ClearSearchButton.Visibility = string.IsNullOrWhiteSpace(SearchBox.Text) ? Visibility.Hidden : Visibility.Visible;
+        }
+    }
+
+    private void ClearSearchButton_Click(object sender, RoutedEventArgs e)
+    {
+        SearchBox.Text = string.Empty;
+        SearchBox.Focus();
+    }
 }
