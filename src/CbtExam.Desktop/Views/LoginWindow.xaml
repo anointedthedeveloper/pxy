@@ -155,8 +155,9 @@
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Padding" Value="0,12"/>
+            <Setter Property="Padding" Value="0,16"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -183,8 +184,8 @@
                             <Border x:Name="bdHover" CornerRadius="8" Opacity="0">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Color="#34D399" Offset="0"/>
-                                        <GradientStop Color="#10B981" Offset="1"/>
+                                        <GradientStop Color="#10B981" Offset="0"/>
+                                        <GradientStop Color="#047857" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
                             </Border>
@@ -279,38 +280,6 @@
                 <ColumnDefinition Width="420"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Theme Toggle Top Right (Absolute Positioning relative to the container) -->
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,20,20,0" Grid.Column="1" Panel.ZIndex="10">
-                <Border Background="#1E293B" CornerRadius="12" Padding="2" BorderThickness="1" BorderBrush="#334155">
-                    <StackPanel Orientation="Horizontal">
-                        <Button x:Name="LightModeBtn" Background="#334155" BorderThickness="0" Foreground="White" Width="24" Height="24" Cursor="Hand" Click="ToggleTheme_Click">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}" CornerRadius="10">
-                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                </ControlTemplate>
-                            </Button.Template>
-                            <TextBlock Text="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Button>
-                        <Button x:Name="DarkModeBtn" Background="Transparent" BorderThickness="0" Foreground="White" Width="24" Height="24" Cursor="Hand" Click="ToggleTheme_Click">
-                            <Button.Template>
-                                <ControlTemplate TargetType="Button">
-                                    <Border Background="{TemplateBinding Background}" CornerRadius="10">
-                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                </ControlTemplate>
-                            </Button.Template>
-                            <TextBlock Text="&#xE708;" FontFamily="Segoe MDL2 Assets" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Button>
-                    </StackPanel>
-                </Border>
-                <!-- Close Button -->
-                <Button Background="Transparent" BorderThickness="0" Foreground="#A1A1AA" Width="30" Height="30" Margin="10,0,0,0" Click="CloseButton_Click" Cursor="Hand">
-                    <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Button>
-            </StackPanel>
-
             <!-- Left Pane (Dark Green) -->
             <Grid Grid.Column="0">
                 <Canvas Opacity="0.3">
@@ -365,19 +334,52 @@
                     <DropShadowEffect BlurRadius="20" Color="Black" Opacity="0.1" ShadowDepth="0"/>
                 </Border.Effect>
                 
-                <Grid Margin="40,50">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Grid.Row="0" Margin="0,0,0,30">
-                        <TextBlock Text="Admin Sign In" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource TextMain}" Margin="0,0,0,8"/>
-                        <TextBlock Text="Use your credentials to access the system" FontSize="14" Foreground="{DynamicResource TextSub}"/>
+                <Grid>
+                    <!-- Top Right Utilities -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,24,24,0" Panel.ZIndex="10">
+                        <Border Background="#1E293B" CornerRadius="12" Padding="2" BorderThickness="1" BorderBrush="#334155" Margin="0,0,16,0">
+                            <StackPanel Orientation="Horizontal">
+                                <Button x:Name="LightModeBtn" Background="#334155" BorderThickness="0" Foreground="White" Width="24" Height="24" Cursor="Hand" Click="ToggleTheme_Click">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                    <TextBlock Text="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Button>
+                                <Button x:Name="DarkModeBtn" Background="Transparent" BorderThickness="0" Foreground="White" Width="24" Height="24" Cursor="Hand" Click="ToggleTheme_Click">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                    <TextBlock Text="&#xE708;" FontFamily="Segoe MDL2 Assets" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                        <!-- Close Button -->
+                        <Button Background="Transparent" BorderThickness="0" Foreground="#A1A1AA" Width="30" Height="30" Click="CloseButton_Click" Cursor="Hand">
+                            <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Button>
                     </StackPanel>
+
+                    <Grid Margin="48,72,48,48">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Margin="0,0,0,45">
+                            <TextBlock Text="Admin Sign In" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource TextMain}" Margin="0,0,0,8"/>
+                            <TextBlock Text="Use your credentials to access the system" FontSize="14" Foreground="{DynamicResource TextSub}"/>
+                        </StackPanel>
 
                     <Border Grid.Row="1" Background="#FEF2F2" CornerRadius="8" Padding="12"
                             Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}"
@@ -399,8 +401,13 @@
                                        HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,0,0,0" IsHitTestVisible="False"/>
                         </Grid>
 
-                        <TextBlock Text="Access Code" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextMain}" Margin="0,0,0,8"/>
-                        <Grid Margin="0,0,0,10">
+                        <Grid Margin="0,0,0,8">
+                            <TextBlock Text="Access Code" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextMain}" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                            <Button Background="Transparent" BorderThickness="0" Foreground="#10B981" HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="13" Cursor="Hand">
+                                <TextBlock Text="Forgot access code?"/>
+                            </Button>
+                        </Grid>
+                        <Grid Margin="0,0,0,20">
                             <PasswordBox x:Name="CodeBox" PasswordChanged="PasswordBox_PasswordChanged"
                                          Style="{StaticResource PasswordFieldStyle}"/>
                             <TextBox x:Name="VisibleCodeBox" Text="{Binding AccessCode, UpdateSourceTrigger=PropertyChanged}" 
@@ -412,11 +419,6 @@
                                 <TextBlock x:Name="TogglePasswordIcon" Text="&#xE7B3;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
                             </Button>
                         </Grid>
-                        
-                        <Button Background="Transparent" BorderThickness="0" Foreground="#10B981" 
-                                HorizontalAlignment="Left" FontSize="13" Cursor="Hand" Margin="0,0,0,20">
-                            <TextBlock Text="Forgot access code?"/>
-                        </Button>
 
                         <CheckBox Content="Remember this device" IsChecked="{Binding RememberMe}"
                                   Foreground="{DynamicResource TextSub}" FontSize="13">
@@ -439,15 +441,37 @@
                     </StackPanel>
 
                     <StackPanel Grid.Row="3">
-                        <Button Content="&#xE72A;  Access Admin Portal" FontFamily="Segoe MDL2 Assets"
+                        <Button Content="Access"
                                 Style="{StaticResource LoginButtonStyle}"
                                 Command="{Binding LoginCommand}" Margin="0,0,0,20">
                             <Button.ContentTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="ArrowIcon" Text="&#xE72A;" FontFamily="Segoe MDL2 Assets" Margin="0,0,12,0" VerticalAlignment="Center">
+                                            <TextBlock.RenderTransform>
+                                                <TranslateTransform X="0" Y="0"/>
+                                            </TextBlock.RenderTransform>
+                                        </TextBlock>
                                         <TextBlock Text="Access Admin Portal" FontFamily="Segoe UI" VerticalAlignment="Center"/>
                                     </StackPanel>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Button}}" Value="True">
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetName="ArrowIcon" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" To="4" Duration="0:0:0.2"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </DataTrigger.EnterActions>
+                                            <DataTrigger.ExitActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetName="ArrowIcon" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)" To="0" Duration="0:0:0.2"/>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </DataTrigger.ExitActions>
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
                                 </DataTemplate>
                             </Button.ContentTemplate>
                         </Button>
@@ -459,6 +483,7 @@
                             <TextBlock Text="Contact system administrator"/>
                         </Button>
                     </StackPanel>
+                    </Grid>
                 </Grid>
             </Border>
         </Grid>
