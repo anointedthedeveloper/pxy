@@ -44,12 +44,12 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 
-                                <Border Grid.Column="0" Width="60" Height="60" CornerRadius="8" Background="#F8FAFC" BorderBrush="#E5E7EB" BorderThickness="1">
-                                    <Image Source="{Binding SchoolLogoPath}" Stretch="UniformToFill" Margin="4">
+                                <Border Grid.Column="0" Width="72" Height="72" CornerRadius="8" Background="#F8FAFC" BorderBrush="#E5E7EB" BorderThickness="1">
+                                    <Image Source="{Binding SchoolLogoImage}" Stretch="Uniform" Margin="6">
                                         <Image.Style>
                                             <Style TargetType="Image">
                                                 <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding SchoolLogoPath}" Value="{x:Null}">
+                                                    <DataTrigger Binding="{Binding SchoolLogoImage}" Value="{x:Null}">
                                                         <Setter Property="Source" Value="pack://application:,,,/res/jamb.png"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>

@@ -18,8 +18,19 @@
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <!-- Animated pulse dot -->
                         <Grid Width="18" Height="18" Margin="0,0,10,0">
-                            <Ellipse Width="18" Height="18" Fill="#DCFCE7" Opacity="0.6"/>
+                            <Ellipse x:Name="PulseDot" Width="18" Height="18" Fill="#DCFCE7" Opacity="0.6"/>
                             <Ellipse Width="10" Height="10" Fill="#16A34A" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Grid.Triggers>
+                                <EventTrigger RoutedEvent="Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard RepeatBehavior="Forever">
+                                            <DoubleAnimation Storyboard.TargetName="PulseDot" Storyboard.TargetProperty="Opacity" From="0.6" To="0" Duration="0:0:1.5" AutoReverse="False"/>
+                                            <DoubleAnimation Storyboard.TargetName="PulseDot" Storyboard.TargetProperty="Width" From="10" To="24" Duration="0:0:1.5" AutoReverse="False"/>
+                                            <DoubleAnimation Storyboard.TargetName="PulseDot" Storyboard.TargetProperty="Height" From="10" To="24" Duration="0:0:1.5" AutoReverse="False"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </Grid.Triggers>
                         </Grid>
                         <TextBlock Text="System Health" FontSize="13" FontWeight="Bold" Foreground="#047857"
                                    Margin="0,0,10,0" VerticalAlignment="Center"/>
@@ -166,10 +177,13 @@
                     </Grid>
                 </Border>
 
-                <!-- 4 stat cards with hover lift -->
+                <!-- 4 stat cards with hover lift and entrance animation -->
                 <UniformGrid Grid.Column="1" Columns="2" Rows="2">
-                    <Border CornerRadius="14" Padding="18" BorderBrush="#E5E7EB" BorderThickness="1" Margin="0,0,10,10"
-                            Background="{DynamicResource CardBrush}">
+                    <Border x:Name="Card1" CornerRadius="14" Padding="18" BorderBrush="#E5E7EB" BorderThickness="1" Margin="0,0,10,10"
+                            Background="{DynamicResource CardBrush}" Opacity="0">
+                        <Border.RenderTransform>
+                            <TranslateTransform Y="20"/>
+                        </Border.RenderTransform>
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Style.Triggers>
@@ -193,8 +207,11 @@
                                        Foreground="{DynamicResource TextPrimaryBrush}"/>
                         </StackPanel>
                     </Border>
-                    <Border CornerRadius="14" Padding="18" BorderBrush="#E5E7EB" BorderThickness="1" Margin="0,0,0,10"
-                            Background="{DynamicResource CardBrush}">
+                    <Border x:Name="Card2" CornerRadius="14" Padding="18" BorderBrush="#E5E7EB" BorderThickness="1" Margin="0,0,0,10"
+                            Background="{DynamicResource CardBrush}" Opacity="0">
+                        <Border.RenderTransform>
+                            <TranslateTransform Y="20"/>
+                        </Border.RenderTransform>
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Style.Triggers>
@@ -218,8 +235,11 @@
                                        Foreground="{DynamicResource TextPrimaryBrush}"/>
                         </StackPanel>
                     </Border>
-                    <Border CornerRadius="14" Padding="18" BorderBrush="#E5E7EB" BorderThickness="1" Margin="0,0,10,0"
-                            Background="{DynamicResource CardBrush}">
+                    <Border x:Name="Card3" CornerRadius="14" Padding="18" BorderBrush="#E5E7EB" BorderThickness="1" Margin="0,0,10,0"
+                            Background="{DynamicResource CardBrush}" Opacity="0">
+                        <Border.RenderTransform>
+                            <TranslateTransform Y="20"/>
+                        </Border.RenderTransform>
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Style.Triggers>
@@ -243,8 +263,11 @@
                                        Foreground="{DynamicResource TextPrimaryBrush}"/>
                         </StackPanel>
                     </Border>
-                    <Border CornerRadius="14" Padding="18" BorderBrush="#E5E7EB" BorderThickness="1"
-                            Background="{DynamicResource CardBrush}">
+                    <Border x:Name="Card4" CornerRadius="14" Padding="18" BorderBrush="#E5E7EB" BorderThickness="1"
+                            Background="{DynamicResource CardBrush}" Opacity="0">
+                        <Border.RenderTransform>
+                            <TranslateTransform Y="20"/>
+                        </Border.RenderTransform>
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Style.Triggers>
@@ -268,6 +291,42 @@
                                        Foreground="{DynamicResource TextPrimaryBrush}"/>
                         </StackPanel>
                     </Border>
+                    
+                    <UniformGrid.Triggers>
+                        <EventTrigger RoutedEvent="Loaded">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="Card1" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4">
+                                        <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetName="Card1" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" To="0" Duration="0:0:0.4">
+                                        <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+
+                                    <DoubleAnimation Storyboard.TargetName="Card2" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4" BeginTime="0:0:0.1">
+                                        <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetName="Card2" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" To="0" Duration="0:0:0.4" BeginTime="0:0:0.1">
+                                        <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+
+                                    <DoubleAnimation Storyboard.TargetName="Card3" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4" BeginTime="0:0:0.2">
+                                        <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetName="Card3" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" To="0" Duration="0:0:0.4" BeginTime="0:0:0.2">
+                                        <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+
+                                    <DoubleAnimation Storyboard.TargetName="Card4" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.4" BeginTime="0:0:0.3">
+                                        <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetName="Card4" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" To="0" Duration="0:0:0.4" BeginTime="0:0:0.3">
+                                        <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </UniformGrid.Triggers>
                 </UniformGrid>
             </Grid>
 

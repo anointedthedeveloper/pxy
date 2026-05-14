@@ -1140,7 +1140,51 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
     public string AdminEmail { get => _adminEmail; set { Set(ref _adminEmail, value); SaveSettings(); } }
 
     private string? _schoolLogoPath = null;
-    public string? SchoolLogoPath { get => _schoolLogoPath; set { Set(ref _schoolLogoPath, value); SaveSettings(); } }
+    public string? SchoolLogoPath
+    {
+        get => _schoolLogoPath;
+        set
+        {
+            if (Set(ref _schoolLogoPath, value))
+            {
+                UpdateLogoImage();
+                SaveSettings();
+            }
+        }
+    }
+
+    private System.Windows.Media.Imaging.BitmapImage? _schoolLogoImage;
+    public System.Windows.Media.Imaging.BitmapImage? SchoolLogoImage
+    {
+        get => _schoolLogoImage;
+        private set => Set(ref _schoolLogoImage, value);
+    }
+
+    private void UpdateLogoImage()
+    {
+        if (string.IsNullOrEmpty(_schoolLogoPath) || !File.Exists(_schoolLogoPath))
+        {
+            SchoolLogoImage = null;
+            return;
+        }
+
+        try
+        {
+            var bitmap = new System.Windows.Media.Imaging.BitmapImage();
+            bitmap.BeginInit();
+            bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+            bitmap.CreateOptions = System.Windows.Media.Imaging.BitmapCreateOptions.IgnoreImageCache;
+            bitmap.UriSource = new Uri(_schoolLogoPath, UriKind.Absolute);
+            bitmap.EndInit();
+            bitmap.Freeze(); // Allow crossing threads
+            SchoolLogoImage = bitmap;
+        }
+        catch (Exception ex)
+        {
+            App.Log("Failed to load school logo image", ex);
+            SchoolLogoImage = null;
+        }
+    }
 
     public RelayCommand ApplyThemeCommand => new(() =>
     {
@@ -1195,9 +1239,14 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
                     Path.GetDirectoryName(Environment.ProcessPath) ?? AppDomain.CurrentDomain.BaseDirectory,
                     "school_logo.png");
 
-                // Copy and resize if needed
+                // Copy and overwrite if needed
                 File.Copy(sourceFile, destFile, true);
-                SchoolLogoPath = destFile;
+                
+                // Force an update even if the path string is the same
+                _schoolLogoPath = destFile;
+                UpdateLogoImage();
+                SaveSettings();
+                OnPropertyChanged(nameof(SchoolLogoPath));
                 CopyStatus = "Logo uploaded successfully!";
                 Task.Delay(2000).ContinueWith(_ => App.Current.Dispatcher.Invoke(() => CopyStatus = string.Empty));
             }

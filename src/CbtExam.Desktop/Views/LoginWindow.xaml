@@ -396,7 +396,7 @@
                 
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="40,0">
                     <Image Width="140" Height="140" Stretch="Uniform" Margin="0,0,0,30" HorizontalAlignment="Center" 
-                           Source="{Binding SchoolLogoPath, TargetNullValue='pack://application:,,,/res/jamb.png', FallbackValue='pack://application:,,,/res/jamb.png'}">
+                           Source="{Binding SchoolLogoImage, TargetNullValue='pack://application:,,,/res/jamb.png', FallbackValue='pack://application:,,,/res/jamb.png'}">
                         <Image.Effect>
                             <DropShadowEffect BlurRadius="20" ShadowDepth="5" Opacity="0.4" Color="Black"/>
                         </Image.Effect>
@@ -684,6 +684,7 @@
 
                     <StackPanel Grid.Row="3">
                         <Button Content="Access"
+                                IsDefault="True"
                                 Style="{StaticResource LoginButtonStyle}"
                                 Command="{Binding LoginCommand}" Margin="0,0,0,20">
                             <Button.ContentTemplate>

@@ -193,44 +193,46 @@
                     </Grid>
                 </Border>
 
-                <StackPanel Margin="8,18,8,0">
-                    <Button Command="{Binding NavigateCommand}" CommandParameter="Dashboard" HorizontalAlignment="Stretch" ToolTip="Dashboard">
-                        <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavBtn}"><Setter Property="Padding" Value="14,13"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/><Style.Triggers><DataTrigger Binding="{Binding CurrentPageKey}" Value="Dashboard"><Setter Property="Background" Value="{DynamicResource NavActiveBrush}"/><Setter Property="Foreground" Value="{DynamicResource NavActiveFgBrush}"/></DataTrigger></Style.Triggers></Style></Button.Style>
-                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE80F;" Style="{StaticResource SideIcon}"/><TextBlock Text="Dashboard" Style="{StaticResource SideLabel}"/></StackPanel>
-                    </Button>
-                    <Button Command="{Binding NavigateCommand}" CommandParameter="Exams" HorizontalAlignment="Stretch" ToolTip="Exams">
-                        <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavBtn}"><Setter Property="Padding" Value="14,13"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/><Style.Triggers><DataTrigger Binding="{Binding CurrentPageKey}" Value="Exams"><Setter Property="Background" Value="{DynamicResource NavActiveBrush}"/><Setter Property="Foreground" Value="{DynamicResource NavActiveFgBrush}"/></DataTrigger></Style.Triggers></Style></Button.Style>
-                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A5;" Style="{StaticResource SideIcon}"/><TextBlock Text="Exams" Style="{StaticResource SideLabel}"/></StackPanel>
-                    </Button>
-                    <Button Command="{Binding NavigateCommand}" CommandParameter="Questions" HorizontalAlignment="Stretch" ToolTip="Questions">
-                        <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavBtn}"><Setter Property="Padding" Value="14,13"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/><Style.Triggers><DataTrigger Binding="{Binding CurrentPageKey}" Value="Questions"><Setter Property="Background" Value="{DynamicResource NavActiveBrush}"/><Setter Property="Foreground" Value="{DynamicResource NavActiveFgBrush}"/></DataTrigger></Style.Triggers></Style></Button.Style>
-                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8F1;" Style="{StaticResource SideIcon}"/><TextBlock Text="Questions" Style="{StaticResource SideLabel}"/></StackPanel>
-                    </Button>
-                    <Button Command="{Binding NavigateCommand}" CommandParameter="Students" HorizontalAlignment="Stretch" ToolTip="Students">
-                        <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavBtn}"><Setter Property="Padding" Value="14,13"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/><Style.Triggers><DataTrigger Binding="{Binding CurrentPageKey}" Value="Students"><Setter Property="Background" Value="{DynamicResource NavActiveBrush}"/><Setter Property="Foreground" Value="{DynamicResource NavActiveFgBrush}"/></DataTrigger></Style.Triggers></Style></Button.Style>
-                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE716;" Style="{StaticResource SideIcon}"/><TextBlock Text="Students" Style="{StaticResource SideLabel}"/></StackPanel>
-                    </Button>
-                    <Button Command="{Binding NavigateCommand}" CommandParameter="Sessions" HorizontalAlignment="Stretch" ToolTip="Sessions">
-                        <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavBtn}"><Setter Property="Padding" Value="14,13"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/><Style.Triggers><DataTrigger Binding="{Binding CurrentPageKey}" Value="Sessions"><Setter Property="Background" Value="{DynamicResource NavActiveBrush}"/><Setter Property="Foreground" Value="{DynamicResource NavActiveFgBrush}"/></DataTrigger></Style.Triggers></Style></Button.Style>
-                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE787;" Style="{StaticResource SideIcon}"/><TextBlock Text="Sessions" Style="{StaticResource SideLabel}"/></StackPanel>
-                    </Button>
-                    <Button Command="{Binding NavigateCommand}" CommandParameter="Results" HorizontalAlignment="Stretch" ToolTip="Results">
-                        <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavBtn}"><Setter Property="Padding" Value="14,13"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/><Style.Triggers><DataTrigger Binding="{Binding CurrentPageKey}" Value="Results"><Setter Property="Background" Value="{DynamicResource NavActiveBrush}"/><Setter Property="Foreground" Value="{DynamicResource NavActiveFgBrush}"/></DataTrigger></Style.Triggers></Style></Button.Style>
-                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE9D2;" Style="{StaticResource SideIcon}"/><TextBlock Text="Results" Style="{StaticResource SideLabel}"/></StackPanel>
-                    </Button>
-                    <Button Command="{Binding NavigateCommand}" CommandParameter="Reports" HorizontalAlignment="Stretch" ToolTip="Reports">
-                        <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavBtn}"><Setter Property="Padding" Value="14,13"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/><Style.Triggers><DataTrigger Binding="{Binding CurrentPageKey}" Value="Reports"><Setter Property="Background" Value="{DynamicResource NavActiveBrush}"/><Setter Property="Foreground" Value="{DynamicResource NavActiveFgBrush}"/></DataTrigger></Style.Triggers></Style></Button.Style>
-                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE9D9;" Style="{StaticResource SideIcon}"/><TextBlock Text="Reports" Style="{StaticResource SideLabel}"/></StackPanel>
-                    </Button>
-                    <Button Command="{Binding NavigateCommand}" CommandParameter="Notifications" HorizontalAlignment="Stretch" ToolTip="Notifications">
-                        <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavBtn}"><Setter Property="Padding" Value="14,13"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/><Style.Triggers><DataTrigger Binding="{Binding CurrentPageKey}" Value="Notifications"><Setter Property="Background" Value="{DynamicResource NavActiveBrush}"/><Setter Property="Foreground" Value="{DynamicResource NavActiveFgBrush}"/></DataTrigger></Style.Triggers></Style></Button.Style>
-                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE7ED;" Style="{StaticResource SideIcon}"/><TextBlock Text="Notifications" Style="{StaticResource SideLabel}"/></StackPanel>
-                    </Button>
-                    <Button Command="{Binding NavigateCommand}" CommandParameter="Settings" HorizontalAlignment="Stretch" ToolTip="Settings">
-                        <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavBtn}"><Setter Property="Padding" Value="14,13"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/><Style.Triggers><DataTrigger Binding="{Binding CurrentPageKey}" Value="Settings"><Setter Property="Background" Value="{DynamicResource NavActiveBrush}"/><Setter Property="Foreground" Value="{DynamicResource NavActiveFgBrush}"/></DataTrigger></Style.Triggers></Style></Button.Style>
-                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE713;" Style="{StaticResource SideIcon}"/><TextBlock Text="Settings" Style="{StaticResource SideLabel}"/></StackPanel>
-                    </Button>
-                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,4,0" Margin="4,0,0,0">
+                    <StackPanel Margin="4,18,4,0">
+                        <Button Command="{Binding NavigateCommand}" CommandParameter="Dashboard" HorizontalAlignment="Stretch" ToolTip="Dashboard">
+                            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavBtn}"><Setter Property="Padding" Value="14,13"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/><Style.Triggers><DataTrigger Binding="{Binding CurrentPageKey}" Value="Dashboard"><Setter Property="Background" Value="{DynamicResource NavActiveBrush}"/><Setter Property="Foreground" Value="{DynamicResource NavActiveFgBrush}"/></DataTrigger></Style.Triggers></Style></Button.Style>
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE80F;" Style="{StaticResource SideIcon}"/><TextBlock Text="Dashboard" Style="{StaticResource SideLabel}"/></StackPanel>
+                        </Button>
+                        <Button Command="{Binding NavigateCommand}" CommandParameter="Exams" HorizontalAlignment="Stretch" ToolTip="Exams">
+                            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavBtn}"><Setter Property="Padding" Value="14,13"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/><Style.Triggers><DataTrigger Binding="{Binding CurrentPageKey}" Value="Exams"><Setter Property="Background" Value="{DynamicResource NavActiveBrush}"/><Setter Property="Foreground" Value="{DynamicResource NavActiveFgBrush}"/></DataTrigger></Style.Triggers></Style></Button.Style>
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A5;" Style="{StaticResource SideIcon}"/><TextBlock Text="Exams" Style="{StaticResource SideLabel}"/></StackPanel>
+                        </Button>
+                        <Button Command="{Binding NavigateCommand}" CommandParameter="Questions" HorizontalAlignment="Stretch" ToolTip="Questions">
+                            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavBtn}"><Setter Property="Padding" Value="14,13"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/><Style.Triggers><DataTrigger Binding="{Binding CurrentPageKey}" Value="Questions"><Setter Property="Background" Value="{DynamicResource NavActiveBrush}"/><Setter Property="Foreground" Value="{DynamicResource NavActiveFgBrush}"/></DataTrigger></Style.Triggers></Style></Button.Style>
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8F1;" Style="{StaticResource SideIcon}"/><TextBlock Text="Questions" Style="{StaticResource SideLabel}"/></StackPanel>
+                        </Button>
+                        <Button Command="{Binding NavigateCommand}" CommandParameter="Students" HorizontalAlignment="Stretch" ToolTip="Students">
+                            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavBtn}"><Setter Property="Padding" Value="14,13"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/><Style.Triggers><DataTrigger Binding="{Binding CurrentPageKey}" Value="Students"><Setter Property="Background" Value="{DynamicResource NavActiveBrush}"/><Setter Property="Foreground" Value="{DynamicResource NavActiveFgBrush}"/></DataTrigger></Style.Triggers></Style></Button.Style>
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE716;" Style="{StaticResource SideIcon}"/><TextBlock Text="Students" Style="{StaticResource SideLabel}"/></StackPanel>
+                        </Button>
+                        <Button Command="{Binding NavigateCommand}" CommandParameter="Sessions" HorizontalAlignment="Stretch" ToolTip="Sessions">
+                            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavBtn}"><Setter Property="Padding" Value="14,13"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/><Style.Triggers><DataTrigger Binding="{Binding CurrentPageKey}" Value="Sessions"><Setter Property="Background" Value="{DynamicResource NavActiveBrush}"/><Setter Property="Foreground" Value="{DynamicResource NavActiveFgBrush}"/></DataTrigger></Style.Triggers></Style></Button.Style>
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE787;" Style="{StaticResource SideIcon}"/><TextBlock Text="Sessions" Style="{StaticResource SideLabel}"/></StackPanel>
+                        </Button>
+                        <Button Command="{Binding NavigateCommand}" CommandParameter="Results" HorizontalAlignment="Stretch" ToolTip="Results">
+                            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavBtn}"><Setter Property="Padding" Value="14,13"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/><Style.Triggers><DataTrigger Binding="{Binding CurrentPageKey}" Value="Results"><Setter Property="Background" Value="{DynamicResource NavActiveBrush}"/><Setter Property="Foreground" Value="{DynamicResource NavActiveFgBrush}"/></DataTrigger></Style.Triggers></Style></Button.Style>
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE9D2;" Style="{StaticResource SideIcon}"/><TextBlock Text="Results" Style="{StaticResource SideLabel}"/></StackPanel>
+                        </Button>
+                        <Button Command="{Binding NavigateCommand}" CommandParameter="Reports" HorizontalAlignment="Stretch" ToolTip="Reports">
+                            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavBtn}"><Setter Property="Padding" Value="14,13"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/><Style.Triggers><DataTrigger Binding="{Binding CurrentPageKey}" Value="Reports"><Setter Property="Background" Value="{DynamicResource NavActiveBrush}"/><Setter Property="Foreground" Value="{DynamicResource NavActiveFgBrush}"/></DataTrigger></Style.Triggers></Style></Button.Style>
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE9D9;" Style="{StaticResource SideIcon}"/><TextBlock Text="Reports" Style="{StaticResource SideLabel}"/></StackPanel>
+                        </Button>
+                        <Button Command="{Binding NavigateCommand}" CommandParameter="Notifications" HorizontalAlignment="Stretch" ToolTip="Notifications">
+                            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavBtn}"><Setter Property="Padding" Value="14,13"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/><Style.Triggers><DataTrigger Binding="{Binding CurrentPageKey}" Value="Notifications"><Setter Property="Background" Value="{DynamicResource NavActiveBrush}"/><Setter Property="Foreground" Value="{DynamicResource NavActiveFgBrush}"/></DataTrigger></Style.Triggers></Style></Button.Style>
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE7ED;" Style="{StaticResource SideIcon}"/><TextBlock Text="Notifications" Style="{StaticResource SideLabel}"/></StackPanel>
+                        </Button>
+                        <Button Command="{Binding NavigateCommand}" CommandParameter="Settings" HorizontalAlignment="Stretch" ToolTip="Settings">
+                            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource NavBtn}"><Setter Property="Padding" Value="14,13"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/><Style.Triggers><DataTrigger Binding="{Binding CurrentPageKey}" Value="Settings"><Setter Property="Background" Value="{DynamicResource NavActiveBrush}"/><Setter Property="Foreground" Value="{DynamicResource NavActiveFgBrush}"/></DataTrigger></Style.Triggers></Style></Button.Style>
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE713;" Style="{StaticResource SideIcon}"/><TextBlock Text="Settings" Style="{StaticResource SideLabel}"/></StackPanel>
+                        </Button>
+                    </StackPanel>
+                </ScrollViewer>
             </DockPanel>
         </Border>
 
@@ -250,17 +252,19 @@
                             ToolTip="Expand sidebar" Style="{StaticResource RailBtn}" HorizontalAlignment="Center"/>
                 </StackPanel>
                 <!-- Nav icons — no margin, truly centred in 64px column -->
-                <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,4,0,0">
-                    <Button Content="&#xE80F;" ToolTip="Dashboard" Command="{Binding NavigateCommand}" CommandParameter="Dashboard" Style="{StaticResource RailBtn}"/>
-                    <Button Content="&#xE8A5;" ToolTip="Exams" Command="{Binding NavigateCommand}" CommandParameter="Exams" Style="{StaticResource RailBtn}"/>
-                    <Button Content="&#xE8F1;" ToolTip="Questions" Command="{Binding NavigateCommand}" CommandParameter="Questions" Style="{StaticResource RailBtn}"/>
-                    <Button Content="&#xE716;" ToolTip="Students" Command="{Binding NavigateCommand}" CommandParameter="Students" Style="{StaticResource RailBtn}"/>
-                    <Button Content="&#xE787;" ToolTip="Sessions" Command="{Binding NavigateCommand}" CommandParameter="Sessions" Style="{StaticResource RailBtn}"/>
-                    <Button Content="&#xE9D2;" ToolTip="Results" Command="{Binding NavigateCommand}" CommandParameter="Results" Style="{StaticResource RailBtn}"/>
-                    <Button Content="&#xE9D9;" ToolTip="Reports" Command="{Binding NavigateCommand}" CommandParameter="Reports" Style="{StaticResource RailBtn}"/>
-                    <Button Content="&#xE7ED;" ToolTip="Notifications" Command="{Binding NavigateCommand}" CommandParameter="Notifications" Style="{StaticResource RailBtn}"/>
-                    <Button Content="&#xE713;" ToolTip="Settings" Command="{Binding NavigateCommand}" CommandParameter="Settings" Style="{StaticResource RailBtn}"/>
-                </StackPanel>
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,4,0,0">
+                        <Button Content="&#xE80F;" ToolTip="Dashboard" Command="{Binding NavigateCommand}" CommandParameter="Dashboard" Style="{StaticResource RailBtn}"/>
+                        <Button Content="&#xE8A5;" ToolTip="Exams" Command="{Binding NavigateCommand}" CommandParameter="Exams" Style="{StaticResource RailBtn}"/>
+                        <Button Content="&#xE8F1;" ToolTip="Questions" Command="{Binding NavigateCommand}" CommandParameter="Questions" Style="{StaticResource RailBtn}"/>
+                        <Button Content="&#xE716;" ToolTip="Students" Command="{Binding NavigateCommand}" CommandParameter="Students" Style="{StaticResource RailBtn}"/>
+                        <Button Content="&#xE787;" ToolTip="Sessions" Command="{Binding NavigateCommand}" CommandParameter="Sessions" Style="{StaticResource RailBtn}"/>
+                        <Button Content="&#xE9D2;" ToolTip="Results" Command="{Binding NavigateCommand}" CommandParameter="Results" Style="{StaticResource RailBtn}"/>
+                        <Button Content="&#xE9D9;" ToolTip="Reports" Command="{Binding NavigateCommand}" CommandParameter="Reports" Style="{StaticResource RailBtn}"/>
+                        <Button Content="&#xE7ED;" ToolTip="Notifications" Command="{Binding NavigateCommand}" CommandParameter="Notifications" Style="{StaticResource RailBtn}"/>
+                        <Button Content="&#xE713;" ToolTip="Settings" Command="{Binding NavigateCommand}" CommandParameter="Settings" Style="{StaticResource RailBtn}"/>
+                    </StackPanel>
+                </ScrollViewer>
                 <!-- Server dot at bottom -->
                 <Button Grid.Row="2" Command="{Binding ToggleServerCommand}" ToolTip="Start/Stop Server"
                         Style="{StaticResource RailBtn}" HorizontalAlignment="Center" Margin="0,0,0,12">

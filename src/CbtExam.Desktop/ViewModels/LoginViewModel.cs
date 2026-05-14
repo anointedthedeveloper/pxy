@@ -32,7 +32,13 @@ public class LoginViewModel : BaseViewModel
     public string ErrorMessage
     {
         get => _errorMessage;
-        set => Set(ref _errorMessage, value);
+        set
+        {
+            if (Set(ref _errorMessage, value))
+            {
+                OnPropertyChanged(nameof(HasError));
+            }
+        }
     }
 
     public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
@@ -46,7 +52,46 @@ public class LoginViewModel : BaseViewModel
     public string? SchoolLogoPath
     {
         get => _schoolLogoPath;
-        set => Set(ref _schoolLogoPath, value);
+        set
+        {
+            if (Set(ref _schoolLogoPath, value))
+            {
+                UpdateLogoImage();
+            }
+        }
+    }
+
+    private System.Windows.Media.Imaging.BitmapImage? _schoolLogoImage;
+    public System.Windows.Media.Imaging.BitmapImage? SchoolLogoImage
+    {
+        get => _schoolLogoImage;
+        private set => Set(ref _schoolLogoImage, value);
+    }
+
+    private void UpdateLogoImage()
+    {
+        if (string.IsNullOrEmpty(_schoolLogoPath) || !File.Exists(_schoolLogoPath))
+        {
+            SchoolLogoImage = null;
+            return;
+        }
+
+        try
+        {
+            var bitmap = new System.Windows.Media.Imaging.BitmapImage();
+            bitmap.BeginInit();
+            bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+            bitmap.CreateOptions = System.Windows.Media.Imaging.BitmapCreateOptions.IgnoreImageCache;
+            bitmap.UriSource = new Uri(_schoolLogoPath, UriKind.Absolute);
+            bitmap.EndInit();
+            bitmap.Freeze(); // Allow crossing threads
+            SchoolLogoImage = bitmap;
+        }
+        catch (Exception ex)
+        {
+            App.Log("Failed to load school logo image", ex);
+            SchoolLogoImage = null;
+        }
     }
 
     private bool _isLoggingIn = false;
@@ -197,8 +242,8 @@ public class LoginViewModel : BaseViewModel
         }
         else
         {
-            ErrorMessage = "Invalid admin access code. Please check your credentials.";
-            App.Log($"Failed login attempt for username '{Username}': Incorrect access code.", null);
+            ErrorMessage = "Incorrect password. Please try again.";
+            App.Log($"Failed login attempt for username '{Username}': Incorrect password.", null);
         }
 
         // Hide loading state
