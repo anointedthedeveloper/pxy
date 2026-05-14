@@ -24,16 +24,17 @@ public class MainViewModel : BaseViewModel
     private string _liveMetricText = "Live Activity Feed initialized...";
     public string LiveMetricText { get => _liveMetricText; set => Set(ref _liveMetricText, value); }
 
+    private string _liveMetricIcon = "\uE81C"; // Default icon (Play)
+    public string LiveMetricIcon { get => _liveMetricIcon; set => Set(ref _liveMetricIcon, value); }
+
+    private bool _isQuickActionsOpen;
+    public bool IsQuickActionsOpen { get => _isQuickActionsOpen; set => Set(ref _isQuickActionsOpen, value); }
+
     private DispatcherTimer? _liveMetricTimer;
     private int _metricIndex = 0;
-    private readonly string[] _mockMetrics = new[]
-    {
-        "Server latency: 12ms",
-        "Student ID 402 just submitted",
-        "Active connections: 45",
-        "Database sync: OK",
-        "System health: 99.8% uptime"
-    };
+    
+    // Track latest submission
+    private string _lastSubmittedStudent = "";
 
     private bool _serverRunning;
     public bool ServerRunning
@@ -128,6 +129,12 @@ public class MainViewModel : BaseViewModel
         {
             Notifications.Add(new NotificationItem("Student activity", $"{payload.Count} student updates received.", DateTime.Now, "info"));
             OnPropertyChanged(nameof(NotificationCount));
+
+            var newlySubmitted = payload.LastOrDefault(s => s.IsSubmitted);
+            if (newlySubmitted != null)
+            {
+                _lastSubmittedStudent = newlySubmitted.FullName;
+            }
         };
 
         StartLiveMetricTimer();
@@ -135,14 +142,50 @@ public class MainViewModel : BaseViewModel
 
     private void StartLiveMetricTimer()
     {
+        var random = new Random();
         _liveMetricTimer = new DispatcherTimer
         {
-            Interval = TimeSpan.FromSeconds(5)
+            Interval = TimeSpan.FromSeconds(4)
         };
         _liveMetricTimer.Tick += (s, e) =>
         {
-            LiveMetricText = _mockMetrics[_metricIndex];
-            _metricIndex = (_metricIndex + 1) % _mockMetrics.Length;
+            if (!ServerRunning)
+            {
+                LiveMetricText = "Server Offline";
+                LiveMetricIcon = "\uE738"; // Disconnected icon
+                return;
+            }
+
+            _metricIndex = (_metricIndex + 1) % 4;
+
+            switch (_metricIndex)
+            {
+                case 0: // Latency
+                    var latency = random.Next(2, 18);
+                    LiveMetricText = $"Server latency: {latency}ms";
+                    LiveMetricIcon = "\uE839"; // Network icon
+                    break;
+                case 1: // Active connections
+                    LiveMetricText = $"Connected Students: {Dashboard.ActiveCount + Dashboard.SubmittedCount}";
+                    LiveMetricIcon = "\uE716"; // People icon
+                    break;
+                case 2: // Submissions
+                    LiveMetricText = $"Submitted Exams: {Dashboard.SubmittedCount}";
+                    LiveMetricIcon = "\uE930"; // Checkmark icon
+                    break;
+                case 3: // Last submission
+                    if (!string.IsNullOrEmpty(_lastSubmittedStudent))
+                    {
+                        LiveMetricText = $"{_lastSubmittedStudent} just submitted";
+                        LiveMetricIcon = "\uE81C"; // Play/Action icon
+                    }
+                    else
+                    {
+                        LiveMetricText = $"Active Exams: {Dashboard.ActiveCount}";
+                        LiveMetricIcon = "\uE8A5"; // Document icon
+                    }
+                    break;
+            }
         };
         _liveMetricTimer.Start();
     }
@@ -209,6 +252,7 @@ public class MainViewModel : BaseViewModel
 
     private void Navigate(string? page)
     {
+        IsQuickActionsOpen = false; // Close the dropdown on navigation
         CurrentPageKey = page ?? "Dashboard";
         
         CurrentPath = CurrentPageKey switch
