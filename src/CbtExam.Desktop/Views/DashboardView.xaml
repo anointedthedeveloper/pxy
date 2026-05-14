@@ -67,24 +67,24 @@
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0,0,4">
                     <Border CornerRadius="8" Background="#ECFDF5" BorderBrush="#BBF7D0" BorderThickness="1"
-                            Padding="10,5" Margin="0,0,8,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE9F5;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="#047857" Margin="0,0,5,0"/>
-                            <TextBlock Text="Offline Mode" FontSize="11" FontWeight="SemiBold" Foreground="#047857"/>
+                            Padding="12,8" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="&#xE9F5;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="#047857" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Offline Mode" FontSize="13" FontWeight="SemiBold" Foreground="#047857" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
                     <Border CornerRadius="8" Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1"
-                            Padding="10,5" Margin="0,0,8,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE774;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="#2563EB" Margin="0,0,5,0"/>
-                            <TextBlock Text="LAN Ready" FontSize="11" FontWeight="SemiBold" Foreground="#2563EB"/>
+                            Padding="12,8" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="&#xE774;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="#2563EB" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="LAN Ready" FontSize="13" FontWeight="SemiBold" Foreground="#2563EB" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
                     <Button Command="{Binding RefreshCommand}" Style="{StaticResource PrimaryBtn}"
                             Background="#0F6FEA" Padding="16,9">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" Margin="0,0,7,0"/>
-                            <TextBlock Text="Refresh"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Refresh" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -117,7 +117,7 @@
                         <StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,28">
                                 <Border Width="42" Height="42" CornerRadius="12" Background="#26FFFFFF" Margin="0,0,12,0">
-                                    <TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" Foreground="White"
+                                    <TextBlock Text="&#xE916;" FontFamily="Segoe MDL2 Assets" Foreground="White"
                                                FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
                                 <StackPanel VerticalAlignment="Center">

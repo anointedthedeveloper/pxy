@@ -182,7 +182,7 @@ public class MainViewModel : BaseViewModel
                     else
                     {
                         LiveMetricText = $"Active Exams: {Dashboard.ActiveCount}";
-                        LiveMetricIcon = "\uE8A5"; // Document icon
+                        LiveMetricIcon = "\uE916"; // Stopwatch icon
                     }
                     break;
             }
