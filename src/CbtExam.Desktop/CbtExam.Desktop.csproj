@@ -5,7 +5,7 @@
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <ApplicationIcon>..\..\appicon.ico</ApplicationIcon>
+    <ApplicationIcon>Resources\appicon.ico</ApplicationIcon>
     <AssemblyName>CbtExam</AssemblyName>
     <RootNamespace>CbtExam.Desktop</RootNamespace>
     <!-- Single-file self-contained publish settings -->
@@ -21,9 +21,7 @@
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\..\appicon.ico" Link="appicon.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="..\..\res\jamb.png" Link="res/jamb.png" />
+    <Resource Include="Resources\appicon.ico" />
+    <Resource Include="Resources\jamb.png" />
   </ItemGroup>
 </Project>
