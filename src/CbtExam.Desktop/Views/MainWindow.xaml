@@ -286,16 +286,24 @@
                         <ColumnDefinition Width="360"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <Grid Grid.Column="1" VerticalAlignment="Center" Height="42">
-                        <TextBox x:Name="SearchBox" Text="{Binding GlobalSearch, UpdateSourceTrigger=PropertyChanged}" 
-                                 Padding="40,8,12,8" GotFocus="SearchBox_GotFocus" LostFocus="SearchBox_LostFocus"
-                                 Style="{StaticResource ModernTextBox}"/>
-                        <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="15" Foreground="{DynamicResource TextSecondaryBrush}"
-                                   VerticalAlignment="Center" HorizontalAlignment="Left" Margin="14,0,0,0" IsHitTestVisible="False"/>
-                        <TextBlock x:Name="SearchPlaceholder" Text="Search anything..." Foreground="{DynamicResource TextSecondaryBrush}" FontSize="13"
-                                   VerticalAlignment="Center" HorizontalAlignment="Left" Margin="40,0,0,0"
-                                   IsHitTestVisible="False"/>
-                    </Grid>
+                    <Border Grid.Column="1" VerticalAlignment="Center" Height="42" Background="{DynamicResource FieldBg}" BorderBrush="{DynamicResource FieldBorder}" BorderThickness="1" CornerRadius="6" Padding="0,2,0,2">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="30"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="30"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="15" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <TextBox x:Name="SearchBox" Grid.Column="1" Text="{Binding GlobalSearch, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalAlignment="Center" Padding="8,6,8,6" Background="Transparent" BorderThickness="0"
+                                     GotFocus="SearchBox_GotFocus" LostFocus="SearchBox_LostFocus" TextChanged="SearchBox_TextChanged"/>
+                            <Button x:Name="ClearSearchButton" Grid.Column="2" Content="✕" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                    Visibility="Hidden" Click="ClearSearchButton_Click" Padding="8,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="SearchPlaceholder" Grid.Column="1" Text="Search anything..." Foreground="{DynamicResource TextSecondaryBrush}" FontSize="13"
+                                       VerticalAlignment="Center" HorizontalAlignment="Left" Margin="8,0,0,0"
+                                       IsHitTestVisible="False"/>
+                        </Grid>
+                    </Border>
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="24,0,0,0">
                         <Button Style="{StaticResource NavBtn}" Padding="10" ToolTip="Theme" Command="{Binding ToggleThemeCommand}">
                             <TextBlock Text="&#xE706;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
