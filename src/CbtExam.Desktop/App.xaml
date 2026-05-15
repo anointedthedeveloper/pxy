@@ -5,6 +5,11 @@
              StartupUri="Views/LoginWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
+            <!-- ── Global Window Style ────────────────────────────────── -->
+            <Style TargetType="Window">
+                <Setter Property="Icon" Value="pack://application:,,,/Resources/appicon.ico"/>
+            </Style>
+
             <!-- ── Converters ──────────────────────────────────────────── -->
             <conv:BoolToVisibilityConverter      x:Key="BoolToVis"/>
             <conv:InverseBoolConverter           x:Key="InvBool"/>

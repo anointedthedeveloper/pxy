@@ -9,7 +9,6 @@
         WindowState="Maximized"
         Background="{DynamicResource BgBrush}"
         FontFamily="Segoe UI"
-        Icon="pack://application:,,,/CbtExam;component/Resources/appicon.ico"
         Loaded="Window_Loaded">
 
     <Window.DataContext>
