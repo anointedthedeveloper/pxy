@@ -126,6 +126,15 @@
                                                     </StackPanel>
                                                 </Grid>
                                             </StackPanel>
+
+                                            <StackPanel Margin="0,0,0,16">
+                                                <TextBlock Text="Access Password (Optional)" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,8"/>
+                                                <Grid Height="42">
+                                                    <TextBox Text="{Binding AccessPassword, UpdateSourceTrigger=PropertyChanged}" Padding="12,10,40,10" FontSize="14"/>
+                                                    <TextBlock Text="&#xE7B3;" FontFamily="Segoe MDL2 Assets" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,12,0" Foreground="#94A3B8" IsHitTestVisible="False"/>
+                                                </Grid>
+                                                <TextBlock Text="Students must enter this password to join the session." FontSize="11" Foreground="#94A3B8" Margin="4,4,0,0"/>
+                                            </StackPanel>
                                         </StackPanel>
 
                                         <!-- Step 2: Subject Selection -->
