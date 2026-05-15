@@ -314,11 +314,14 @@ public class ExamSubjectConfigVM : BaseViewModel
 {
     private readonly ApiClient _api;
     private readonly Action<ExamSubjectConfigVM> _onRemove;
+    private readonly Action _onChanged;
+    private List<QuestionBankDto> _bankQuestions = [];
 
-    public ExamSubjectConfigVM(ApiClient api, ObservableCollection<string> availableSubjects, Action<ExamSubjectConfigVM> onRemove)
+    public ExamSubjectConfigVM(ApiClient api, ObservableCollection<string> availableSubjects, Action<ExamSubjectConfigVM> onRemove, Action onChanged)
     {
         _api = api;
         _onRemove = onRemove;
+        _onChanged = onChanged;
         AvailableSubjects = availableSubjects;
     }
 
@@ -337,10 +340,34 @@ public class ExamSubjectConfigVM : BaseViewModel
     }
 
     private int _questionCount = 40;
-    public int QuestionCount { get => _questionCount; set => Set(ref _questionCount, value); }
+    public int QuestionCount
+    {
+        get => _questionCount;
+        set
+        {
+            if (Set(ref _questionCount, value))
+            {
+                OnPropertyChanged(nameof(HasPoolWarning));
+                OnPropertyChanged(nameof(PoolWarningText));
+                _onChanged();
+            }
+        }
+    }
 
     private int _poolSize;
-    public int PoolSize { get => _poolSize; set => Set(ref _poolSize, value); }
+    public int PoolSize
+    {
+        get => _poolSize;
+        set
+        {
+            Set(ref _poolSize, value);
+            OnPropertyChanged(nameof(HasPoolWarning));
+            OnPropertyChanged(nameof(PoolWarningText));
+        }
+    }
+
+    public bool HasPoolWarning => PoolSize > 0 && QuestionCount > PoolSize;
+    public string PoolWarningText => HasPoolWarning ? $"Only {PoolSize} questions available in bank!" : string.Empty;
 
     public List<int> GetSelectedYears() => AvailableYears.Where(y => y.IsSelected).Select(y => y.Year).ToList();
 
@@ -368,29 +395,36 @@ public class ExamSubjectConfigVM : BaseViewModel
     private async Task LoadYearsAsync()
     {
         AvailableYears.Clear();
+        _bankQuestions = [];
         PoolSize = 0;
         if (string.IsNullOrWhiteSpace(SelectedSubject)) return;
-        var years = await _api.GetQuestionBankYearsAsync(SelectedSubject);
-        if (years is null) return;
-        foreach (var y in years.OrderByDescending(y => y))
-            AvailableYears.Add(new YearToggle(y, true));
+
+        // Load all questions for this subject to get accurate counts
+        var questions = await _api.GetQuestionBankAsync(SelectedSubject);
+        _bankQuestions = questions ?? [];
+
+        var yearGroups = _bankQuestions.GroupBy(q => q.Year).OrderByDescending(g => g.Key);
+        foreach (var g in yearGroups)
+            AvailableYears.Add(new YearToggle(g.Key, true, g.Count()));
         RecalcPool();
     }
 
     private void RecalcPool()
     {
-        // Pool size will be computed during save — for now just show selected year count
-        PoolSize = AvailableYears.Count(y => y.IsSelected);
-        OnPropertyChanged(nameof(PoolSize));
+        var selectedYears = GetSelectedYears();
+        PoolSize = _bankQuestions.Count(q => selectedYears.Contains(q.Year));
+        _onChanged();
     }
 }
 
 public class YearToggle : BaseViewModel
 {
     public int Year { get; }
+    public int QuestionCount { get; }
     private bool _isSelected;
     public bool IsSelected { get => _isSelected; set => Set(ref _isSelected, value); }
-    public YearToggle(int year, bool selected) { Year = year; _isSelected = selected; }
+    public string Label => QuestionCount > 0 ? $"{Year} ({QuestionCount})" : $"{Year}";
+    public YearToggle(int year, bool selected, int questionCount = 0) { Year = year; _isSelected = selected; QuestionCount = questionCount; }
 }
 
 // ─── Exams list (Template builder) ────────────────────────────────────────────
