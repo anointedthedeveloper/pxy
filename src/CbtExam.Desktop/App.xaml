@@ -14,6 +14,7 @@
             <conv:IntToVisibilityConverter       x:Key="IntToVis"/>
             <conv:ZeroToVisibilityConverter      x:Key="ZeroToVis"/>
             <conv:PercentageToWidthConverter     x:Key="PctToWidth"/>
+            <conv:PassThroughConverter           x:Key="PassThroughConverter"/>
 
             <!-- ── Semantic brushes (all replaced at runtime by ApplyTheme) ── -->
             <!-- Page background -->
