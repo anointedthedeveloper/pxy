@@ -421,8 +421,12 @@ public class YearToggle : BaseViewModel
 {
     public int Year { get; }
     public int QuestionCount { get; }
-    private bool _isSelected;
-    public bool IsSelected { get => _isSelected; set => Set(ref _is// ─── Exams list (Template builder) ────────────────────────────────────────────
+    public bool IsSelected { get => _isSelected; set => Set(ref _isSelected, value); }
+    public string Label => QuestionCount > 0 ? $"{Year} ({QuestionCount})" : $"{Year}";
+    public YearToggle(int year, bool selected, int questionCount = 0) { Year = year; _isSelected = selected; QuestionCount = questionCount; }
+}
+
+// ─── Exams list (Template builder) ────────────────────────────────────────────
 public class ExamsViewModel(ApiClient api) : BaseViewModel, IRefreshable
 {
     public ObservableCollection<ExamDto> Exams { get; } = [];
@@ -723,16 +727,6 @@ public class ExamsViewModel(ApiClient api) : BaseViewModel, IRefreshable
     }
 
     private async Task DeleteAsync(ExamDto? exam)
-    {
-        if (exam is null) return;
-        var res = MessageBox.Show($"Are you sure you want to delete '{exam.Title}'?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-        if (res == MessageBoxResult.Yes)
-        {
-            await api.DeleteExamAsync(exam.Id);
-            await LoadAsync();
-        }
-    }
-}c(ExamDto? exam)
     {
         if (exam is null) return;
         var res = MessageBox.Show($"Are you sure you want to delete '{exam.Title}'?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
