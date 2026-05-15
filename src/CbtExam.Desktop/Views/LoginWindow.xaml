@@ -7,7 +7,6 @@
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
-        Icon="pack://application:,,,/CbtExam;component/Resources/appicon.ico"
         FontFamily="Segoe UI">
 
     <Window.DataContext>
