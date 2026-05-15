@@ -639,29 +639,24 @@ public class SessionViewModel(ApiClient api) : BaseViewModel, IRefreshable
 {
     public ObservableCollection<ExamDto> Exams { get; } = [];
     public ObservableCollection<SessionDto> Sessions { get; } = [];
+    public ObservableCollection<SessionDto> ActiveSessions { get; } = [];
 
     private ExamDto? _selectedExam;
     public ExamDto? SelectedExam { get => _selectedExam; set => Set(ref _selectedExam, value); }
 
-    private SessionDto? _activeSession;
-    public SessionDto? ActiveSession
-    {
-        get => _activeSession;
-        set
-        {
-            Set(ref _activeSession, value);
-            OnPropertyChanged(nameof(HasActiveSession));
-            OnPropertyChanged(nameof(JoinUrl));
-        }
-    }
+    public bool HasActiveSessions => ActiveSessions.Count > 0;
 
-    public bool HasActiveSession => ActiveSession is not null;
-    public string JoinUrl => ActiveSession is null ? string.Empty : $"{api.BaseUrl}?code={ActiveSession.SessionCode}";
+    public string GetJoinUrl(SessionDto session) => $"{api.BaseUrl}?code={session.SessionCode}";
 
     public RelayCommand RefreshCommand => new(async () => await LoadAsync());
     public RelayCommand StartCommand => new(async () => await StartAsync());
-    public RelayCommand StopCommand => new(async () => await StopAsync());
+    public RelayCommand<SessionDto> StopSessionCommand => new(async s => await StopSessionAsync(s));
     public RelayCommand EndAllCommand => new(async () => await EndAllAsync());
+    public RelayCommand<SessionDto> CopyJoinUrlCommand => new(s =>
+    {
+        if (s is not null)
+            System.Windows.Clipboard.SetText(GetJoinUrl(s));
+    });
 
     public async Task LoadAsync()
     {
@@ -673,7 +668,11 @@ public class SessionViewModel(ApiClient api) : BaseViewModel, IRefreshable
         var sessions = await api.GetSessionsAsync();
         Sessions.Clear();
         sessions?.ForEach(Sessions.Add);
-        ActiveSession = Sessions.FirstOrDefault(s => s.IsActive);
+        
+        ActiveSessions.Clear();
+        foreach (var s in Sessions.Where(s => s.IsActive))
+            ActiveSessions.Add(s);
+        OnPropertyChanged(nameof(HasActiveSessions));
     }
 
     private async Task StartAsync()
@@ -683,17 +682,30 @@ public class SessionViewModel(ApiClient api) : BaseViewModel, IRefreshable
         await LoadAsync();
     }
 
-    private async Task StopAsync()
+    private async Task StopSessionAsync(SessionDto? session)
     {
-        if (ActiveSession is null) return;
-        await api.StopSessionAsync(ActiveSession.Id);
-        await LoadAsync();
+        if (session is null) return;
+        var res = MessageBox.Show(
+            $"End session '{session.ExamTitle}' (Code: {session.SessionCode})?\n\nAll unsubmitted students will be auto-submitted.",
+            "End Session", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (res == MessageBoxResult.Yes)
+        {
+            await api.StopSessionAsync(session.Id);
+            await LoadAsync();
+        }
     }
 
     private async Task EndAllAsync()
     {
-        await api.EndAllSessionsAsync();
-        await LoadAsync();
+        if (ActiveSessions.Count == 0) return;
+        var res = MessageBox.Show(
+            $"End ALL {ActiveSessions.Count} active session(s)?\n\nAll unsubmitted students will be auto-submitted.",
+            "End All Sessions", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (res == MessageBoxResult.Yes)
+        {
+            await api.EndAllSessionsAsync();
+            await LoadAsync();
+        }
     }
 }
 
