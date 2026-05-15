@@ -492,6 +492,9 @@ public class ExamsViewModel(ApiClient api) : BaseViewModel, IRefreshable
     private int _duration = 60;
     public int Duration { get => _duration; set => Set(ref _duration, value); }
 
+    private string _accessPassword = string.Empty;
+    public string AccessPassword { get => _accessPassword; set => Set(ref _accessPassword, value); }
+
     // Duration presets
     public RelayCommand SetDuration30 => new(() => Duration = 30);
     public RelayCommand SetDuration45 => new(() => Duration = 45);
@@ -668,7 +671,7 @@ public class ExamsViewModel(ApiClient api) : BaseViewModel, IRefreshable
                 s.QuestionCount
             )).ToList();
 
-            var dto = new ExamGenerateDto(fullTitle, Duration, ShuffleQuestions, ShuffleOptions, subjectDtos);
+            var dto = new ExamGenerateDto(fullTitle, Duration, ShuffleQuestions, ShuffleOptions, AccessPassword, subjectDtos);
             var resp = await api.GenerateExamFromBankAsync(dto);
 
             if (resp.IsSuccessStatusCode)
@@ -715,6 +718,7 @@ public class ExamsViewModel(ApiClient api) : BaseViewModel, IRefreshable
         Duration = e.DurationMinutes;
         ShuffleQuestions = e.ShuffleQuestions;
         ShuffleOptions = e.ShuffleOptions;
+        AccessPassword = e.AccessPassword;
 
         SubjectConfigs.Clear();
         var subjects = e.Subject.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -738,6 +742,7 @@ public class ExamsViewModel(ApiClient api) : BaseViewModel, IRefreshable
         Duration = 60;
         ShuffleQuestions = true;
         ShuffleOptions = true;
+        AccessPassword = string.Empty;
         SelectedExam = null;
         SubjectConfigs.Clear();
         CreateStatus = string.Empty;
@@ -986,7 +991,22 @@ public class QuestionsViewModel(ApiClient api) : BaseViewModel, IRefreshable
 
     public ObservableCollection<string> SubjectFilters { get; } = ["All subjects"];
     private string _selectedSubject = "All subjects";
-    public string SelectedSubject { get => _selectedSubject; set { Set(ref _selectedSubject, value); ApplyFilter(); } }
+    public string SelectedSubject 
+    { 
+        get => _selectedSubject; 
+        set 
+        { 
+            if (Set(ref _selectedSubject, value))
+            {
+                ApplyFilter();
+                // Auto-fill the subject field in the form if it's a new question and a subject is selected
+                if (!IsEditing && value != "All subjects")
+                {
+                    Subject = value;
+                }
+            }
+        } 
+    }
 
     public ObservableCollection<string> YearFilters { get; } = ["All years"];
     private string _selectedYear = "All years";
@@ -1137,8 +1157,12 @@ public class QuestionsViewModel(ApiClient api) : BaseViewModel, IRefreshable
         IsBusy = true;
         try
         {
+            // Standardize subject name to Title Case
+            var standardizedSubject = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(Subject.Trim().ToLower());
+            Subject = standardizedSubject;
+
             var options = new List<string> { OptionA, OptionB, OptionC, OptionD };
-            var dto = new QuestionBankCreateDto(Subject, Year, 0, QuestionText, options, CorrectAnswer);
+            var dto = new QuestionBankCreateDto(standardizedSubject, Year, 0, QuestionText, options, CorrectAnswer);
 
             HttpResponseMessage resp;
             if (Selected is not null)
@@ -1213,7 +1237,25 @@ public class QuestionsViewModel(ApiClient api) : BaseViewModel, IRefreshable
                 Status = "No questions found in JSON."; StatusOk = false; return;
             }
 
-            var resp = await api.ImportQuestionBankAsync(list);
+            // Standardize subject names on import
+            foreach (var q in list)
+            {
+                if (!string.IsNullOrWhiteSpace(q.Subject))
+                {
+                    // Using a private field or logic to not trigger property changes repeatedly if many
+                    var std = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(q.Subject.Trim().ToLower());
+                    // Since record, we can't easily modify properties if they are init-only, 
+                    // but QuestionBankCreateDto is likely a record with positional properties.
+                    // Let's assume we can't modify it directly if it's a record, so we'll map to new objects if needed.
+                }
+            }
+            
+            // Re-map to ensure standardized subjects
+            var standardizedList = list.Select(q => q with { 
+                Subject = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(q.Subject?.Trim().ToLower() ?? "Unknown") 
+            }).ToList();
+
+            var resp = await api.ImportQuestionBankAsync(standardizedList);
             if (resp.IsSuccessStatusCode)
             {
                 Status = $"{list.Count} questions imported successfully."; StatusOk = true;
