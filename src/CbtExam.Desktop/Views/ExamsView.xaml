@@ -3,10 +3,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:CbtExam.Desktop.ViewModels">
     <Grid Background="{DynamicResource BgBrush}">
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="26">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-                <!-- Header -->
+            <!-- Top Header & Search (Always Visible) -->
+            <StackPanel Grid.Row="0" Margin="26,26,26,0">
                 <Grid Margin="0,0,0,20">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -14,7 +18,7 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel>
                         <TextBlock Text="Exam Templates" FontSize="28" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                        <TextBlock Text="Create exam templates from your question bank. Select subjects, years, and question counts." FontSize="13" Foreground="#64748B" Margin="0,6,0,0"/>
+                        <TextBlock Text="Design and manage your exam configurations. Configure subjects, pooling logic, and timing." FontSize="13" Foreground="#64748B" Margin="0,6,0,0"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <Button Command="{Binding RefreshCommand}" Style="{StaticResource PrimaryBtn}"
@@ -31,201 +35,385 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- Search -->
+                <!-- Search (Moved out of create form) -->
                 <Grid Height="44" Margin="0,0,0,16">
                     <TextBox Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" Padding="40,8,12,8"/>
                     <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#94A3B8"
                                VerticalAlignment="Center" HorizontalAlignment="Left" Margin="14,0,0,0" IsHitTestVisible="False"/>
-                    <TextBlock Text="Search templates..." FontSize="13" Foreground="#94A3B8"
+                    <TextBlock Text="Search templates by name or subject..." FontSize="13" Foreground="#94A3B8"
                                VerticalAlignment="Center" HorizontalAlignment="Left" Margin="40,0,0,0"
                                IsHitTestVisible="False"
                                Visibility="{Binding Search, Converter={StaticResource EmptyStringToVis}}"/>
                 </Grid>
+            </StackPanel>
 
-                <!-- Create/Edit Form -->
-                <Border Visibility="{Binding ShowCreateForm, Converter={StaticResource BoolToVis}}"
-                        Background="{DynamicResource CardBrush}" CornerRadius="14" BorderBrush="#E5E7EB"
-                        BorderThickness="1" Padding="24" Margin="0,0,0,20">
-                    <Border.Effect>
-                        <DropShadowEffect BlurRadius="20" ShadowDepth="3" Opacity="0.08" Color="#111827"/>
-                    </Border.Effect>
-                    <StackPanel>
-                        <!-- Form header -->
-                        <Grid Margin="0,0,0,18">
-                            <TextBlock Text="{Binding FormTitle}" FontSize="18" FontWeight="Bold"
-                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
-                            <Button HorizontalAlignment="Right" Command="{Binding ToggleCreateCommand}"
-                                    Style="{StaticResource PrimaryBtn}" Background="Transparent"
-                                    Foreground="{DynamicResource TextSecondaryBrush}" Padding="8">
-                                <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
-                            </Button>
-                        </Grid>
+            <!-- Main Content Area -->
+            <Grid Grid.Row="1">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="26,0,26,26">
+                        
+                        <!-- Create/Edit Form (Wizard) -->
+                        <Border Visibility="{Binding ShowCreateForm, Converter={StaticResource BoolToVis}}"
+                                Background="{DynamicResource CardBrush}" CornerRadius="14" BorderBrush="#E5E7EB"
+                                BorderThickness="1" Margin="0,0,0,20">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="20" ShadowDepth="3" Opacity="0.08" Color="#111827"/>
+                            </Border.Effect>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/> <!-- Header -->
+                                    <RowDefinition Height="*"/>    <!-- Steps -->
+                                    <RowDefinition Height="Auto"/> <!-- Sticky-like Footer -->
+                                </Grid.RowDefinitions>
 
-                        <!-- Row 1: Name + Duration -->
-                        <Grid Margin="0,0,0,16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="3*"/>
-                                <ColumnDefinition Width="1*"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Margin="0,0,12,0">
-                                <TextBlock Text="Exam Name *" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,6"/>
-                                <TextBox Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}" FontSize="14" Padding="12,10"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1">
-                                <TextBlock Text="Duration (minutes)" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,6"/>
-                                <TextBox Text="{Binding Duration, UpdateSourceTrigger=PropertyChanged}" FontSize="14" Padding="12,10"/>
-                            </StackPanel>
-                        </Grid>
-
-                        <!-- Shuffle options -->
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
-                            <CheckBox Content="Shuffle Questions" IsChecked="{Binding ShuffleQuestions}" Margin="0,0,24,0" FontSize="13"/>
-                            <CheckBox Content="Shuffle Options" IsChecked="{Binding ShuffleOptions}" FontSize="13"/>
-                        </StackPanel>
-
-                        <!-- Subject Configuration Section -->
-                        <Border Background="{DynamicResource BgBrush}" CornerRadius="10" Padding="18" Margin="0,0,0,16">
-                            <StackPanel>
-                                <Grid Margin="0,0,0,14">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#xE8F1;" FontFamily="Segoe MDL2 Assets" FontSize="16" Foreground="{DynamicResource AccentBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Subject Configuration" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                                        <Border Background="#ECFDF5" CornerRadius="10" Padding="8,3" Margin="12,0,0,0" VerticalAlignment="Center">
-                                            <TextBlock FontSize="11" FontWeight="Bold" Foreground="#047857">
-                                                <Run Text="{Binding TotalSubjects, Mode=OneWay}"/>
-                                                <Run Text=" / 4 subjects"/>
-                                            </TextBlock>
-                                        </Border>
-                                    </StackPanel>
-                                    <Button HorizontalAlignment="Right" Command="{Binding AddSubjectCommand}"
-                                            Style="{StaticResource PrimaryBtn}" Background="#047857" Padding="12,7"
-                                            IsEnabled="{Binding CanAddSubject}">
+                                <!-- Form Header & Close -->
+                                <Border Background="#F8FAFC" CornerRadius="14,14,0,0" Padding="24,18">
+                                    <Grid>
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="+" FontSize="14" Margin="0,0,6,0"/>
-                                            <TextBlock Text="Add Subject" FontSize="12"/>
+                                            <TextBlock Text="{Binding FormTitle}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                            <Border Margin="16,0,0,0" Background="#E2E8F0" CornerRadius="12" Padding="12,4" VerticalAlignment="Center">
+                                                <TextBlock FontSize="11" FontWeight="Bold" Foreground="#475569">
+                                                    Step <Run Text="{Binding CurrentStep}"/> of 3
+                                                </TextBlock>
+                                            </Border>
                                         </StackPanel>
-                                    </Button>
-                                </Grid>
+                                        <Button HorizontalAlignment="Right" Command="{Binding ToggleCreateCommand}"
+                                                Style="{StaticResource PrimaryBtn}" Background="Transparent"
+                                                Foreground="{DynamicResource TextSecondaryBrush}" Padding="8">
+                                            <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                                        </Button>
+                                    </Grid>
+                                </Border>
 
+                                <!-- Steps Container -->
+                                <Border Grid.Row="1" Padding="24">
+                                    <Grid MinHeight="300">
+                                        
+                                        <!-- Step 1: General Info -->
+                                        <StackPanel Visibility="{Binding IsStep1, Converter={StaticResource BoolToVis}}">
+                                            <TextBlock Text="General Information" FontSize="16" FontWeight="Bold" Margin="0,0,0,4"/>
+                                            <TextBlock Text="Set the basic identity and timing for this exam template." FontSize="13" Foreground="#64748B" Margin="0,0,0,20"/>
+
+                                            <Grid Margin="0,0,0,16">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="2*"/>
+                                                    <ColumnDefinition Width="1*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Margin="0,0,16,0">
+                                                    <TextBlock Text="Exam Name *" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,6"/>
+                                                    <TextBox Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}" FontSize="14" Padding="12,10"/>
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1">
+                                                    <TextBlock Text="Category / Tag (Optional)" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,6"/>
+                                                    <TextBox Text="{Binding Category, UpdateSourceTrigger=PropertyChanged}" FontSize="14" Padding="12,10" Tag="e.g. Mock, Mid-Term"/>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <StackPanel Margin="0,0,0,16">
+                                                <TextBlock Text="Duration (minutes)" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,8"/>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="120"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBox Text="{Binding Duration, UpdateSourceTrigger=PropertyChanged}" FontSize="16" FontWeight="Bold" Padding="12,10" VerticalAlignment="Center"/>
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
+                                                        <Button Command="{Binding SetDuration30}" Content="30m" Style="{StaticResource PrimaryBtn}" Background="#F1F5F9" Foreground="#475569" Padding="12,6" Margin="0,0,8,0" FontSize="11"/>
+                                                        <Button Command="{Binding SetDuration45}" Content="45m" Style="{StaticResource PrimaryBtn}" Background="#F1F5F9" Foreground="#475569" Padding="12,6" Margin="0,0,8,0" FontSize="11"/>
+                                                        <Button Command="{Binding SetDuration60}" Content="60m" Style="{StaticResource PrimaryBtn}" Background="#F1F5F9" Foreground="#475569" Padding="12,6" Margin="0,0,8,0" FontSize="11"/>
+                                                        <Button Command="{Binding SetDuration90}" Content="90m" Style="{StaticResource PrimaryBtn}" Background="#F1F5F9" Foreground="#475569" Padding="12,6" Margin="0,0,8,0" FontSize="11"/>
+                                                        <Button Command="{Binding SetDuration120}" Content="120m" Style="{StaticResource PrimaryBtn}" Background="#F1F5F9" Foreground="#475569" Padding="12,6" FontSize="11"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </StackPanel>
+                                        </StackPanel>
+
+                                        <!-- Step 2: Subject Selection -->
+                                        <StackPanel Visibility="{Binding IsStep2, Converter={StaticResource BoolToVis}}">
+                                            <Grid Margin="0,0,0,20">
+                                                <StackPanel>
+                                                    <TextBlock Text="Subject Configuration" FontSize="16" FontWeight="Bold" Margin="0,0,0,4"/>
+                                                    <TextBlock Text="Configure question pooling per subject and year." FontSize="13" Foreground="#64748B"/>
+                                                </StackPanel>
+                                                <Button HorizontalAlignment="Right" Command="{Binding AddSubjectCommand}"
+                                                        Style="{StaticResource PrimaryBtn}" Background="#047857" Padding="14,8"
+                                                        IsEnabled="{Binding CanAddSubject}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="+" FontSize="14" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="Add Subject Row" FontSize="12"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </Grid>
+
+                                            <!-- Subject Rows -->
+                                            <ItemsControl ItemsSource="{Binding SubjectConfigs}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate DataType="{x:Type vm:ExamSubjectConfigVM}">
+                                                        <Border Background="#F8FAFC" CornerRadius="12" Padding="20" Margin="0,0,0,16" BorderBrush="#E2E8F0" BorderThickness="1">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+
+                                                                <StackPanel>
+                                                                    <Grid Margin="0,0,0,16">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="2*"/>
+                                                                            <ColumnDefinition Width="1*"/>
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <StackPanel Margin="0,0,16,0">
+                                                                            <TextBlock Text="Select Subject" FontSize="11" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,6"/>
+                                                                            <ComboBox ItemsSource="{Binding AvailableSubjects}" SelectedItem="{Binding SelectedSubject}" Padding="10,8"/>
+                                                                        </StackPanel>
+                                                                        <StackPanel Grid.Column="1">
+                                                                            <TextBlock Text="Questions to Pick" FontSize="11" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,6"/>
+                                                                            <TextBox Text="{Binding QuestionCount, UpdateSourceTrigger=PropertyChanged}" Padding="10,8" FontSize="14" FontWeight="Bold"/>
+                                                                        </StackPanel>
+                                                                    </Grid>
+
+                                                                    <!-- Years Selection (Chips) -->
+                                                                    <StackPanel Visibility="{Binding AvailableYears.Count, Converter={StaticResource IntToVis}}">
+                                                                        <Grid Margin="0,0,0,8">
+                                                                            <StackPanel Orientation="Horizontal">
+                                                                                <TextBlock Text="Source Years" FontSize="11" FontWeight="SemiBold" Foreground="#64748B" VerticalAlignment="Center"/>
+                                                                                <Border Background="#EFF6FF" CornerRadius="10" Padding="8,2" Margin="10,0,0,0">
+                                                                                    <TextBlock FontSize="10" FontWeight="Bold" Foreground="#2563EB">
+                                                                                        Pool Size: <Run Text="{Binding PoolSize, Mode=OneWay}"/> Qs
+                                                                                    </TextBlock>
+                                                                                </Border>
+                                                                            </StackPanel>
+                                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                                                <Button Content="All" Command="{Binding SelectAllYearsCommand}" Style="{StaticResource PrimaryBtn}" Background="Transparent" Foreground="#2563EB" BorderThickness="0" Padding="8,0" FontSize="10"/>
+                                                                                <Button Content="None" Command="{Binding DeselectAllYearsCommand}" Style="{StaticResource PrimaryBtn}" Background="Transparent" Foreground="#64748B" BorderThickness="0" Padding="8,0" FontSize="10"/>
+                                                                            </StackPanel>
+                                                                        </Grid>
+                                                                        
+                                                                        <ItemsControl ItemsSource="{Binding AvailableYears}">
+                                                                            <ItemsControl.ItemsPanel>
+                                                                                <ItemsPanelTemplate>
+                                                                                    <WrapPanel/>
+                                                                                </ItemsPanelTemplate>
+                                                                            </ItemsControl.ItemsPanel>
+                                                                            <ItemsControl.ItemTemplate>
+                                                                                <DataTemplate DataType="{x:Type vm:YearToggle}">
+                                                                                    <Border Margin="0,0,6,6" CornerRadius="8" Padding="12,6" Cursor="Hand" MouseLeftButtonDown="YearChip_Click">
+                                                                                        <Border.Style>
+                                                                                            <Style TargetType="Border">
+                                                                                                <Setter Property="Background" Value="White"/>
+                                                                                                <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                                                                                                <Setter Property="BorderThickness" Value="1"/>
+                                                                                                <Style.Triggers>
+                                                                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                                                        <Setter Property="Background" Value="#ECFDF5"/>
+                                                                                                        <Setter Property="BorderBrush" Value="#10B981"/>
+                                                                                                    </DataTrigger>
+                                                                                                </Style.Triggers>
+                                                                                            </Style>
+                                                                                        </Border.Style>
+                                                                                        <TextBlock Text="{Binding Label}" FontSize="12">
+                                                                                            <TextBlock.Style>
+                                                                                                <Style TargetType="TextBlock">
+                                                                                                    <Setter Property="Foreground" Value="#64748B"/>
+                                                                                                    <Style.Triggers>
+                                                                                                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                                                            <Setter Property="Foreground" Value="#047857"/>
+                                                                                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                                                                                        </DataTrigger>
+                                                                                                    </Style.Triggers>
+                                                                                                </Style>
+                                                                                            </TextBlock.Style>
+                                                                                        </TextBlock>
+                                                                                    </Border>
+                                                                                </DataTemplate>
+                                                                            </ItemsControl.ItemTemplate>
+                                                                        </ItemsControl>
+                                                                    </StackPanel>
+
+                                                                    <!-- Inventory Warning -->
+                                                                    <Border Background="#FEF2F2" BorderBrush="#FEE2E2" BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,8,0,0"
+                                                                            Visibility="{Binding HasPoolWarning, Converter={StaticResource BoolToVis}}">
+                                                                        <StackPanel Orientation="Horizontal">
+                                                                            <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" Foreground="#DC2626" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                                            <TextBlock Text="{Binding PoolWarningText}" Foreground="#991B1B" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                                        </StackPanel>
+                                                                    </Border>
+                                                                </StackPanel>
+
+                                                                <Button Grid.Column="1" Command="{Binding RemoveCommand}" VerticalAlignment="Top" Margin="16,0,0,0"
+                                                                        Style="{StaticResource PrimaryBtn}" Background="Transparent" Foreground="#94A3B8" Padding="6">
+                                                                    <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
+                                                                </Button>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+
+                                            <!-- Step 2 Summary -->
+                                            <Border Background="#F0FDF4" CornerRadius="12" Padding="20" Margin="0,4,0,0" BorderBrush="#DCFCE7" BorderThickness="1">
+                                                <Grid>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Border Background="#10B981" Width="40" Height="40" CornerRadius="20">
+                                                            <TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                        <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
+                                                            <TextBlock Text="Ready to Generate" FontWeight="Bold" Foreground="#065F46" FontSize="14"/>
+                                                            <TextBlock FontSize="12" Foreground="#047857">
+                                                                <Run Text="{Binding TotalQuestions, Mode=OneWay}" FontWeight="Bold"/> total questions from <Run Text="{Binding TotalPoolSize, Mode=OneWay}"/> available pool.
+                                                            </TextBlock>
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                    <TextBlock Text="Warning: One or more subjects exceed bank count!" Foreground="#DC2626" FontSize="11" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                               Visibility="{Binding HasAnyPoolWarning, Converter={StaticResource BoolToVis}}"/>
+                                                </Grid>
+                                            </Border>
+                                        </StackPanel>
+
+                                        <!-- Step 3: Advanced Settings & Review -->
+                                        <StackPanel Visibility="{Binding IsStep3, Converter={StaticResource BoolToVis}}">
+                                            <TextBlock Text="Advanced Logic & Review" FontSize="16" FontWeight="Bold" Margin="0,0,0,4"/>
+                                            <TextBlock Text="Finalize shuffling behavior and review the summary before creating." FontSize="13" Foreground="#64748B" Margin="0,0,0,20"/>
+
+                                            <Border Background="#F1F5F9" CornerRadius="12" Padding="20" Margin="0,0,0,20">
+                                                <StackPanel>
+                                                    <TextBlock Text="Question Logic" FontWeight="Bold" Margin="0,0,0,12"/>
+                                                    <CheckBox IsChecked="{Binding ShuffleQuestions}" Margin="0,0,0,12">
+                                                        <StackPanel>
+                                                            <TextBlock Text="Shuffle Questions" FontWeight="SemiBold"/>
+                                                            <TextBlock Text="Questions will appear in a different random order for each student." FontSize="11" Foreground="#64748B"/>
+                                                        </StackPanel>
+                                                    </CheckBox>
+                                                    <CheckBox IsChecked="{Binding ShuffleOptions}">
+                                                        <StackPanel>
+                                                            <TextBlock Text="Shuffle Options" FontWeight="SemiBold"/>
+                                                            <TextBlock Text="The A, B, C, D choices will be randomized for each question." FontSize="11" Foreground="#64748B"/>
+                                                        </StackPanel>
+                                                    </CheckBox>
+                                                </StackPanel>
+                                            </Border>
+
+                                            <Border BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="20">
+                                                <StackPanel>
+                                                    <TextBlock Text="Summary Review" FontWeight="Bold" Margin="0,0,0,12"/>
+                                                    <Grid Margin="0,0,0,8">
+                                                        <TextBlock Text="Template Name:" Foreground="#64748B"/>
+                                                        <TextBlock Text="{Binding Title}" FontWeight="Bold" HorizontalAlignment="Right"/>
+                                                    </Grid>
+                                                    <Grid Margin="0,0,0,8">
+                                                        <TextBlock Text="Subjects:" Foreground="#64748B"/>
+                                                        <TextBlock Text="{Binding TotalSubjects}" FontWeight="Bold" HorizontalAlignment="Right"/>
+                                                    </Grid>
+                                                    <Grid Margin="0,0,0,8">
+                                                        <TextBlock Text="Total Questions:" Foreground="#64748B"/>
+                                                        <TextBlock Text="{Binding TotalQuestions}" FontWeight="Bold" HorizontalAlignment="Right"/>
+                                                    </Grid>
+                                                    <Grid>
+                                                        <TextBlock Text="Duration:" Foreground="#64748B"/>
+                                                        <TextBlock Text="{Binding Duration, StringFormat='{}{0} minutes'}" FontWeight="Bold" HorizontalAlignment="Right"/>
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Form Footer (Floating/Sticky Style) -->
+                                <Border Grid.Row="2" Background="#F8FAFC" CornerRadius="0,0,14,14" Padding="24,16" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0">
+                                    <Grid>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Command="{Binding PrevStepCommand}" Visibility="{Binding CanGoBack, Converter={StaticResource BoolToVis}}"
+                                                    Content="Previous" Style="{StaticResource PrimaryBtn}" Background="White" Foreground="#475569" BorderBrush="#CBD5E1" BorderThickness="1" Padding="20,10" Margin="0,0,12,0"/>
+                                            <TextBlock Text="{Binding CreateStatus}" VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding StatusOk}" Value="True">
+                                                                <Setter Property="Foreground" Value="#059669"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <Button HorizontalAlignment="Right" Command="{Binding NextStepCommand}"
+                                                Style="{StaticResource PrimaryBtn}" Background="#047857" Padding="30,10">
+                                            <TextBlock Text="{Binding NextButtonText}" FontSize="13" FontWeight="Bold"/>
+                                        </Button>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <!-- Templates Table Header -->
+                        <Border Background="#F8FAFC" CornerRadius="8,8,0,0" Padding="16,0" Height="40">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2.5*"/>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="80"/>
+                                    <ColumnDefinition Width="90"/>
+                                    <ColumnDefinition Width="130"/>
+                                    <ColumnDefinition Width="100"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="TEMPLATE NAME" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#64748B" LetterSpacing="1"/>
+                                <TextBlock Grid.Column="1" Text="SUBJECTS" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#64748B" LetterSpacing="1"/>
+                                <TextBlock Grid.Column="2" Text="DUR." VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#64748B" LetterSpacing="1"/>
+                                <TextBlock Grid.Column="3" Text="QUESTIONS" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#64748B" LetterSpacing="1"/>
+                                <TextBlock Grid.Column="4" Text="CREATED" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#64748B" LetterSpacing="1"/>
+                                <TextBlock Grid.Column="5" Text="ACTIONS" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#64748B" LetterSpacing="1"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Templates Table Content -->
+                        <Border BorderBrush="#E5E7EB" BorderThickness="1,0,1,1" CornerRadius="0,0,8,8">
+                            <StackPanel>
                                 <!-- Empty state -->
-                                <Border Visibility="{Binding SubjectConfigs.Count, Converter={StaticResource ZeroToVis}}"
-                                        Background="{DynamicResource CardBrush}" CornerRadius="10" Padding="30">
+                                <Border Visibility="{Binding Filtered.Count, Converter={StaticResource ZeroToVis}}" Padding="60">
                                     <StackPanel HorizontalAlignment="Center">
-                                        <TextBlock Text="&#xE82D;" FontFamily="Segoe MDL2 Assets" FontSize="32"
-                                                   Foreground="#CBD5E1" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                                        <TextBlock Text="No subjects added yet" FontSize="14" FontWeight="SemiBold"
-                                                   Foreground="#94A3B8" HorizontalAlignment="Center"/>
-                                        <TextBlock Text="Click 'Add Subject' to configure subjects and years for this exam."
-                                                   FontSize="12" Foreground="#94A3B8" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                        <Border Width="64" Height="64" CornerRadius="32" Background="#F1F5F9" Margin="0,0,0,16">
+                                            <TextBlock Text="&#xE82D;" FontFamily="Segoe MDL2 Assets" FontSize="28" Foreground="#94A3B8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Text="No exam templates found" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Try adjusting your search or create a new template." FontSize="13" Foreground="#64748B" HorizontalAlignment="Center" Margin="0,4,0,0"/>
                                     </StackPanel>
                                 </Border>
 
-                                <!-- Subject rows -->
-                                <ItemsControl ItemsSource="{Binding SubjectConfigs}">
+                                <!-- Table Rows -->
+                                <ItemsControl ItemsSource="{Binding Filtered}">
                                     <ItemsControl.ItemTemplate>
-                                        <DataTemplate DataType="{x:Type vm:ExamSubjectConfigVM}">
-                                            <Border Background="{DynamicResource CardBrush}" CornerRadius="10"
-                                                    Padding="16" Margin="0,0,0,10" BorderBrush="#E5E7EB" BorderThickness="1">
+                                        <DataTemplate>
+                                            <Border BorderBrush="#F1F5F9" BorderThickness="0,0,0,1" Height="60">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="2.5*"/>
+                                                        <ColumnDefinition Width="2*"/>
+                                                        <ColumnDefinition Width="80"/>
+                                                        <ColumnDefinition Width="90"/>
+                                                        <ColumnDefinition Width="130"/>
+                                                        <ColumnDefinition Width="100"/>
                                                     </Grid.ColumnDefinitions>
-
-                                                    <StackPanel>
-                                                        <!-- Subject + Question Count row -->
-                                                        <Grid Margin="0,0,0,12">
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="2*"/>
-                                                                <ColumnDefinition Width="1*"/>
-                                                            </Grid.ColumnDefinitions>
-                                                            <StackPanel Margin="0,0,12,0">
-                                                                <TextBlock Text="Subject" FontSize="11" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,4"/>
-                                                                <ComboBox ItemsSource="{Binding AvailableSubjects}"
-                                                                          SelectedItem="{Binding SelectedSubject}"
-                                                                          FontSize="13"/>
-                                                            </StackPanel>
-                                                            <StackPanel Grid.Column="1">
-                                                                <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,4">
-                                                                    <Run Text="Questions to pick"/>
-                                                                </TextBlock>
-                                                                <TextBox Text="{Binding QuestionCount, UpdateSourceTrigger=PropertyChanged}" FontSize="13" Padding="8,6"/>
-                                                            </StackPanel>
-                                                        </Grid>
-
-                                                        <!-- Years section -->
-                                                        <StackPanel Visibility="{Binding AvailableYears.Count, Converter={StaticResource IntToVis}}">
-                                                            <Grid Margin="0,0,0,6">
-                                                                <StackPanel Orientation="Horizontal">
-                                                                    <TextBlock Text="Select Years" FontSize="11" FontWeight="SemiBold" Foreground="#64748B" VerticalAlignment="Center"/>
-                                                                    <Border Background="#EFF6FF" CornerRadius="8" Padding="6,2" Margin="8,0,0,0">
-                                                                        <TextBlock FontSize="10" FontWeight="Bold" Foreground="#2563EB">
-                                                                            <Run Text="{Binding PoolSize, Mode=OneWay}"/>
-                                                                            <Run Text=" years selected"/>
-                                                                        </TextBlock>
-                                                                    </Border>
-                                                                </StackPanel>
-                                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                                                    <Button Content="All" Command="{Binding SelectAllYearsCommand}"
-                                                                            Style="{StaticResource PrimaryBtn}"
-                                                                            Background="#EFF6FF" Foreground="#2563EB"
-                                                                            Padding="8,3" Margin="0,0,4,0" FontSize="10"/>
-                                                                    <Button Content="None" Command="{Binding DeselectAllYearsCommand}"
-                                                                            Style="{StaticResource PrimaryBtn}"
-                                                                            Background="#F1F5F9" Foreground="#64748B"
-                                                                            Padding="8,3" FontSize="10"/>
-                                                                </StackPanel>
-                                                            </Grid>
-                                                            <!-- Year chips -->
-                                                            <ItemsControl ItemsSource="{Binding AvailableYears}">
-                                                                <ItemsControl.ItemsPanel>
-                                                                    <ItemsPanelTemplate>
-                                                                        <WrapPanel/>
-                                                                    </ItemsPanelTemplate>
-                                                                </ItemsControl.ItemsPanel>
-                                                                <ItemsControl.ItemTemplate>
-                                                                    <DataTemplate DataType="{x:Type vm:YearToggle}">
-                                                                        <Border Margin="0,0,6,6" CornerRadius="6" Padding="10,5" Cursor="Hand"
-                                                                                MouseLeftButtonDown="YearChip_Click">
-                                                                            <Border.Style>
-                                                                                <Style TargetType="Border">
-                                                                                    <Setter Property="Background" Value="#F1F5F9"/>
-                                                                                    <Setter Property="BorderBrush" Value="#E5E7EB"/>
-                                                                                    <Setter Property="BorderThickness" Value="1"/>
-                                                                                    <Style.Triggers>
-                                                                                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                                                            <Setter Property="Background" Value="#ECFDF5"/>
-                                                                                            <Setter Property="BorderBrush" Value="#10B981"/>
-                                                                                        </DataTrigger>
-                                                                                    </Style.Triggers>
-                                                                                </Style>
-                                                                            </Border.Style>
-                                                                            <TextBlock Text="{Binding Year}" FontSize="12" FontWeight="SemiBold">
-                                                                                <TextBlock.Style>
-                                                                                    <Style TargetType="TextBlock">
-                                                                                        <Setter Property="Foreground" Value="#64748B"/>
-                                                                                        <Style.Triggers>
-                                                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                                                                <Setter Property="Foreground" Value="#047857"/>
-                                                                                            </DataTrigger>
-                                                                                        </Style.Triggers>
-                                                                                    </Style>
-                                                                                </TextBlock.Style>
-                                                                            </TextBlock>
-                                                                        </Border>
-                                                                    </DataTemplate>
-                                                                </ItemsControl.ItemTemplate>
-                                                            </ItemsControl>
-                                                        </StackPanel>
+                                                    <StackPanel VerticalAlignment="Center" Margin="16,0,0,0">
+                                                        <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                        <TextBlock Text="{Binding SubjectDisplay}" FontSize="11" Foreground="#94A3B8" Visibility="Collapsed"/>
                                                     </StackPanel>
-
-                                                    <!-- Remove button -->
-                                                    <Button Grid.Column="1" Command="{Binding RemoveCommand}"
-                                                            Style="{StaticResource PrimaryBtn}" Background="#FEF2F2"
-                                                            Foreground="#DC2626" Padding="8" VerticalAlignment="Top" Margin="10,0,0,0"
-                                                            ToolTip="Remove subject">
-                                                        <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
-                                                    </Button>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Subject}" VerticalAlignment="Center" FontSize="12" Foreground="#64748B" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Grid.Column="2" Text="{Binding DurationMinutes, StringFormat='{}{0}m'}" VerticalAlignment="Center" FontSize="13" Foreground="#64748B"/>
+                                                    <Border Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Left" Background="#EFF6FF" CornerRadius="6" Padding="8,4">
+                                                        <TextBlock Text="{Binding QuestionCount}" FontSize="12" FontWeight="Bold" Foreground="#2563EB"/>
+                                                    </Border>
+                                                    <TextBlock Grid.Column="4" Text="{Binding CreatedAt, StringFormat='dd MMM yyyy'}" VerticalAlignment="Center" FontSize="12" Foreground="#94A3B8"/>
+                                                    <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <Button Style="{StaticResource PrimaryBtn}" Background="#F0F9FF" Foreground="#0284C7" Padding="8" Margin="0,0,6,0" ToolTip="Edit"
+                                                                Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                                            <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets"/>
+                                                        </Button>
+                                                        <Button Style="{StaticResource PrimaryBtn}" Background="#FEF2F2" Foreground="#DC2626" Padding="8" ToolTip="Delete"
+                                                                Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}">
+                                                            <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets"/>
+                                                        </Button>
+                                                    </StackPanel>
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
@@ -233,138 +421,22 @@
                                 </ItemsControl>
                             </StackPanel>
                         </Border>
+                    </StackPanel>
+                </ScrollViewer>
 
-                        <!-- Summary bar -->
-                        <Border Background="#F0FDF4" CornerRadius="8" Padding="16,10" Margin="0,0,0,16"
-                                Visibility="{Binding SubjectConfigs.Count, Converter={StaticResource IntToVis}}">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#059669" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                <TextBlock VerticalAlignment="Center" FontSize="13" Foreground="#047857">
-                                    <Run Text="{Binding TotalSubjects, Mode=OneWay}" FontWeight="Bold"/>
-                                    <Run Text=" subject(s)  ·  "/>
-                                    <Run Text="{Binding TotalQuestions, Mode=OneWay}" FontWeight="Bold"/>
-                                    <Run Text=" total questions  ·  "/>
-                                    <Run Text="{Binding Duration, Mode=OneWay}" FontWeight="Bold"/>
-                                    <Run Text=" min duration"/>
-                                </TextBlock>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Actions -->
-                        <StackPanel Orientation="Horizontal">
-                            <Button Content="{Binding SubmitButtonText}" Command="{Binding CreateTemplateCommand}"
-                                    Style="{StaticResource PrimaryBtn}" Background="#047857" Padding="20,10" Margin="0,0,10,0"
-                                    FontSize="13" FontWeight="SemiBold"/>
-                            <Button Content="Cancel" Command="{Binding ToggleCreateCommand}"
-                                    Style="{StaticResource PrimaryBtn}" Background="#F1F5F9" Foreground="#111827" Padding="20,10"
-                                    FontSize="13"/>
-                            <TextBlock Text="{Binding CreateStatus}" VerticalAlignment="Center" Margin="14,0,0,0" FontSize="12" FontWeight="SemiBold">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding StatusOk}" Value="True">
-                                                <Setter Property="Foreground" Value="#059669"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
+                <!-- Loading Overlay -->
+                <Border Background="#40FFFFFF" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" IsHitTestVisible="True">
+                    <Border Background="White" CornerRadius="12" Padding="30" HorizontalAlignment="Center" VerticalAlignment="Center" BorderBrush="#E2E8F0" BorderThickness="1">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.1"/>
+                        </Border.Effect>
+                        <StackPanel>
+                            <ProgressBar IsIndeterminate="True" Width="180" Height="4" Foreground="{DynamicResource AccentBrush}" Background="#F1F5F9" BorderThickness="0"/>
+                            <TextBlock Text="{Binding BusyMessage}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="13" FontWeight="SemiBold" Margin="0,16,0,0" HorizontalAlignment="Center"/>
                         </StackPanel>
-                    </StackPanel>
+                    </Border>
                 </Border>
-
-                <!-- Table header -->
-                <Border Background="#F8FAFC" CornerRadius="8,8,0,0" Padding="16,0" Height="40">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="2.5*"/>
-                            <ColumnDefinition Width="2*"/>
-                            <ColumnDefinition Width="80"/>
-                            <ColumnDefinition Width="90"/>
-                            <ColumnDefinition Width="130"/>
-                            <ColumnDefinition Width="100"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="Template Name" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#64748B"/>
-                        <TextBlock Grid.Column="1" Text="Subjects" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#64748B"/>
-                        <TextBlock Grid.Column="2" Text="Duration" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#64748B"/>
-                        <TextBlock Grid.Column="3" Text="Questions" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#64748B"/>
-                        <TextBlock Grid.Column="4" Text="Created" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#64748B"/>
-                        <TextBlock Grid.Column="5" Text="Actions" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#64748B"/>
-                    </Grid>
-                </Border>
-
-                <!-- Empty state -->
-                <Border BorderBrush="#E5E7EB" BorderThickness="1,0,1,1" CornerRadius="0,0,8,8"
-                        Visibility="{Binding Filtered.Count, Converter={StaticResource ZeroToVis}}">
-                    <StackPanel HorizontalAlignment="Center" Margin="0,40">
-                        <Border Width="56" Height="56" CornerRadius="28" Background="#ECFDF5" HorizontalAlignment="Center" Margin="0,0,0,12">
-                            <TextBlock Text="&#xE82D;" FontFamily="Segoe MDL2 Assets" FontSize="22"
-                                       Foreground="#059669" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <TextBlock Text="No exam templates yet" FontSize="15" FontWeight="Bold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Click 'New Template' to create your first exam from the question bank."
-                                   FontSize="12" Foreground="#64748B" HorizontalAlignment="Center" Margin="0,6,0,0"/>
-                    </StackPanel>
-                </Border>
-
-                <!-- Exam rows -->
-                <Border BorderBrush="#E5E7EB" BorderThickness="1,0,1,1" CornerRadius="0,0,8,8"
-                        Visibility="{Binding Filtered.Count, Converter={StaticResource IntToVis}}">
-                    <ItemsControl ItemsSource="{Binding Filtered}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Height="54">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="2.5*"/>
-                                        <ColumnDefinition Width="2*"/>
-                                        <ColumnDefinition Width="80"/>
-                                        <ColumnDefinition Width="90"/>
-                                        <ColumnDefinition Width="130"/>
-                                        <ColumnDefinition Width="100"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Border Grid.ColumnSpan="6" BorderBrush="#F1F5F9" BorderThickness="0,0,0,1"/>
-                                    <TextBlock Text="{Binding Title}" Margin="16,0,0,0" VerticalAlignment="Center"
-                                               FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Subject}" VerticalAlignment="Center"
-                                               FontSize="12" Foreground="#64748B" TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Grid.Column="2" Text="{Binding DurationMinutes, StringFormat='{}{0}m'}"
-                                               VerticalAlignment="Center" FontSize="13" Foreground="#64748B"/>
-                                    <Border Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Left"
-                                            Background="#EFF6FF" CornerRadius="6" Padding="8,3">
-                                        <TextBlock Text="{Binding QuestionCount}" FontSize="12" FontWeight="Bold" Foreground="#2563EB"/>
-                                    </Border>
-                                    <TextBlock Grid.Column="4" Text="{Binding CreatedAt, StringFormat='dd/MM/yyyy'}"
-                                               VerticalAlignment="Center" FontSize="12" Foreground="#94A3B8"/>
-                                    <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <Button Style="{StaticResource PrimaryBtn}" Background="#F0F9FF" Foreground="#0284C7"
-                                                Padding="8,5" Margin="0,0,5,0" ToolTip="Edit Template"
-                                                Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                CommandParameter="{Binding}">
-                                            <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets"/>
-                                        </Button>
-                                        <Button Style="{StaticResource PrimaryBtn}" Background="#FEF2F2" Foreground="#DC2626"
-                                                Padding="8,5" ToolTip="Delete"
-                                                Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                CommandParameter="{Binding}">
-                                            <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets"/>
-                                        </Button>
-                                    </StackPanel>
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </Border>
-            </StackPanel>
-        </ScrollViewer>
-
-        <!-- Loading Overlay -->
-        <Border Background="#40FFFFFF" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
-            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                <ProgressBar IsIndeterminate="True" Width="120" Height="3" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource AccentBrush}"/>
-                <TextBlock Text="{Binding BusyMessage}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" Margin="0,10,0,0" HorizontalAlignment="Center"/>
-            </StackPanel>
-        </Border>
+            </Grid>
+        </Grid>
     </Grid>
 </UserControl>
