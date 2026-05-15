@@ -14,7 +14,7 @@ public class ExamsController(AppDbContext db) : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll() =>
         Ok(await db.Exams
-            .Select(e => new ExamDto(e.Id, e.Title, e.Subject, e.DurationMinutes, e.ShuffleQuestions, e.ShuffleOptions, e.CreatedAt, e.Questions.Count))
+            .Select(e => new ExamDto(e.Id, e.Title, e.Subject, e.DurationMinutes, e.ShuffleQuestions, e.ShuffleOptions, e.AccessPassword, e.CreatedAt, e.Questions.Count))
             .ToListAsync());
 
     [HttpGet("{id}")]
@@ -32,7 +32,8 @@ public class ExamsController(AppDbContext db) : ControllerBase
             Title = dto.Title, Subject = dto.Subject,
             DurationMinutes = dto.DurationMinutes,
             ShuffleQuestions = dto.ShuffleQuestions,
-            ShuffleOptions = dto.ShuffleOptions
+            ShuffleOptions = dto.ShuffleOptions,
+            AccessPassword = dto.AccessPassword ?? string.Empty
         };
         db.Exams.Add(exam);
         await db.SaveChangesAsync();
@@ -49,6 +50,7 @@ public class ExamsController(AppDbContext db) : ControllerBase
         exam.DurationMinutes = dto.DurationMinutes;
         exam.ShuffleQuestions = dto.ShuffleQuestions;
         exam.ShuffleOptions = dto.ShuffleOptions;
+        exam.AccessPassword = dto.AccessPassword ?? string.Empty;
         await db.SaveChangesAsync();
         return NoContent();
     }

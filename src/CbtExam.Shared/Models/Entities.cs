@@ -8,6 +8,7 @@ public class Exam
     public int DurationMinutes { get; set; }
     public bool ShuffleQuestions { get; set; } = true;
     public bool ShuffleOptions { get; set; } = true;
+    public string AccessPassword { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public ICollection<Question> Questions { get; set; } = new List<Question>();
     public ICollection<ExamSession> Sessions { get; set; } = new List<ExamSession>();

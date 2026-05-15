@@ -115,6 +115,7 @@ public class QuestionBankController(AppDbContext db) : ControllerBase
             DurationMinutes = dto.DurationMinutes,
             ShuffleQuestions = dto.ShuffleQuestions,
             ShuffleOptions = dto.ShuffleOptions,
+            AccessPassword = dto.AccessPassword ?? string.Empty,
             CreatedAt = DateTime.UtcNow
         };
         db.Exams.Add(exam);

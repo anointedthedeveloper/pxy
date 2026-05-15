@@ -1,8 +1,8 @@
 namespace CbtExam.Shared.DTOs;
 
 // --- Exam DTOs ---
-public record ExamCreateDto(string Title, string Subject, int DurationMinutes, bool ShuffleQuestions, bool ShuffleOptions);
-public record ExamDto(int Id, string Title, string Subject, int DurationMinutes, bool ShuffleQuestions, bool ShuffleOptions, DateTime CreatedAt, int QuestionCount)
+public record ExamCreateDto(string Title, string Subject, int DurationMinutes, bool ShuffleQuestions, bool ShuffleOptions, string AccessPassword = "");
+public record ExamDto(int Id, string Title, string Subject, int DurationMinutes, bool ShuffleQuestions, bool ShuffleOptions, string AccessPassword, DateTime CreatedAt, int QuestionCount)
 {
     // Year is parsed from Subject if stored as "Subject|Year"
     public string Year => Subject.Contains('|') ? Subject.Split('|')[1] : string.Empty;
@@ -72,7 +72,7 @@ public record QuestionBankDto(int Id, string Subject, int Year, int QuestionNumb
 public record QuestionBankSubjectYearDto(string Subject, List<int> Years, int QuestionCount);
 
 // --- Exam generation from question bank ---
-public record ExamGenerateDto(string Title, int DurationMinutes, bool ShuffleQuestions, bool ShuffleOptions, List<QuestionBankSubjectYearDto> Subjects);
+public record ExamGenerateDto(string Title, int DurationMinutes, bool ShuffleQuestions, bool ShuffleOptions, string AccessPassword, List<QuestionBankSubjectYearDto> Subjects);
 
 // --- Notifications ---
 public record NotificationDto(string Title, string Message, DateTime CreatedAt, string Level);
