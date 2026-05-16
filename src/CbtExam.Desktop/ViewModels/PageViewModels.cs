@@ -1068,7 +1068,7 @@ public class QuestionsViewModel(ApiClient api) : BaseViewModel, IRefreshable
     public RelayCommand SaveCommand => new(async () => await SaveAsync());
     public RelayCommand DeleteCommand => new(async () => await DeleteAsync());
     public RelayCommand ClearCommand => new(Clear);
-    public RelayCommand<QuestionBankRow> PickCommand => new(q => Pick(_all.FirstOrDefault(x => x.Id == q.Id)));
+    public RelayCommand<QuestionBankRow> PickCommand => new(q => { if (q != null) Pick(_all.FirstOrDefault(x => x.Id == q.Id)); });
     public RelayCommand ImportJsonCommand => new(async () => await ImportJsonAsync());
     public RelayCommand CopyTemplateCommand => new(() => { Clipboard.SetText(BulkJsonTemplate); Status = "Template copied to clipboard!"; StatusOk = true; });
     public RelayCommand AddSubjectCommand => new(() => { IsAddingSubject = true; NewSubjectName = string.Empty; });
@@ -1424,6 +1424,7 @@ public class SearchResultsViewModel : BaseViewModel
     
     public RelayCommand<SearchSuggestion> NavigateToSuggestionCommand => new(suggestion => { 
         // Handle suggestion navigation based on title
+        if (suggestion?.Title == null) return;
         if (System.Windows.Application.Current.MainWindow?.DataContext is MainViewModel mainViewModel)
         {
             switch (suggestion.Title.ToLower())
@@ -1464,6 +1465,7 @@ public class SearchResultsViewModel : BaseViewModel
     
     public RelayCommand<SearchResult> NavigateToResultCommand => new(result => { 
         // Handle result navigation based on title
+        if (result?.Title == null) return;
         if (System.Windows.Application.Current.MainWindow?.DataContext is MainViewModel mainViewModel)
         {
             switch (result.Title.ToLower())
@@ -1814,7 +1816,7 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
         finally
         {
             IsBusy = false;
-            Task.Delay(5000).ContinueWith(_ => App.Current.Dispatcher.Invoke(() => CopyStatus = string.Empty));
+            _ = Task.Delay(5000).ContinueWith(_ => App.Current?.Dispatcher.Invoke(() => CopyStatus = string.Empty));
         }
     }
 

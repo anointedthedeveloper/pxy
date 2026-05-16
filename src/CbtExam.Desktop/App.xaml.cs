@@ -50,7 +50,7 @@ public partial class App : Application
         ShutdownMode = ShutdownMode.OnLastWindowClose;
 
         // Force icon to be set at the OS level as soon as window handle exists
-        EventManager.RegisterClassHandler(typeof(Window), Window.SourceInitializedEvent, new RoutedEventHandler((s, e) =>
+        EventManager.RegisterClassHandler(typeof(Window), FrameworkElement.LoadedEvent, new RoutedEventHandler((s, e) =>
         {
             if (s is Window window)
             {
