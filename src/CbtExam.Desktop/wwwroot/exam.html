@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Examination | CBT Portal</title>
+<link rel="stylesheet" href="/css/style.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="exam-layout">
+
+<header class="exam-header-modern">
+  <div class="header-content">
+    <div class="brand-section">
+      <img class="dynamic-logo-mini" src="/img/jamb.png" alt="Logo"/>
+      <div class="divider"></div>
+      <h1 id="exam-title">Post-UTME Screening 2026</h1>
+    </div>
+    
+    <div class="stats-section">
+      <div class="stat-box timer">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span id="timer">00:00:00</span>
+      </div>
+      <div class="stat-box progress">
+        <div class="progress-ring-container">
+          <svg class="progress-ring" width="36" height="36">
+            <circle class="progress-ring__circle" stroke="var(--primary)" stroke-width="3" fill="transparent" r="15" cx="18" cy="18"/>
+          </svg>
+          <span id="progress-pct">0%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="user-section">
+      <div class="user-avatar">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div class="user-info">
+        <span class="u-name" id="user-name">Candidate Name</span>
+        <span class="u-id" id="user-id">ID: 00000000</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="exam-container">
+  <aside class="sidebar-nav">
+    <div class="nav-card">
+      <div class="nav-header">
+        <h3>Question Navigator</h3>
+        <p><span id="answered-count">0</span> of <span id="total-count">0</span> Answered</p>
+      </div>
+      <div class="nav-grid" id="question-nav">
+        <!-- Buttons injected here -->
+      </div>
+      <div class="nav-legend">
+        <div class="leg-item"><span class="dot current"></span> Current</div>
+        <div class="leg-item"><span class="dot answered"></span> Answered</div>
+        <div class="leg-item"><span class="dot flagged"></span> Flagged</div>
+      </div>
+    </div>
+  </aside>
+
+  <section class="question-workspace">
+    <div class="question-card-modern" id="question-card">
+      <div class="q-header">
+        <span class="q-num">Question <span id="current-q-num">1</span></span>
+        <button class="btn-icon-flag" onclick="toggleFlagCurrent()" title="Flag for Review">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
+        </button>
+      </div>
+      
+      <div class="q-content">
+        <p class="q-text" id="question-text">Loading question content...</p>
+      </div>
+
+      <div class="options-grid" id="options-list">
+        <!-- Options injected here -->
+      </div>
+    </div>
+
+    <footer class="exam-controls">
+      <button class="btn btn-outline" id="btn-prev" onclick="prevQuestion()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        Previous
+      </button>
+      
+      <div class="central-controls">
+        <button class="btn btn-outline" onclick="toggleCalculator()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+        </button>
+        <button class="btn btn-outline" onclick="clearCurrentAnswer()">Clear</button>
+      </div>
+
+      <button class="btn btn-primary" id="btn-next" onclick="nextQuestion()">
+        Next
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+
+      <button class="btn btn-danger" id="btn-finish" onclick="confirmSubmit()">Submit Exam</button>
+    </footer>
+  </section>
+</main>
+
+<div id="calculator-modal" class="modal-overlay hidden">
+  <!-- Calculator content -->
+</div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

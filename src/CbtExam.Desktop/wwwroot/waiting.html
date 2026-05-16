@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Waiting Room | CBT Portal</title>
+<link rel="stylesheet" href="/css/style.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="portal-body">
+
+<div class="bg-waves">
+  <div class="wave"></div>
+  <div class="wave"></div>
+  <div class="wave"></div>
+</div>
+
+<main id="page-waiting" class="page active">
+  <div class="join-card glass">
+    <div class="logo">
+      <img class="dynamic-logo" src="/img/jamb.png" alt="Logo" onerror="this.src='/img/jamb.png'"/>
+    </div>
+    
+    <div class="status-visual">
+      <div class="pulse-container">
+        <div class="pulse-ring"></div>
+        <div class="pulse-ring"></div>
+        <div class="pulse-ring"></div>
+        <div class="status-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="mt-6">Waiting Room</h2>
+    <p class="subtitle">The exam coordinator will start the session shortly. Please remain on this page.</p>
+    
+    <div class="info-grid">
+      <div class="info-item">
+        <span class="label">Candidate</span>
+        <span class="value" id="wait-candidate-name">Loading...</span>
+      </div>
+      <div class="info-item">
+        <span class="label">Subject</span>
+        <span class="value" id="wait-exam-name">Post-UTME 2026</span>
+      </div>
+    </div>
+
+    <div class="loading-bar-container">
+      <div class="loading-bar-progress"></div>
+    </div>
+    
+    <p id="waiting-status" class="status-text">Synchronizing questions...</p>
+    
+    <div class="mt-8">
+      <button class="btn btn-primary btn-full disabled" id="btn-start-exam" onclick="location.href='exam.html'">
+        Waiting for Coordinator...
+      </button>
+    </div>
+  </div>
+</main>
+
+<script src="/js/app.js"></script>
+</body>
+</html>
