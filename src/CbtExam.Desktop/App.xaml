@@ -22,7 +22,7 @@
 
             <!-- ── Semantic brushes (all replaced at runtime by ApplyTheme) ── -->
             <!-- Page background -->
-            <SolidColorBrush x:Key="BgBrush"            Color="#F8FAFC"/>
+            <SolidColorBrush x:Key="BgBrush"            Color="#F1F5F9"/>
             <!-- Card / panel surface -->
             <SolidColorBrush x:Key="CardBrush"          Color="#FFFFFF"/>
             <!-- Elevated surface (sidebar, header) -->
@@ -30,59 +30,79 @@
             <!-- Input background (TextBox, ComboBox) -->
             <SolidColorBrush x:Key="InputBgBrush"       Color="#FFFFFF"/>
             <!-- Input border -->
-            <SolidColorBrush x:Key="InputBorderBrush"   Color="#A7F3D0"/>
+            <SolidColorBrush x:Key="InputBorderBrush"   Color="#E2E8F0"/>
             <!-- Primary text -->
-            <SolidColorBrush x:Key="TextPrimaryBrush"   Color="#0F2A1E"/>
+            <SolidColorBrush x:Key="TextPrimaryBrush"   Color="#0F172A"/>
             <!-- Secondary / muted text -->
             <SolidColorBrush x:Key="TextSecondaryBrush" Color="#64748B"/>
             <!-- Divider / border -->
-            <SolidColorBrush x:Key="BorderBrush"        Color="#E5E7EB"/>
+            <SolidColorBrush x:Key="BorderBrush"        Color="#E2E8F0"/>
             <!-- Sidebar nav hover bg -->
-            <SolidColorBrush x:Key="NavHoverBrush"      Color="#DCFCE7"/>
+            <SolidColorBrush x:Key="NavHoverBrush"      Color="#F8FAFC"/>
             <!-- Sidebar nav hover text -->
-            <SolidColorBrush x:Key="NavHoverFgBrush"    Color="#15803D"/>
+            <SolidColorBrush x:Key="NavHoverFgBrush"    Color="#16A34A"/>
             <!-- Sidebar nav active bg -->
-            <SolidColorBrush x:Key="NavActiveBrush"     Color="#ECFDF5"/>
+            <SolidColorBrush x:Key="NavActiveBrush"     Color="#F0FDF4"/>
             <!-- Sidebar nav active text -->
-            <SolidColorBrush x:Key="NavActiveFgBrush"   Color="#047857"/>
+            <SolidColorBrush x:Key="NavActiveFgBrush"   Color="#15803D"/>
             <!-- DataGrid row hover -->
-            <SolidColorBrush x:Key="RowHoverBrush"      Color="#F9FAFB"/>
+            <SolidColorBrush x:Key="RowHoverBrush"      Color="#F8FAFC"/>
             <!-- DataGrid row selected -->
-            <SolidColorBrush x:Key="RowSelectedBrush"   Color="#ECFDF5"/>
+            <SolidColorBrush x:Key="RowSelectedBrush"   Color="#F0FDF4"/>
             <!-- DataGrid header bg -->
             <SolidColorBrush x:Key="HeaderBgBrush"      Color="#F8FAFC"/>
             <!-- Accent (primary action color — changes with accent pick) -->
-            <SolidColorBrush x:Key="AccentBrush"        Color="#0D9488"/>
-            <SolidColorBrush x:Key="AccentDarkBrush"    Color="#0F766E"/>
+            <SolidColorBrush x:Key="AccentBrush"        Color="#16A34A"/>
+            <SolidColorBrush x:Key="AccentDarkBrush"    Color="#15803D"/>
             <!-- Fixed semantic brushes (never change with theme) -->
-            <SolidColorBrush x:Key="GreenBrush"         Color="#16A34A"/>
-            <SolidColorBrush x:Key="GreenLightBrush"    Color="#22C55E"/>
-            <SolidColorBrush x:Key="YellowBrush"        Color="#EAB308"/>
+            <SolidColorBrush x:Key="GreenBrush"         Color="#10B981"/>
+            <SolidColorBrush x:Key="GreenLightBrush"    Color="#D1FAE5"/>
+            <SolidColorBrush x:Key="YellowBrush"        Color="#F59E0B"/>
             <SolidColorBrush x:Key="DangerBrush"        Color="#EF4444"/>
-            <SolidColorBrush x:Key="SuccessBrush"       Color="#22C55E"/>
+            <SolidColorBrush x:Key="SuccessBrush"       Color="#10B981"/>
+
 
             <!-- ── Button — Primary ─────────────────────────────────── -->
             <Style x:Key="PrimaryBtn" TargetType="Button">
                 <Setter Property="Background"           Value="{DynamicResource AccentBrush}"/>
                 <Setter Property="Foreground"           Value="White"/>
-                <Setter Property="Padding"              Value="16,8"/>
+                <Setter Property="Padding"              Value="20,10"/>
                 <Setter Property="BorderThickness"      Value="0"/>
                 <Setter Property="Cursor"               Value="Hand"/>
-                <Setter Property="FontSize"             Value="13"/>
+                <Setter Property="FontSize"             Value="14"/>
                 <Setter Property="FontWeight"           Value="SemiBold"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
-                            <Border x:Name="bd" Background="{TemplateBinding Background}"
-                                    CornerRadius="7" Padding="{TemplateBinding Padding}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
+                            <Grid>
+                                <Border x:Name="shadow" Background="Black" CornerRadius="8" Opacity="0.1" Margin="0,2,0,-2"/>
+                                <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                        CornerRadius="8" Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <ContentPresenter.Resources>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
+                                            </Style>
+                                        </ContentPresenter.Resources>
+                                    </ContentPresenter>
+                                </Border>
+                            </Grid>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="bd" Property="Opacity" Value="0.85"/>
+                                    <Setter TargetName="bd" Property="Opacity" Value="0.9"/>
+                                    <Setter TargetName="shadow" Property="Margin" Value="0,3,0,-3"/>
+                                    <Setter TargetName="shadow" Property="Opacity" Value="0.15"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="bd" Property="RenderTransform">
+                                        <Setter.Value>
+                                            <TranslateTransform Y="1"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter TargetName="shadow" Property="Visibility" Value="Collapsed"/>
                                 </Trigger>
                                 <Trigger Property="IsEnabled" Value="False">
-                                    <Setter Property="Opacity" Value="0.45"/>
+                                    <Setter Property="Opacity" Value="0.5"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -220,13 +240,13 @@
             <!-- ── Card ───────────────────────────────────────────── -->
             <Style x:Key="Card" TargetType="Border">
                 <Setter Property="Background"      Value="{DynamicResource CardBrush}"/>
-                <Setter Property="CornerRadius"    Value="14"/>
-                <Setter Property="Padding"         Value="18"/>
+                <Setter Property="CornerRadius"    Value="16"/>
+                <Setter Property="Padding"         Value="24"/>
                 <Setter Property="BorderBrush"     Value="{DynamicResource BorderBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="Effect">
                     <Setter.Value>
-                        <DropShadowEffect BlurRadius="18" ShadowDepth="2" Opacity="0.07" Color="#000000"/>
+                        <DropShadowEffect BlurRadius="25" ShadowDepth="2" Opacity="0.05" Color="#000000"/>
                     </Setter.Value>
                 </Setter>
             </Style>
