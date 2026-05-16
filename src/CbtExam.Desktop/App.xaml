@@ -485,6 +485,83 @@
                 <Setter Property="HorizontalScrollBarVisibility" Value="Disabled"/>
             </Style>
 
+            <Style x:Key="AutoHidingScrollViewer" TargetType="ScrollViewer">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ScrollViewer">
+                            <Grid x:Name="Grid" Background="{TemplateBinding Background}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <ScrollContentPresenter x:Name="PART_ContentHost" 
+                                                      CanContentScroll="{TemplateBinding CanContentScroll}" 
+                                                      CanHorizontallyScroll="False" 
+                                                      CanVerticallyScroll="False" 
+                                                      Content="{TemplateBinding Content}" 
+                                                      ContentTemplate="{TemplateBinding ContentTemplate}" 
+                                                      Grid.Column="0" Grid.Row="0" 
+                                                      Margin="{TemplateBinding Padding}"/>
+                                <ScrollBar x:Name="PART_VerticalScrollBar" 
+                                         AutomationProperties.AutomationId="VerticalScrollBar" 
+                                         Cursor="Arrow" Grid.Column="1" 
+                                         Maximum="{TemplateBinding ScrollableHeight}" 
+                                         Minimum="0" Grid.Row="0" 
+                                         Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" 
+                                         Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" 
+                                         ViewportSize="{TemplateBinding ViewportHeight}" 
+                                         Opacity="0" Width="6">
+                                    <ScrollBar.Style>
+                                        <Style TargetType="ScrollBar">
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Opacity" Value="1"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ScrollBar.Style>
+                                </ScrollBar>
+                                <ScrollBar x:Name="PART_HorizontalScrollBar" 
+                                         AutomationProperties.AutomationId="HorizontalScrollBar" 
+                                         Cursor="Arrow" Grid.Column="0" 
+                                         Maximum="{TemplateBinding ScrollableWidth}" 
+                                         Minimum="0" Orientation="Horizontal" 
+                                         Grid.Row="1" 
+                                         Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}" 
+                                         Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}" 
+                                         ViewportSize="{TemplateBinding ViewportWidth}" 
+                                         Opacity="0" Height="6"/>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Trigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="PART_VerticalScrollBar" Storyboard.TargetProperty="Opacity" To="0.8" Duration="0:0:0.3"/>
+                                                <DoubleAnimation Storyboard.TargetName="PART_HorizontalScrollBar" Storyboard.TargetProperty="Opacity" To="0.8" Duration="0:0:0.3"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.EnterActions>
+                                    <Trigger.ExitActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="PART_VerticalScrollBar" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.3"/>
+                                                <DoubleAnimation Storyboard.TargetName="PART_HorizontalScrollBar" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.3"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </Trigger.ExitActions>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
         </ResourceDictionary>
     </Application.Resources>
 </Application>
