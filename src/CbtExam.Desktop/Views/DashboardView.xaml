@@ -42,6 +42,14 @@
                                            Foreground="{DynamicResource AccentBrush}"/>
                             </StackPanel>
                         </Border>
+                        <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="12" Padding="12,6">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE950;" FontFamily="Segoe MDL2 Assets" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"
+                                           Foreground="{Binding LatencyColor}"/>
+                                <TextBlock Text="{Binding Latency}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </Grid>
             </Border>

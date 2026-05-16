@@ -187,6 +187,10 @@
                                    Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                         <TextBox Text="{Binding StudentId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12"/>
 
+                        <TextBlock Text="Password (auto if blank)" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding NewPassword, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12"/>
+
                         <CheckBox Content="Active" IsChecked="{Binding IsActive}" Margin="0,0,0,14"/>
 
                         <!-- Password — only shown when editing -->
@@ -274,13 +278,25 @@
                         <TextBox Text="{Binding BulkCsv, UpdateSourceTrigger=PropertyChanged}"
                                  AcceptsReturn="True" Height="120" TextWrapping="Wrap"
                                  FontFamily="Consolas" FontSize="11" Margin="0,0,0,10"/>
-                        <Button Command="{Binding BulkImportCommand}" Style="{StaticResource PrimaryBtn}"
-                                Background="#2563EB" Padding="14,9" HorizontalAlignment="Stretch">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE8A3;" FontFamily="Segoe MDL2 Assets" Margin="0,0,7,0"/>
-                                <TextBlock Text="Import Students"/>
-                            </StackPanel>
-                        </Button>
+                        <Grid Margin="0,0,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="8"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Command="{Binding BulkImportCommand}" Style="{StaticResource PrimaryBtn}"
+                                    Background="#2563EB" Padding="14,9" HorizontalAlignment="Stretch">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE8A3;" FontFamily="Segoe MDL2 Assets" Margin="0,0,7,0"/>
+                                    <TextBlock Text="Import Students"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="2" Command="{Binding UploadCsvCommand}" Style="{StaticResource PrimaryBtn}"
+                                    Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
+                                    Padding="14,9" ToolTip="Upload CSV File">
+                                <TextBlock Text="&#xE8B5;" FontFamily="Segoe MDL2 Assets"/>
+                            </Button>
+                        </Grid>
                         <TextBlock Text="{Binding BulkStatus}" FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap"
                                    Foreground="{Binding BulkSuccess, Converter={StaticResource BoolToColor}}"/>
                     </StackPanel>

@@ -9,8 +9,9 @@ using System.Windows;
 namespace CbtExam.Desktop.ViewModels;
 
 // ─── Dashboard (Overview) ────────────────────────────────────────────────────
-public class DashboardViewModel(ApiClient api) : BaseViewModel, IRefreshable
+public class DashboardViewModel : BaseViewModel, IRefreshable
 {
+    private readonly ApiClient api;
     private int _totalStudents, _activeCount, _submittedCount, _pausedCount;
     public int TotalStudents  { get => _totalStudents;  set { if (Set(ref _totalStudents,  value)) NotifySessionRatios(); } }
     public int ActiveCount    { get => _activeCount;    set { if (Set(ref _activeCount,    value)) NotifySessionRatios(); } }
@@ -18,6 +19,10 @@ public class DashboardViewModel(ApiClient api) : BaseViewModel, IRefreshable
     public int PausedCount    { get => _pausedCount;    set => Set(ref _pausedCount,    value); }
     public double SubmittedPercent => TotalStudents == 0 ? 0 : Math.Round(SubmittedCount * 100.0 / TotalStudents, 1);
     public double ActivePercent => TotalStudents == 0 ? 0 : Math.Round(ActiveCount * 100.0 / TotalStudents, 1);
+
+    private string _latency = "--";
+    public string Latency { get => _latency; set { if (Set(ref _latency, value)) OnPropertyChanged(nameof(LatencyColor)); } }
+    public string LatencyColor => Latency switch { "--" => "#64748B", var s when int.TryParse(s.Replace("ms", ""), out int v) && v < 100 => "#16A34A", _ => "#EF4444" };
 
     private SessionDto? _activeSession;
     public SessionDto? ActiveSession
@@ -61,10 +66,44 @@ public class DashboardViewModel(ApiClient api) : BaseViewModel, IRefreshable
     private bool _showCreateForm;
     public bool ShowCreateForm { get => _showCreateForm; set => Set(ref _showCreateForm, value); }
 
+    private System.Timers.Timer? _liveTimer;
+
+    public DashboardViewModel(ApiClient api)
+    {
+        this.api = api;
+        _liveTimer = new System.Timers.Timer(5000);
+        _liveTimer.Elapsed += async (s, e) => await UpdateLiveStatsAsync();
+        _liveTimer.Start();
+    }
+
     public RelayCommand RefreshCommand    => new(async () => await LoadAsync());
     public RelayCommand ToggleFormCommand => new(() => { ShowCreateForm = !ShowCreateForm; CreateStatus = string.Empty; });
     public RelayCommand CreateExamCommand => new(async () => await CreateExamAsync());
     public RelayCommand<ExamDto> DeleteExamCommand => new(async e => await DeleteExamAsync(e));
+
+    private async Task UpdateLiveStatsAsync()
+    {
+        try
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            var sessions = await api.GetSessionsAsync();
+            sw.Stop();
+            
+            App.Current.Dispatcher.Invoke(() => Latency = $"{sw.ElapsedMilliseconds}ms");
+
+            var active = sessions?.FirstOrDefault(s => s.IsActive);
+            if (active is not null)
+            {
+                var students = await api.GetStudentsAsync(active.Id);
+                App.Current.Dispatcher.Invoke(() => {
+                    TotalStudents  = students?.Count ?? 0;
+                    SubmittedCount = students?.Count(s => s.IsSubmitted) ?? 0;
+                    ActiveCount    = students?.Count(s => !s.IsSubmitted) ?? 0;
+                });
+            }
+        }
+        catch { App.Current.Dispatcher.Invoke(() => Latency = "Error"); }
+    }
 
     public async Task LoadAsync()
     {
@@ -927,8 +966,11 @@ public class MonitorViewModel(ApiClient api, MonitorRealtimeService realtime) : 
 }
 
 // ─── Devices ─────────────────────────────────────────────────────────────────
-public class DevicesViewModel(ApiClient api) : BaseViewModel, IRefreshable
+public class DevicesViewModel : BaseViewModel, IRefreshable
 {
+    private readonly ApiClient api;
+    private System.Timers.Timer? _refreshTimer;
+
     public ObservableCollection<DeviceRow> Devices { get; } = [];
 
     private string _sessionInfo = string.Empty;
@@ -938,29 +980,47 @@ public class DevicesViewModel(ApiClient api) : BaseViewModel, IRefreshable
     public int Total  { get => _total;  set => Set(ref _total,  value); }
     public int Online { get => _online; set => Set(ref _online, value); }
 
+    public DevicesViewModel(ApiClient api)
+    {
+        this.api = api;
+        _refreshTimer = new System.Timers.Timer(5000);
+        _refreshTimer.Elapsed += async (_, _) => await LoadAsync();
+        _refreshTimer.Start();
+    }
+
     public RelayCommand RefreshCommand => new(async () => await LoadAsync());
 
     public async Task LoadAsync()
     {
-        var sessions = await api.GetSessionsAsync();
-        var active = sessions?.FirstOrDefault(s => s.IsActive);
-        if (active is null) { Devices.Clear(); SessionInfo = "No active session"; Total = Online = 0; return; }
-
-        SessionInfo = $"{active.ExamTitle}  ·  Code: {active.SessionCode}";
-        var students = await api.GetStudentsAsync(active.Id);
-        Devices.Clear();
-        if (students is null) return;
-
-        foreach (var s in students)
+        try
         {
-            Devices.Add(new DeviceRow(
-                s.FullName, s.StudentId,
-                s.JoinedAt.ToLocalTime().ToString("HH:mm:ss"),
-                s.IsSubmitted ? "Submitted" : s.ConnectionState,
-                s.TabSwitchCount,
-                s.BatteryLevel, s.IsOnline));
+            var sessions = await api.GetSessionsAsync();
+            var active = sessions?.FirstOrDefault(s => s.IsActive);
+            if (active is null) { 
+                App.Current.Dispatcher.Invoke(() => { Devices.Clear(); SessionInfo = "No active session"; Total = Online = 0; });
+                return; 
+            }
+
+            App.Current.Dispatcher.Invoke(() => SessionInfo = $"{active.ExamTitle}  ·  Code: {active.SessionCode}");
+            var students = await api.GetStudentsAsync(active.Id);
+            if (students is null) return;
+
+            App.Current.Dispatcher.Invoke(() => {
+                Devices.Clear();
+                foreach (var s in students)
+                {
+                    Devices.Add(new DeviceRow(
+                        s.FullName, s.StudentId,
+                        s.JoinedAt.ToLocalTime().ToString("HH:mm:ss"),
+                        s.IsSubmitted ? "Submitted" : s.ConnectionState,
+                        s.TabSwitchCount,
+                        s.BatteryLevel, s.IsOnline));
+                }
+                Total = students.Count;
+                Online = students.Count(s => !s.IsSubmitted && s.IsOnline);
+            });
         }
-        Online = students.Count(s => !s.IsSubmitted && s.IsOnline);
+        catch { /* ignore */ }
     }
 }
 
@@ -2014,8 +2074,15 @@ public class StudentsViewModel(ApiClient api) : BaseViewModel, IRefreshable
     public RelayCommand SaveCommand => new(async () => await SaveAsync());
     public RelayCommand DeleteCommand => new(async () => await DeleteAsync());
     public RelayCommand PasswordCommand => new(async () => await UpdatePasswordAsync());
+    public RelayCommand UploadCsvCommand => new(async () => await UploadCsvAsync());
     public RelayCommand PrintCommand => new(PrintStudents);
     public RelayCommand<StudentAdminDto> PickCommand => new(s => Pick(s));
+    public RelayCommand ClearCommand => new(Clear);
+
+    public bool IsEditing => Selected != null;
+    public string BulkCsv { get; set; } = string.Empty;
+    public string BulkStatus { get; set; } = string.Empty;
+    public bool BulkSuccess { get; set; }
 
     public async Task LoadAsync()
     {
@@ -2040,9 +2107,20 @@ public class StudentsViewModel(ApiClient api) : BaseViewModel, IRefreshable
 
     private async Task SaveAsync()
     {
-        var resp = await api.UpsertStudentAsync(new StudentUpsertDto(Selected?.Id, FullName, StudentId, IsActive));
-        Status = resp.IsSuccessStatusCode ? "Student saved." : "Could not save student.";
-        await LoadAsync();
+        var password = NewPassword;
+        if (!IsEditing && string.IsNullOrWhiteSpace(password))
+        {
+            password = Guid.NewGuid().ToString("N").Substring(0, 6).ToUpper();
+        }
+
+        var resp = await api.UpsertStudentAsync(new StudentUpsertDto(Selected?.Id, FullName, StudentId, IsActive, password));
+        if (resp.IsSuccessStatusCode)
+        {
+            Status = IsEditing ? "Student updated." : $"Student added. Pass: {password}";
+            Clear();
+            await LoadAsync();
+        }
+        else Status = "Could not save student.";
     }
 
     private async Task DeleteAsync()
@@ -2068,6 +2146,35 @@ public class StudentsViewModel(ApiClient api) : BaseViewModel, IRefreshable
         FullName = s.FullName;
         StudentId = s.StudentId;
         IsActive = s.IsActive;
+        NewPassword = string.Empty;
+        OnPropertyChanged(nameof(IsEditing));
+    }
+
+    private void Clear()
+    {
+        Selected = null;
+        FullName = string.Empty;
+        StudentId = string.Empty;
+        NewPassword = string.Empty;
+        IsActive = true;
+        Status = string.Empty;
+        OnPropertyChanged(nameof(IsEditing));
+    }
+
+    private async Task UploadCsvAsync()
+    {
+        var ofd = new Microsoft.Win32.OpenFileDialog { Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*" };
+        if (ofd.ShowDialog() == true)
+        {
+            try
+            {
+                var content = await File.ReadAllTextAsync(ofd.FileName);
+                BulkCsv = content;
+                OnPropertyChanged("BulkCsv");
+                Status = "File loaded. Click 'Import Students' to proceed.";
+            }
+            catch (Exception ex) { Status = $"Error loading file: {ex.Message}"; }
+        }
     }
 
     private void PrintStudents()
