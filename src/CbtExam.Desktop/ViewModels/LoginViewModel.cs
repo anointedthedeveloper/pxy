@@ -235,7 +235,9 @@ public class LoginViewModel : BaseViewModel
             mainWindow.Show();
 
             // Now close the login window(s)
-            foreach (Window window in Application.Current.Windows)
+            if (Application.Current?.Windows != null)
+            {
+                foreach (Window window in Application.Current.Windows)
             {
                 if (window is LoginWindow)
                 {

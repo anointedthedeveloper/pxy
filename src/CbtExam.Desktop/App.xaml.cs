@@ -181,7 +181,7 @@ public partial class App : Application
                 var iconStream = GetResourceStream(iconUri)?.Stream;
                 if (iconStream != null)
                 {
-                    var bitmap = BitmapFrame.Create(iconStream);
+                    var bitmap = System.Windows.Media.Imaging.BitmapFrame.Create(iconStream);
                     w.Icon = bitmap; // WPF layer
 
                     // Native layer (optional but helpful for taskbar persistence)
