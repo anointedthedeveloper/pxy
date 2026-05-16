@@ -65,6 +65,8 @@ public class StudentExam
     public int Id { get; set; }
     public int StudentId { get; set; }
     public int SessionId { get; set; }
+    public string DeviceId { get; set; } = string.Empty;
+    public string DeviceName { get; set; } = string.Empty;
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
     public DateTime? SubmittedAt { get; set; }
     public bool IsSubmitted { get; set; }
@@ -73,6 +75,16 @@ public class StudentExam
     public Student? Student { get; set; }
     public ExamSession? Session { get; set; }
     public ICollection<Answer> Answers { get; set; } = new List<Answer>();
+}
+
+public class Device
+{
+    public int Id { get; set; }
+    public string DeviceId { get; set; } = string.Empty;
+    public string DeviceName { get; set; } = string.Empty;
+    public string IpAddress { get; set; } = string.Empty;
+    public DateTime LastSeen { get; set; } = DateTime.UtcNow;
+    public bool IsOnline { get; set; } = true;
 }
 
 public class Answer

@@ -12,11 +12,13 @@ namespace CbtExam.Desktop.ViewModels;
 public class DashboardViewModel : BaseViewModel, IRefreshable
 {
     private readonly ApiClient api;
-    private int _totalStudents, _activeCount, _submittedCount, _pausedCount;
+    private int _totalStudents, _activeCount, _submittedCount, _pausedCount, _registeredDevicesCount, _onlineDevicesCount;
     public int TotalStudents  { get => _totalStudents;  set { if (Set(ref _totalStudents,  value)) NotifySessionRatios(); } }
     public int ActiveCount    { get => _activeCount;    set { if (Set(ref _activeCount,    value)) NotifySessionRatios(); } }
     public int SubmittedCount { get => _submittedCount; set { if (Set(ref _submittedCount, value)) NotifySessionRatios(); } }
     public int PausedCount    { get => _pausedCount;    set => Set(ref _pausedCount,    value); }
+    public int RegisteredDevicesCount { get => _registeredDevicesCount; set => Set(ref _registeredDevicesCount, value); }
+    public int OnlineDevicesCount     { get => _onlineDevicesCount;     set => Set(ref _onlineDevicesCount,     value); }
     public double SubmittedPercent => TotalStudents == 0 ? 0 : Math.Round(SubmittedCount * 100.0 / TotalStudents, 1);
     public double ActivePercent => TotalStudents == 0 ? 0 : Math.Round(ActiveCount * 100.0 / TotalStudents, 1);
 
@@ -101,6 +103,12 @@ public class DashboardViewModel : BaseViewModel, IRefreshable
                     ActiveCount    = students?.Count(s => !s.IsSubmitted) ?? 0;
                 });
             }
+
+            var devices = await api.GetDevicesAsync();
+            App.Current.Dispatcher.Invoke(() => {
+                RegisteredDevicesCount = devices?.Count ?? 0;
+                OnlineDevicesCount = devices?.Count(d => d.IsOnline) ?? 0;
+            });
         }
         catch { App.Current.Dispatcher.Invoke(() => Latency = "Error"); }
     }

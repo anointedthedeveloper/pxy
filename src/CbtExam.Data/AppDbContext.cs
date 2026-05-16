@@ -13,6 +13,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Answer> Answers => Set<Answer>();
     public DbSet<QuestionBank> QuestionBank => Set<QuestionBank>();
     public DbSet<AdminConfig> AdminConfigs => Set<AdminConfig>();
+    public DbSet<Device> Devices => Set<Device>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {

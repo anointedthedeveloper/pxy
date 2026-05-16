@@ -18,7 +18,7 @@ public record SessionStartDto(int ExamId);
 public record SessionDto(int Id, int ExamId, string ExamTitle, string SessionCode, DateTime StartedAt, bool IsActive, int StudentCount);
 
 // --- Student DTOs ---
-public record JoinExamDto(string SessionCode, string FullName, string StudentId);
+public record JoinExamDto(string SessionCode, string FullName, string StudentId, string DeviceId = "", string DeviceName = "");
 public record JoinResultDto(int StudentExamId, int SessionId, int ExamId, string ExamTitle, int DurationMinutes);
 public record JoinRequestDto(int StudentExamId, int SessionId, string FullName, string StudentId, DateTime RequestedAt, bool IsApproved);
 
@@ -60,6 +60,8 @@ public record ActivityLogDto(int StudentExamId, string Activity, DateTime Timest
 // --- Tab switch report ---
 public record TabSwitchDto(int StudentExamId);
 public record DeviceHeartbeatDto(int StudentExamId, int CurrentQuestion, int BatteryLevel, bool IsOnline, string ConnectionState, string DeviceName = "", string DeviceId = "");
+public record DeviceRegistrationDto(string DeviceId, string DeviceName);
+public record DeviceDto(string DeviceId, string DeviceName, string IpAddress, DateTime LastSeen, bool IsOnline);
 public record SnapshotDto(int StudentExamId, string ImageBase64);
 
 // --- Student admin management ---

@@ -47,6 +47,7 @@ public class ApiClient
     public Task<HttpResponseMessage> UpsertStudentAsync(StudentUpsertDto dto) => IsReady ? _http.PostAsJsonAsync("api/students", dto) : OfflineResponse();
     public Task<HttpResponseMessage> DeleteStudentAsync(int id) => IsReady ? _http.DeleteAsync($"api/students/{id}") : OfflineResponse();
     public Task<HttpResponseMessage> UpdateStudentPasswordAsync(StudentPasswordUpdateDto dto) => IsReady ? _http.PostAsJsonAsync("api/students/password", dto) : OfflineResponse();
+    public Task<List<DeviceDto>?> GetDevicesAsync() => IsReady ? _http.GetFromJsonAsync<List<DeviceDto>>("api/student/devices") : Task.FromResult<List<DeviceDto>?>([]);
 
     // Question Bank
     public Task<List<QuestionBankDto>?> GetQuestionBankAsync(string? subject = null, int? year = null)

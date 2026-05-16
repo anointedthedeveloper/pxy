@@ -38,12 +38,27 @@ const showPage = id => {
 
 const storageKey = () => `cbt-progress-${state.studentExamId || 'draft'}`;
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
   const code = new URLSearchParams(location.search).get('code');
   if (code) $('inp-code').value = code.toUpperCase();
   $('waiting-status').textContent = 'Ready to continue when admin starts the exam.';
   initCamera();
+  await registerDevice();
 });
+
+async function registerDevice() {
+  const deviceId = getOrCreateDeviceId();
+  const deviceName = getDeviceName();
+  try {
+    await fetch('/api/student/device', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deviceId, deviceName })
+    });
+  } catch (err) {
+    console.error('Failed to register device:', err);
+  }
+}
 
 // ── Anti-cheat: Tab Switch Detection ──────────────────────────────────────
 document.addEventListener('visibilitychange', () => {
@@ -103,7 +118,13 @@ async function joinExam() {
     const res = await fetch('/api/student/join', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionCode: code, fullName: name, studentId: id })
+      body: JSON.stringify({ 
+        sessionCode: code, 
+        fullName: name, 
+        studentId: id,
+        deviceId: getOrCreateDeviceId(),
+        deviceName: getDeviceName()
+      })
     });
 
     if (!res.ok) {

@@ -38,7 +38,7 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         if (existing is not null)
             return Ok(new JoinResultDto(existing.Id, session.Id, session.ExamId, session.Exam!.Title, session.Exam.DurationMinutes));
 
-        var se = new StudentExam { StudentId = student.Id, SessionId = session.Id };
+        var se = new StudentExam { StudentId = student.Id, SessionId = session.Id, DeviceId = dto.DeviceId, DeviceName = dto.DeviceName };
         db.StudentExams.Add(se);
         await db.SaveChangesAsync();
 
@@ -175,8 +175,59 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
     {
         var se = await db.StudentExams.Include(x => x.Session).FirstOrDefaultAsync(x => x.Id == dto.StudentExamId);
         if (se is null) return NotFound();
+
+        // Update device status
+        var device = await db.Devices.FirstOrDefaultAsync(d => d.DeviceId == dto.DeviceId);
+        if (device is not null)
+        {
+            device.LastSeen = DateTime.UtcNow;
+            device.IsOnline = true;
+            await db.SaveChangesAsync();
+        }
+
         await NotifyAdmin(se.Session!.SessionCode, se.SessionId, dto);
         return Ok();
+    }
+
+    [HttpPost("device")]
+    public async Task<IActionResult> RegisterDevice(DeviceRegistrationDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.DeviceId)) return BadRequest();
+        
+        var device = await db.Devices.FirstOrDefaultAsync(d => d.DeviceId == dto.DeviceId);
+        if (device is null)
+        {
+            device = new Device
+            {
+                DeviceId = dto.DeviceId,
+                DeviceName = dto.DeviceName,
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                LastSeen = DateTime.UtcNow,
+                IsOnline = true
+            };
+            db.Devices.Add(device);
+        }
+        else
+        {
+            device.DeviceName = dto.DeviceName;
+            device.LastSeen = DateTime.UtcNow;
+            device.IsOnline = true;
+            device.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? device.IpAddress;
+        }
+
+        await db.SaveChangesAsync();
+        // Notify admin about device count update
+        await hub.Clients.All.SendAsync("DeviceUpdate");
+        return Ok();
+    }
+
+    [HttpGet("devices")]
+    public async Task<IActionResult> GetDevices()
+    {
+        var devices = await db.Devices
+            .Select(d => new DeviceDto(d.DeviceId, d.DeviceName, d.IpAddress, d.LastSeen, d.IsOnline))
+            .ToListAsync();
+        return Ok(devices);
     }
 
     [HttpPost("snapshot")]

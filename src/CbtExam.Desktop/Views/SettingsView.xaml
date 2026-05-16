@@ -16,17 +16,8 @@
 
                 <Border Background="White" CornerRadius="14" BorderBrush="#E5E7EB" BorderThickness="1" Padding="12" Margin="0,0,18,0">
                     <StackPanel>
-                        <Border CornerRadius="9" Background="#ECFDF5" Padding="12,10" Margin="0,0,0,8">
+                        <Border CornerRadius="9" Background="#ECFDF5" Padding="12,10">
                             <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" Foreground="#047857" Margin="0,0,10,0"/><TextBlock Text="General" FontWeight="Bold" Foreground="#047857"/></StackPanel>
-                        </Border>
-                        <Border CornerRadius="9" Padding="12,10" Margin="0,0,0,8">
-                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A7;" FontFamily="Segoe MDL2 Assets" Foreground="#64748B" Margin="0,0,10,0"/><TextBlock Text="System" Foreground="#334155"/></StackPanel>
-                        </Border>
-                        <Border CornerRadius="9" Padding="12,10" Margin="0,0,0,8">
-                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE9F5;" FontFamily="Segoe MDL2 Assets" Foreground="#64748B" Margin="0,0,10,0"/><TextBlock Text="Database" Foreground="#334155"/></StackPanel>
-                        </Border>
-                        <Border CornerRadius="9" Padding="12,10">
-                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8F6;" FontFamily="Segoe MDL2 Assets" Foreground="#64748B" Margin="0,0,10,0"/><TextBlock Text="Backup" Foreground="#334155"/></StackPanel>
                         </Border>
                     </StackPanel>
                 </Border>
