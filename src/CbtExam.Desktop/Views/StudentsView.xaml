@@ -4,11 +4,11 @@
     <Grid Background="{DynamicResource BgBrush}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="300"/>
+            <ColumnDefinition Width="340"/>
         </Grid.ColumnDefinitions>
 
         <!-- Left: list + toolbar -->
-        <Grid Margin="24,24,12,24">
+        <Grid Margin="32,32,16,32">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -16,55 +16,57 @@
             </Grid.RowDefinitions>
 
             <!-- Header -->
-            <Grid Margin="0,0,0,16">
+            <Grid Margin="0,0,0,24">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="Students" FontSize="28" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                    <TextBlock Text="Manage student roster. IDs are auto-assigned." FontSize="13"
+                    <TextBlock Text="Student Directory" FontSize="28" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    <TextBlock Text="Manage candidate roster and credentials. IDs are auto-assigned." FontSize="14"
                                Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Command="{Binding RefreshCommand}" Style="{StaticResource PrimaryBtn}"
                             Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
-                            Padding="12,9" Margin="0,0,8,0" ToolTip="Refresh">
+                            Padding="14,10" Margin="0,0,12,0" ToolTip="Refresh List">
                         <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets"/>
                     </Button>
                     <Button Command="{Binding PrintCommand}" Style="{StaticResource PrimaryBtn}"
-                            Background="{StaticResource GreenBrush}" Padding="14,9">
+                            Background="{DynamicResource PremiumGradient}" Padding="20,10">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE749;" FontFamily="Segoe MDL2 Assets" Margin="0,0,7,0"/>
-                            <TextBlock Text="Print List"/>
+                            <TextBlock Text="&#xE749;" FontFamily="Segoe MDL2 Assets" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Export Roster" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>
             </Grid>
 
             <!-- Search + sort toolbar -->
-            <Grid Grid.Row="1" Margin="0,0,0,12">
+            <Grid Grid.Row="1" Margin="0,0,0,20">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <Grid Height="42">
-                    <TextBox Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" Padding="38,8,12,8"/>
-                    <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+                <Grid Height="46">
+                    <TextBox Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" Padding="42,10,14,10"
+                             Style="{StaticResource {x:Type TextBox}}" BorderBrush="{DynamicResource BorderBrush}"/>
+                    <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="14"
                                Foreground="{DynamicResource TextSecondaryBrush}"
-                               VerticalAlignment="Center" HorizontalAlignment="Left" Margin="12,0,0,0" IsHitTestVisible="False"/>
-                    <TextBlock Text="Search students..." FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}"
-                               VerticalAlignment="Center" HorizontalAlignment="Left" Margin="38,0,0,0"
+                               VerticalAlignment="Center" HorizontalAlignment="Left" Margin="16,0,0,0" IsHitTestVisible="False"/>
+                    <TextBlock Text="Search by name or student ID..." FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}"
+                               VerticalAlignment="Center" HorizontalAlignment="Left" Margin="42,0,0,0"
                                IsHitTestVisible="False"
                                Visibility="{Binding Search, Converter={StaticResource EmptyStringToVis}}"/>
                 </Grid>
                 <ComboBox Grid.Column="1" ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSort}"
-                          Width="180" Margin="8,0,0,0"/>
-                <Border Grid.Column="2" Background="{DynamicResource CardBrush}" CornerRadius="8"
-                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="8,0,0,0" Padding="10,0">
-                    <TextBlock VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}">
-                        <Run Text="{Binding Students.Count, Mode=OneWay}"/><Run Text=" students"/>
+                          Width="200" Margin="12,0,0,0" Height="46"/>
+                <Border Grid.Column="2" Background="{DynamicResource CardBrush}" CornerRadius="12"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="12,0,0,0" Padding="16,0">
+                    <TextBlock VerticalAlignment="Center" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}">
+                        <Run Text="{Binding Students.Count, Mode=OneWay}" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <Run Text=" Students Found"/>
                     </TextBlock>
                 </Border>
             </Grid>
@@ -78,19 +80,19 @@
                     </Grid.RowDefinitions>
                     <!-- Table header -->
                     <Border Background="{DynamicResource HeaderBgBrush}" CornerRadius="14,14,0,0" Padding="0,0,0,0">
-                        <Grid Height="40">
+                        <Grid Height="44">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="50"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="130"/>
-                                <ColumnDefinition Width="70"/>
                                 <ColumnDefinition Width="60"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="90"/>
+                                <ColumnDefinition Width="80"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="#" Margin="16,0,0,0" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                            <TextBlock Grid.Column="1" Text="Full Name" Margin="12,0,0,0" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                            <TextBlock Grid.Column="2" Text="Student ID" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                            <TextBlock Grid.Column="3" Text="Active" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                            <TextBlock Grid.Column="4" Text="Edit" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <TextBlock Text="#" Margin="24,0,0,0" VerticalAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" LetterSpacing="1"/>
+                            <TextBlock Grid.Column="1" Text="FULL NAME" Margin="16,0,0,0" VerticalAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" LetterSpacing="1"/>
+                            <TextBlock Grid.Column="2" Text="STUDENT ID" VerticalAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" LetterSpacing="1"/>
+                            <TextBlock Grid.Column="3" Text="STATUS" VerticalAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" LetterSpacing="1"/>
+                            <TextBlock Grid.Column="4" Text="ACTIONS" VerticalAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" LetterSpacing="1"/>
                         </Grid>
                     </Border>
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
@@ -108,39 +110,46 @@
                                                 </Style.Triggers>
                                             </Style>
                                         </Border.Style>
-                                        <Grid Height="46">
+                                        <Grid Height="54">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="50"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="130"/>
-                                                <ColumnDefinition Width="70"/>
                                                 <ColumnDefinition Width="60"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="150"/>
+                                                <ColumnDefinition Width="90"/>
+                                                <ColumnDefinition Width="80"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Text="{Binding Serial}" Margin="16,0,0,0" VerticalAlignment="Center"
+                                            <TextBlock Text="{Binding Serial}" Margin="24,0,0,0" VerticalAlignment="Center"
                                                        FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                            <TextBlock Grid.Column="1" Text="{Binding FullName}" Margin="12,0,0,0"
-                                                       VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold"
+                                            <TextBlock Grid.Column="1" Text="{Binding FullName}" Margin="16,0,0,0"
+                                                       VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource TextPrimaryBrush}"/>
                                             <TextBlock Grid.Column="2" Text="{Binding StudentId}" VerticalAlignment="Center"
-                                                       FontSize="12" FontFamily="Consolas" Foreground="{DynamicResource AccentBrush}"/>
-                                            <Ellipse Grid.Column="3" Width="8" Height="8" VerticalAlignment="Center">
-                                                <Ellipse.Style>
-                                                    <Style TargetType="Ellipse">
-                                                        <Setter Property="Fill" Value="#DC2626"/>
+                                                       FontSize="13" FontFamily="Consolas" Foreground="{DynamicResource AccentBrush}"/>
+                                            
+                                            <Border Grid.Column="3" Width="10" Height="10" CornerRadius="5" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="#DC2626"/>
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                                                <Setter Property="Fill" Value="#16A34A"/>
+                                                                <Setter Property="Background" Value="#16A34A"/>
+                                                                <Setter Property="Effect">
+                                                                    <Setter.Value>
+                                                                        <DropShadowEffect BlurRadius="8" Color="#16A34A" Opacity="0.5" ShadowDepth="0"/>
+                                                                    </Setter.Value>
+                                                                </Setter>
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
-                                                </Ellipse.Style>
-                                            </Ellipse>
+                                                </Border.Style>
+                                            </Border>
+
                                             <Button Grid.Column="4" Style="{StaticResource PrimaryBtn}"
                                                     Background="Transparent" Foreground="{DynamicResource AccentBrush}"
-                                                    Padding="6,4" ToolTip="Edit"
+                                                    Padding="10,6" ToolTip="Edit Candidate"
                                                     Command="{Binding DataContext.PickCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                     CommandParameter="{Binding}">
-                                                <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                                                <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
                                             </Button>
                                         </Grid>
                                     </Border>
@@ -153,18 +162,18 @@
         </Grid>
 
         <!-- Right panel: Add/Edit + Bulk -->
-        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Margin="0,24,24,24">
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Margin="0,32,32,32">
             <StackPanel>
                 <!-- Add / Edit card -->
-                <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                <Border Style="{StaticResource Card}" Margin="0,0,0,20">
                     <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
-                            <Border Width="30" Height="30" CornerRadius="8" Background="{DynamicResource NavActiveBrush}" Margin="0,0,10,0">
-                                <TextBlock Text="&#xE716;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                            <Border Width="36" Height="36" CornerRadius="10" Background="{DynamicResource NavActiveBrush}" Margin="0,0,14,0">
+                                <TextBlock Text="&#xE716;" FontFamily="Segoe MDL2 Assets" FontSize="16"
                                            Foreground="{DynamicResource NavActiveFgBrush}"
                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <TextBlock VerticalAlignment="Center" FontSize="15" FontWeight="Bold"
+                            <TextBlock VerticalAlignment="Center" FontSize="18" FontWeight="Bold"
                                        Foreground="{DynamicResource TextPrimaryBrush}">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
@@ -179,56 +188,65 @@
                             </TextBlock>
                         </StackPanel>
 
-                        <TextBlock Text="Full Name *" FontSize="11" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                        <TextBox Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12"/>
+                        <TextBlock Text="FULL NAME *" FontSize="10" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="2,0,0,6" LetterSpacing="1"/>
+                        <TextBox Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,16" Height="42"/>
 
-                        <TextBlock Text="Username (auto if blank)" FontSize="11" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                        <TextBox Text="{Binding StudentId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12"/>
+                        <TextBlock Text="STUDENT ID (AUTO IF BLANK)" FontSize="10" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="2,0,0,6" LetterSpacing="1"/>
+                        <TextBox Text="{Binding StudentId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,16" Height="42"/>
 
-                        <TextBlock Text="Password (auto if blank)" FontSize="11" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                        <TextBox Text="{Binding NewPassword, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12"/>
+                        <TextBlock Text="PASSWORD (AUTO IF BLANK)" FontSize="10" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" Margin="2,0,0,6" LetterSpacing="1"/>
+                        <TextBox Text="{Binding NewPassword, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,20" Height="42"/>
 
-                        <CheckBox Content="Active" IsChecked="{Binding IsActive}" Margin="0,0,0,14"/>
+                        <CheckBox Content="Allow Login Access" IsChecked="{Binding IsActive}" Margin="2,0,0,24" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
                         <!-- Password — only shown when editing -->
                         <StackPanel Visibility="{Binding IsEditing, Converter={StaticResource BoolToVis}}">
-                            <Border Background="{DynamicResource BgBrush}" CornerRadius="8"
+                            <Border Background="{DynamicResource BgBrush}" CornerRadius="12"
                                     BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                                    Padding="12" Margin="0,0,0,12">
+                                    Padding="16" Margin="0,0,0,20">
                                 <StackPanel>
-                                    <TextBlock Text="Reset Password" FontSize="11" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
-                                    <TextBox Text="{Binding NewPassword, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
-                                    <Button Content="Set Password" Command="{Binding PasswordCommand}"
-                                            Style="{StaticResource PrimaryBtn}" Background="{StaticResource GreenBrush}"
-                                            Padding="12,7" HorizontalAlignment="Left"/>
+                                    <TextBlock Text="SECURITY" FontSize="10" FontWeight="Bold"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" Margin="2,0,0,10" LetterSpacing="1"/>
+                                    <TextBlock Text="Update Password" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                                    <TextBox Text="{Binding NewPassword, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" Height="36"/>
+                                    <Button Content="Set New Password" Command="{Binding PasswordCommand}"
+                                            Style="{StaticResource PrimaryBtn}" Background="{DynamicResource CardBrush}"
+                                            Foreground="{DynamicResource TextPrimaryBrush}"
+                                            Padding="14,8" HorizontalAlignment="Stretch"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
 
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
                             <Button Command="{Binding SaveCommand}" Style="{StaticResource PrimaryBtn}"
-                                    Background="{DynamicResource AccentBrush}" Padding="16,9" Margin="0,0,8,0">
+                                    Background="{DynamicResource AccentBrush}" Padding="20,12">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0"/>
-                                    <TextBlock Text="Save"/>
+                                    <TextBlock Text="&#xE74E;" FontFamily="Segoe MDL2 Assets" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Commit" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
-                            <Button Command="{Binding DeleteCommand}" Style="{StaticResource DangerBtn}"
-                                    Padding="14,9" Margin="0,0,8,0"
-                                    Visibility="{Binding IsEditing, Converter={StaticResource BoolToVis}}">
+                            <Button Grid.Column="1" Command="{Binding DeleteCommand}" Style="{StaticResource DangerBtn}"
+                                    Padding="16,12" Margin="10,0,0,0"
+                                    Visibility="{Binding IsEditing, Converter={StaticResource BoolToVis}}"
+                                    ToolTip="Delete Candidate">
                                 <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets"/>
                             </Button>
-                            <Button Command="{Binding ClearCommand}" Style="{StaticResource PrimaryBtn}"
+                            <Button Grid.Column="2" Command="{Binding ClearCommand}" Style="{StaticResource PrimaryBtn}"
                                     Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
-                                    Padding="14,9" Visibility="{Binding IsEditing, Converter={StaticResource BoolToVis}}">
-                                <TextBlock Text="Cancel"/>
+                                    Padding="16,12" Margin="10,0,0,0" Visibility="{Binding IsEditing, Converter={StaticResource BoolToVis}}"
+                                    ToolTip="Cancel Edit">
+                                <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets"/>
                             </Button>
-                        </StackPanel>
-                        <TextBlock Text="{Binding Status}" FontSize="12" TextWrapping="Wrap"
+                        </Grid>
+                        <TextBlock Text="{Binding Status}" FontSize="12" TextWrapping="Wrap" Margin="4,0,0,0"
                                    Foreground="{Binding StatusOk, Converter={StaticResource BoolToColor}}"/>
                     </StackPanel>
                 </Border>
@@ -236,28 +254,24 @@
                 <!-- Bulk enrol card -->
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <Border Width="30" Height="30" CornerRadius="8" Background="#EFF6FF" Margin="0,0,10,0">
-                                <TextBlock Text="&#xE8A3;" FontFamily="Segoe MDL2 Assets" FontSize="14"
-                                           Foreground="#2563EB" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <Border Width="36" Height="36" CornerRadius="10" Background="#103B82F6" Margin="0,0,14,0">
+                                <TextBlock Text="&#xE8A3;" FontFamily="Segoe MDL2 Assets" FontSize="16"
+                                           Foreground="#3B82F6" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <TextBlock Text="Bulk Enrol" FontSize="15" FontWeight="Bold"
+                            <TextBlock Text="Bulk Import" FontSize="18" FontWeight="Bold"
                                        Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                         </StackPanel>
 
-                        <TextBlock FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"
-                                   Margin="0,0,0,8" TextWrapping="Wrap">
-                            CSV format: <Run FontWeight="Bold" FontFamily="Consolas">Full Name,Username,Password</Run>
-                            <LineBreak/>
-                            • Username auto-assigned if blank (STU-0001, STU-0002…)
-                            <LineBreak/>
-                            • Duplicate usernames are rejected
+                        <TextBlock FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"
+                                   Margin="2,0,0,12" TextWrapping="Wrap" LineHeight="1.5">
+                            Use CSV format: <Run FontWeight="Bold" FontFamily="Consolas" Foreground="{DynamicResource TextPrimaryBrush}">Full Name,Username,Password</Run>
                         </TextBlock>
 
                         <!-- Copyable sample -->
-                        <Border Background="{DynamicResource BgBrush}" CornerRadius="6"
+                        <Border Background="{DynamicResource BgBrush}" CornerRadius="10"
                                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                                Padding="10,8" Margin="0,0,0,10">
+                                Padding="16,12" Margin="0,0,0,16">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -265,39 +279,40 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock FontFamily="Consolas" FontSize="11"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
-                                           Text="John Doe,johndoe,1234&#x0a;Jane Smith,janesmith,abcd&#x0a;Peter Okafor,,password123" TextWrapping="Wrap"/>
+                                           Text="John Doe,johndoe,1234&#x0a;Jane Smith,janesmith,abcd" TextWrapping="Wrap"/>
                                 <Button Grid.Column="1" Command="{Binding CopySampleCommand}"
                                         Style="{StaticResource PrimaryBtn}" Background="Transparent"
-                                        Foreground="{DynamicResource AccentBrush}" Padding="6,4"
-                                        ToolTip="Copy sample format" VerticalAlignment="Top">
-                                    <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
+                                        Foreground="{DynamicResource AccentBrush}" Padding="8,6"
+                                        ToolTip="Copy Sample" VerticalAlignment="Top">
+                                    <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
                                 </Button>
                             </Grid>
                         </Border>
 
                         <TextBox Text="{Binding BulkCsv, UpdateSourceTrigger=PropertyChanged}"
-                                 AcceptsReturn="True" Height="120" TextWrapping="Wrap"
-                                 FontFamily="Consolas" FontSize="11" Margin="0,0,0,10"/>
-                        <Grid Margin="0,0,0,0">
+                                 AcceptsReturn="True" Height="140" TextWrapping="Wrap"
+                                 FontFamily="Consolas" FontSize="12" Margin="0,0,0,16"
+                                 Style="{StaticResource {x:Type TextBox}}" BorderBrush="{DynamicResource BorderBrush}"/>
+                        
+                        <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="8"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <Button Command="{Binding BulkImportCommand}" Style="{StaticResource PrimaryBtn}"
-                                    Background="#2563EB" Padding="14,9" HorizontalAlignment="Stretch">
+                                    Background="#3B82F6" Padding="20,12" HorizontalAlignment="Stretch">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE8A3;" FontFamily="Segoe MDL2 Assets" Margin="0,0,7,0"/>
-                                    <TextBlock Text="Import Students"/>
+                                    <TextBlock Text="&#xE8A3;" FontFamily="Segoe MDL2 Assets" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Import Candidates" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
-                            <Button Grid.Column="2" Command="{Binding UploadCsvCommand}" Style="{StaticResource PrimaryBtn}"
+                            <Button Grid.Column="1" Command="{Binding UploadCsvCommand}" Style="{StaticResource PrimaryBtn}"
                                     Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
-                                    Padding="14,9" ToolTip="Upload CSV File">
-                                <TextBlock Text="&#xE8B5;" FontFamily="Segoe MDL2 Assets"/>
+                                    Padding="18,12" Margin="10,0,0,0" ToolTip="Upload CSV File">
+                                <TextBlock Text="&#xE8B5;" FontFamily="Segoe MDL2 Assets" FontSize="16"/>
                             </Button>
                         </Grid>
-                        <TextBlock Text="{Binding BulkStatus}" FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap"
+                        <TextBlock Text="{Binding BulkStatus}" FontSize="12" Margin="4,12,0,0" TextWrapping="Wrap"
                                    Foreground="{Binding BulkSuccess, Converter={StaticResource BoolToColor}}"/>
                     </StackPanel>
                 </Border>
