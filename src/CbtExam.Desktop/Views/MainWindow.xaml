@@ -8,7 +8,7 @@
         WindowStartupLocation="CenterScreen"
         WindowState="Maximized"
         Background="{DynamicResource BgBrush}"
-        Icon="/Resources/appicon.ico"
+        Icon="pack://application:,,,/Resources/appicon.ico"
         FontFamily="Segoe UI"
         Loaded="Window_Loaded">
 

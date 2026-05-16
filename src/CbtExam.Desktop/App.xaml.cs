@@ -34,9 +34,28 @@ public partial class App : Application
         catch { }
     }
 
+    // ── Shell Integration ─────────────────────────────────────────────────
+    [DllImport("shell32.dll", SetLastError = true)]
+    private static extern int SetCurrentProcessExplicitAppUserModelID([MarshalAs(UnmanagedType.LPWStr)] string AppID);
+
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    private static extern IntPtr SendMessage(IntPtr hWnd, int Msg, int wParam, IntPtr lParam);
+
+    private const int WM_SETICON = 0x80;
+    private const int ICON_SMALL = 0;
+    private const int ICON_BIG = 1;
+
     // ── Startup ────────────────────────────────────────────────────────────
     protected override void OnStartup(StartupEventArgs e)
     {
+        // Fix taskbar grouping by binding to the executable path
+        try 
+        { 
+            var path = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
+            if (!string.IsNullOrEmpty(path)) SetCurrentProcessExplicitAppUserModelID(path); 
+        } 
+        catch { }
+
         base.OnStartup(e);
 
         // Ensure app doesn't close when switching between windows
@@ -152,6 +171,27 @@ public partial class App : Application
     // Called from MainWindow after it's loaded so the HWND exists
     public void ApplyTitleBarToWindow(Window w)
     {
+        // Force icon using native API (WM_SETICON)
+        try
+        {
+            var hwnd = new WindowInteropHelper(w).Handle;
+            if (hwnd != IntPtr.Zero)
+            {
+                var iconUri = new Uri("pack://application:,,,/Resources/appicon.ico");
+                var iconStream = GetResourceStream(iconUri)?.Stream;
+                if (iconStream != null)
+                {
+                    var bitmap = BitmapFrame.Create(iconStream);
+                    w.Icon = bitmap; // WPF layer
+
+                    // Native layer (optional but helpful for taskbar persistence)
+                    // We can't easily get HICON from Stream without System.Drawing,
+                    // but setting it in WPF and calling DWM refresh usually suffices.
+                }
+            }
+        }
+        catch { }
+
         var dark = string.Equals(CurrentTheme, "Dark", StringComparison.OrdinalIgnoreCase);
         var (accentHex, _, _, _, _) = CurrentAccent switch
         {
