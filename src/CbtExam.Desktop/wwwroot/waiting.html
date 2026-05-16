@@ -1,65 +1,193 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Waiting Room | CBT Portal</title>
-<link rel="stylesheet" href="/css/style.css"/>
-<link rel="stylesheet" href="/css/waiting.css"/>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Waiting Room | JAMB CBT Mock System</title>
+    <link rel="icon" type="image/png" href="/img/jamb.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="stylesheet" href="/css/login.css" />
+    <link rel="stylesheet" href="/css/waiting.css" />
 </head>
-<body class="portal-body">
 
-<div class="bg-waves">
-  <div class="wave"></div>
-  <div class="wave"></div>
-</div>
+<body>
+    <div id="toastContainer"></div>
 
-<main id="page-waiting" class="page active">
-  <div class="join-card glass">
-    <div class="logo">
-      <img class="dynamic-logo" src="/img/jamb.png" alt="Logo" onerror="this.src='/img/jamb.png'"/>
-    </div>
-    
-    <div class="status-visual">
-      <div class="pulse-container">
-        <div class="pulse-ring"></div>
-        <div class="pulse-ring"></div>
-        <div class="pulse-ring"></div>
-        <div class="status-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <div class="login-card waiting-layout">
+        <!-- Left Panel: Brand & Visuals -->
+        <div class="left-panel">
+            <div class="flowing-gradient"></div>
+            <div class="hex-grid-overlay"></div>
+            <div class="wave-decor"></div>
+
+            <div class="left-content-top">
+                <div class="jamb-logo-container">
+                    <img src="/img/jamb.png" alt="JAMB Logo" class="main-logo-img">
+                </div>
+
+                <div class="status-visual-container">
+                    <div class="pulse-container">
+                        <div class="pulse-ring"></div>
+                        <div class="pulse-ring"></div>
+                        <div class="pulse-ring"></div>
+                        <div class="status-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <h1 class="mt-8">Waiting Room<br><span class="green-text">Examination Portal</span></h1>
+                <p class="tagline">The exam coordinator will start the session shortly. Please remain on this page as
+                    we synchronize your questions.</p>
+            </div>
+
+            <div class="shield-container">
+                <div class="shield-base"></div>
+                <div class="shield-3d">
+                    <svg viewBox="0 0 50 60" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.3" />
+                                <stop offset="100%" style="stop-color:#064e3b;stop-opacity:0.8" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M25,2 L45,10 L45,30 C45,45 25,58 25,58 C25,58 5,45 5,30 L5,10 Z" fill="url(#shieldGrad)"
+                            stroke="#10b981" stroke-width="2" />
+                        <path d="M18,30 L23,35 L33,25" fill="none" stroke="#ffffff" stroke-width="4"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </div>
+            </div>
         </div>
-      </div>
+
+        <!-- Right Panel: Status & Details -->
+        <div class="right-panel">
+            <div class="welcome-badge">UTME Preparation Portal</div>
+            <h2>Session Synchronization</h2>
+            <p class="instruction-text">We are preparing your environment for a seamless examination experience.</p>
+
+            <div class="status-details-card">
+                <div class="candidate-header">
+                    <div class="avatar-circle" id="userAvatar">?</div>
+                    <div class="candidate-info">
+                        <span class="label">Candidate Name</span>
+                        <h3 id="wait-candidate-name">Loading...</h3>
+                    </div>
+                </div>
+
+                <div class="exam-info-box">
+                    <div class="info-row">
+                        <div class="info-col">
+                            <span class="label">Examination</span>
+                            <span class="value" id="wait-exam-name">Loading...</span>
+                        </div>
+                        <div class="info-col">
+                            <span class="label">System Status</span>
+                            <span class="value status-online">Connected</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sync-progress-section">
+                    <div class="progress-header">
+                        <span id="waiting-status">Synchronizing questions...</span>
+                        <span id="progress-percent">40%</span>
+                    </div>
+                    <div class="loading-bar-container">
+                        <div class="loading-bar-progress" id="loading-bar"></div>
+                    </div>
+                </div>
+
+                <button class="submit-btn disabled" id="btn-start-exam" disabled>
+                    <span>Waiting for Coordinator...</span>
+                </button>
+            </div>
+
+            <div class="info-alert-box mt-6">
+                <div class="info-alert-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="16" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12.01" y2="8" />
+                    </svg>
+                </div>
+                <div class="info-alert-text">
+                    Do not refresh this page. The "Start Examination" button will activate automatically once the
+                    coordinator releases the paper.
+                </div>
+            </div>
+
+            <div class="disclaimer-text">
+                <strong>Important:</strong> Ensure your internet connection is stable. If you experience any issues,
+                please alert the invigilator immediately.
+            </div>
+
+            <footer class="workspace-footer"
+                style="margin-top: auto; padding-top: 20px; border-top: 1.5px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+                <div class="copyright">© <span id="currentYear"></span> Anobyte Technologies</div>
+            </footer>
+        </div>
     </div>
 
-    <h2 class="mt-6">Waiting Room</h2>
-    <p class="subtitle">The exam coordinator will start the session shortly. Please remain on this page.</p>
-    
-    <div class="info-grid">
-      <div class="info-item">
-        <span class="label">Candidate</span>
-        <span class="value" id="wait-candidate-name">Loading...</span>
-      </div>
-      <div class="info-item">
-        <span class="label">Subject</span>
-        <span class="value" id="wait-exam-name">Post-UTME 2026</span>
-      </div>
-    </div>
+    <script src="/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const studentName = localStorage.getItem('studentName') || 'Candidate';
+            const examTitle = localStorage.getItem('selectedExamTitle') || 'Selected Examination';
+            const currentYear = new Date().getFullYear();
 
-    <div class="loading-bar-container">
-      <div class="loading-bar-progress"></div>
-    </div>
-    
-    <p id="waiting-status" class="status-text">Synchronizing questions...</p>
-    
-    <div class="mt-8">
-      <button class="btn btn-primary btn-full disabled" id="btn-start-exam" onclick="location.href='exam.html'">
-        Waiting for Coordinator...
-      </button>
-    </div>
-  </div>
-</main>
+            document.getElementById('wait-candidate-name').textContent = studentName;
+            document.getElementById('wait-exam-name').textContent = examTitle;
+            document.getElementById('userAvatar').textContent = studentName.charAt(0).toUpperCase();
+            document.getElementById('currentYear').textContent = currentYear;
 
-<script src="/js/app.js"></script>
+            // Simulate progress
+            let progress = 40;
+            const progressBar = document.getElementById('loading-bar');
+            const percentText = document.getElementById('progress-percent');
+            const statusText = document.getElementById('waiting-status');
+
+            const interval = setInterval(() => {
+                if (progress < 100) {
+                    progress += Math.floor(Math.random() * 5) + 1;
+                    if (progress > 100) progress = 100;
+                    progressBar.style.width = progress + '%';
+                    percentText.textContent = progress + '%';
+                } else {
+                    clearInterval(interval);
+                }
+            }, 300);
+
+            // Simulate server signal
+            setTimeout(() => {
+                const btn = document.getElementById('btn-start-exam');
+                
+                statusText.textContent = 'All synchronization complete. Ready to start.';
+                statusText.style.color = '#10b981';
+                percentText.textContent = '100%';
+                progressBar.style.width = '100%';
+                progressBar.style.background = '#10b981';
+                progressBar.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.4)';
+
+                btn.disabled = false;
+                btn.classList.remove('disabled');
+                btn.innerHTML = '<span>Start Examination Now</span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>';
+                btn.onclick = () => window.location.href = 'exam.html';
+            }, 5000);
+        });
+    </script>
 </body>
+
 </html>
