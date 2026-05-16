@@ -83,9 +83,19 @@ public static class ApiBootstrap
         app.UseCors();
         app.Use(async (ctx, next) =>
         {
-            if (!ctx.Request.Path.StartsWithSegments("/api/exams") &&
-                !ctx.Request.Path.StartsWithSegments("/api/sessions") &&
-                !ctx.Request.Path.StartsWithSegments("/api/students"))
+            var path = ctx.Request.Path.Value?.ToLower() ?? "";
+            
+            // Allow public access to certain endpoints
+            if (!path.StartsWith("/api/exams") &&
+                !path.StartsWith("/api/sessions") &&
+                !path.StartsWith("/api/students"))
+            {
+                await next();
+                return;
+            }
+
+            // Allow students to GET exams
+            if (path.StartsWith("/api/exams") && ctx.Request.Method == "GET")
             {
                 await next();
                 return;
@@ -99,7 +109,8 @@ public static class ApiBootstrap
             }
 
             ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            await ctx.Response.WriteAsync("Unauthorized admin request.");
+            ctx.Response.ContentType = "application/json";
+            await ctx.Response.WriteAsync("{\"error\": \"Unauthorized admin request.\"}");
         });
         app.UseDefaultFiles();
         app.UseStaticFiles();

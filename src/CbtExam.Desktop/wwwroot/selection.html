@@ -10,8 +10,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/login.css">
     <link rel="stylesheet" href="/css/selection.css">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+    <div id="toastContainer"></div>
     <div class="login-card">
         <!-- LEFT PANEL (BRANDING) -->
         <div class="left-panel">
@@ -67,6 +69,13 @@
                 </div>
                 <div class="header-divider"></div>
                 <span class="page-indicator">Selection Portal</span>
+                <div class="user-profile-mini">
+                    <div class="user-avatar-small" id="userAvatar">U</div>
+                    <div class="user-details-mini">
+                        <span class="user-name-small" id="userName">Student Candidate</span>
+                        <span class="user-role-small">Candidate</span>
+                    </div>
+                </div>
             </header>
 
             <div class="content-body">
@@ -86,28 +95,11 @@
                     </ul>
                 </div>
 
-                <div class="exam-list-modern">
-                    <!-- Active Exam -->
-                    <div class="exam-card-modern" onclick="location.href='waiting.html'">
-                        <div class="exam-card-info">
-                            <div class="exam-type-badge">ACTIVE</div>
-                            <h3>Post-UTME Screening 2026</h3>
-                            <div class="exam-meta-pills">
-                                <span class="meta-pill">40 Questions</span>
-                                <span class="meta-pill">60 Minutes</span>
-                            </div>
-                        </div>
-                        <button class="action-btn">Start Session</button>
-                    </div>
-
-                    <!-- Locked Exam -->
-                    <div class="exam-card-modern locked">
-                        <div class="exam-card-info">
-                            <div class="exam-type-badge gray">LOCKED</div>
-                            <h3>MOCK Exam Series II</h3>
-                            <p class="exam-lock-reason">Scheduled for May 20th, 2026. Unlocked by Admin only.</p>
-                        </div>
-                        <button class="action-btn" disabled>Unavailable</button>
+                <div class="exam-list-modern" id="examList">
+                    <!-- Dynamic exams will be injected here -->
+                    <div class="loading-state">
+                        <div class="spinner green"></div>
+                        <p>Fetching available examinations...</p>
                     </div>
                 </div>
             </div>
@@ -117,7 +109,7 @@
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                     Sign Out
                 </button>
-                <div class="copyright">© 2026 JAMB Mock System</div>
+                <div class="copyright">© <span id="currentYear"></span> Anobyte Technologies</div>
             </footer>
         </div>
     </div>

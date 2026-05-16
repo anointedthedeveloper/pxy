@@ -13,6 +13,18 @@ namespace CbtExam.Api.Controllers;
 [Route("api/[controller]")]
 public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, SnapshotExportService exports) : ControllerBase
 {
+    // POST /api/student/login
+    [HttpPost("login")]
+    public async Task<IActionResult> Login(StudentLoginDto dto)
+    {
+        var student = await db.Students.FirstOrDefaultAsync(s => 
+            (s.StudentId == dto.StudentId || s.FullName == dto.StudentId) && 
+            s.Password == dto.Password && s.IsActive);
+
+        if (student is null) return Unauthorized(new { error = "Invalid student credentials or inactive account." });
+        return Ok(new StudentAdminDto(student.Id, student.FullName, student.StudentId, student.IsActive, ""));
+    }
+
     // POST /api/student/join
     [HttpPost("join")]
     public async Task<IActionResult> Join(JoinExamDto dto)
