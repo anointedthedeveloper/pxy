@@ -105,17 +105,46 @@ async function joinExam() {
 
     $('exam-title').textContent = data.examTitle;
     errEl.classList.add('hidden');
-    showPage('page-waiting');
-    await loadQuestions();
-    await loadServerProgress();
-    maybeResumePage();
+    
+    // Show selection page if multiple exams exist, otherwise go to waiting
+    if (data.availableExams && data.availableExams.length > 1) {
+      renderExamSelection(data.availableExams);
+      showPage('page-selection');
+    } else {
+      showPage('page-waiting');
+      await loadQuestions();
+      await loadServerProgress();
+      maybeResumePage();
+    }
 
   } catch (err) {
     showError(errEl, 'Connection error. Is the server running?');
   } finally {
     $('btn-join').disabled = false;
-    $('btn-join').textContent = 'Join Exam →';
+    $('btn-join').textContent = 'Join Exam';
   }
+}
+
+function renderExamSelection(exams) {
+  const list = $('exam-list');
+  list.innerHTML = exams.map(e => `
+    <div class="exam-card-item" onclick="selectExamSession(${e.examId})">
+      <div class="badge">${e.status || 'ACTIVE'}</div>
+      <h3>${e.title}</h3>
+      <div class="meta">
+        <span>${e.questionCount} Questions</span>
+        <span>${e.duration} Minutes</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function selectExamSession(examId) {
+  state.examId = examId;
+  showPage('page-waiting');
+  await loadQuestions();
+  await loadServerProgress();
+  maybeResumePage();
 }
 
 function continueFromWaiting() {
