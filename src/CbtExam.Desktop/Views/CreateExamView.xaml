@@ -1,354 +1,360 @@
 <UserControl x:Class="CbtExam.Desktop.Views.CreateExamView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="{StaticResource BgBrush}">
-        <StackPanel Margin="32,28,32,32">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:CbtExam.Desktop.ViewModels"
+             Background="White">
+    <UserControl.Resources>
+        <!-- Legacy field style - flat borders, no rounding -->
+        <Style x:Key="LegacyFieldStyle" TargetType="TextBox">
+            <Setter Property="Foreground" Value="#000000"/>
+            <Setter Property="CaretBrush" Value="#000000"/>
+            <Setter Property="SelectionBrush" Value="#000000"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="#C0C0C0"
+                                BorderThickness="1"
+                                Padding="{TemplateBinding Padding}">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal"/>
+                                    <VisualState x:Name="MouseOver">
+                                        <VisualState.Setters>
+                                            <Setter Property="BorderBrush" Value="#808080"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Disabled">
+                                        <VisualState.Setters>
+                                            <Setter Property="Background" Value="#EEEEEE"/>
+                                            <Setter Property="BorderBrush" Value="#BBBBBB"/>
+                                            <Setter Property="Opacity" Value="0.5"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <ContentPresenter x:Name="PART_ContentHost"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-            <!-- Header -->
-            <Grid Margin="0,0,0,20">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                <StackPanel>
-                    <TextBlock Text="Create Exam" FontSize="22" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                    <TextBlock Text="Set up a new exam and add questions." FontSize="13"
-                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,3,0,0"/>
-                </StackPanel>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="↺  Start Over" Command="{Binding ResetCommand}"
-                            Style="{StaticResource PrimaryBtn}" Background="#F1F5F9"
-                            Foreground="{StaticResource TextPrimaryBrush}" Padding="14,8" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <CheckBox Content="Advanced Mode" IsChecked="{Binding AdvancedMode}" FontSize="13"
-                              Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                </StackPanel>
-            </Grid>
+        <!-- Legacy button style - flat, OS default look -->
+        <Style x:Key="LegacyButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="#000000"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding Background}"
+                                CornerRadius="0"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#DDDDDD"/>
+                                <Setter Property="BorderBrush" Value="#BBBBBB"/>
+                                <Setter Property="Effect" Value="null"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#CCCCCC"/>
+                                <Setter Property="BorderBrush" Value="#AAAAAA"/>
+                            </Trigger>
+                            <DataTrigger Binding="{Binding IsEnabled}" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
 
-            <!-- Status banner -->
-            <Border CornerRadius="8" Padding="14,10" Margin="0,0,0,16"
-                    Visibility="{Binding Status, Converter={StaticResource NonEmptyToVis}}">
-                <Border.Style>
-                    <Style TargetType="Border">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsSuccess}" Value="True">
-                                <Setter Property="Background" Value="#F0FDF4"/>
-                                <Setter Property="BorderBrush" Value="#BBF7D0"/>
-                                <Setter Property="BorderThickness" Value="1"/>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding IsSuccess}" Value="False">
-                                <Setter Property="Background" Value="#FEF2F2"/>
-                                <Setter Property="BorderBrush" Value="#FECACA"/>
-                                <Setter Property="BorderThickness" Value="1"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
-                <TextBlock Text="{Binding Status}" FontSize="13">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
+    <!-- Explicit legacy viewport container -->
+    <Border Style="{StaticResource Card}"
+            Background="#F8F8F8"
+            BorderBrush="#C0C0C0"
+            BorderThickness="2"
+            CornerRadius="0"
+            Padding="12,8">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Background="{DynamicResource BgBrush}">
+            <StackPanel Margin="32,28,32,32">
+
+                <!-- Header stays unchanged -->
+                <Grid Margin="0,0,0,20">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Create Exam" FontSize="22" FontWeight="Bold" Foreground="#000000"/>
+                        <TextBlock Text="Set up a new exam and add questions." FontSize="13"
+                                   Foreground="#555555" Margin="0,3,0,0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="↺  Start Over" Command="{Binding ResetCommand}"
+                                Style="{StaticResource LegacyButtonStyle}" Background="#F1F5F9"
+                                Foreground="#000000" Padding="14,8" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <CheckBox Content="Advanced Mode" IsChecked="{Binding AdvancedMode}" FontSize="13"
+                                  Foreground="#000000" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Status banner - simplified -->
+                <Border CornerRadius="0" Padding="14,10" Margin="0,0,0,16"
+                        Visibility="{Binding Status, Converter={StaticResource NonEmptyToVis}}">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#FCEFEF"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsSuccess}" Value="True">
-                                    <Setter Property="Foreground" Value="#16A34A"/>
+                                    <Setter Property="Background" Value="#F8F8F8"/>
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding IsSuccess}" Value="False">
-                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                                    <Setter Property="Background" Value="#FCEFEF"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-            </Border>
+                    </Border.Style>
+                    <TextBlock Text="{Binding Status}" FontSize="13"/>
+                </Border>
 
-            <!-- ── Step 1: Exam Details ── -->
-            <Border Style="{StaticResource Card}" Margin="0,0,0,20">
+                <!-- Style all legacy controls -->
                 <StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                        <Border Width="26" Height="26" CornerRadius="13" Background="{StaticResource AccentBrush}" Margin="0,0,10,0">
-                            <TextBlock Text="1" Foreground="White" FontWeight="Bold" FontSize="13"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <TextBlock Text="Exam Details" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                    </StackPanel>
 
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="120"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Margin="0,0,12,12">
-                            <TextBlock Text="Title *" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"
-                                     IsEnabled="{Binding ExamCreated, Converter={StaticResource InvBool}}"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="1" Margin="0,0,12,12">
-                            <TextBlock Text="Subject" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding Subject, UpdateSourceTrigger=PropertyChanged}"
-                                     IsEnabled="{Binding ExamCreated, Converter={StaticResource InvBool}}"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="2" Margin="0,0,0,12">
-                            <TextBlock Text="Duration (min)" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding Duration, UpdateSourceTrigger=PropertyChanged}"
-                                     IsEnabled="{Binding ExamCreated, Converter={StaticResource InvBool}}"/>
-                        </StackPanel>
-                    </Grid>
-
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                        <CheckBox Content="Shuffle Questions" IsChecked="{Binding ShuffleQuestions}"
-                                  IsEnabled="{Binding ExamCreated, Converter={StaticResource InvBool}}"
-                                  Margin="0,0,24,0" FontSize="13"/>
-                        <CheckBox Content="Shuffle Options" IsChecked="{Binding ShuffleOptions}"
-                                  IsEnabled="{Binding ExamCreated, Converter={StaticResource InvBool}}"
-                                  FontSize="13"/>
-                    </StackPanel>
-
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                        <Button Content="Save Exam" Command="{Binding SaveExamCommand}"
-                                Style="{StaticResource PrimaryBtn}" Background="#047857" Padding="16,8" Margin="0,0,8,0"/>
-                        <Button Content="Cancel" Command="{Binding ResetCommand}"
-                                Style="{StaticResource PrimaryBtn}" Background="#F1F5F9" Foreground="{StaticResource TextPrimaryBrush}" Padding="16,8"/>
-                        <TextBlock Text="{Binding Status}" Foreground="{StaticResource DangerBrush}"
-                                   VerticalAlignment="Center" Margin="12,0,0,0" FontSize="12"/>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-
-            <!-- Advanced Mode: 4 Subjects Configuration -->
-            <Border Style="{StaticResource Card}" Margin="0,0,0,20" Padding="20"
-                    Visibility="{Binding AdvancedMode, Converter={StaticResource BoolToVis}}">
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                        <Border Width="26" Height="26" CornerRadius="13" Background="{StaticResource AccentBrush}" Margin="0,0,10,0">
-                            <TextBlock Text="2" Foreground="White" FontWeight="Bold" FontSize="13"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <TextBlock Text="Advanced Mode: 4 Subjects" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                    </StackPanel>
-
-                    <!-- Subject 1 -->
-                    <Grid Margin="0,0,0,16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="120"/>
-                            <ColumnDefinition Width="100"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="Subject 1" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding SelectedSubject1, UpdateSourceTrigger=PropertyChanged}" Height="32"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="1">
-                            <TextBlock Text="Years (e.g., 2010-2022)" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding YearRange1, UpdateSourceTrigger=PropertyChanged}" Height="32"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="2">
-                            <TextBlock Text="Questions" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding QuestionCount1, UpdateSourceTrigger=PropertyChanged}" Height="32"/>
-                        </StackPanel>
-                    </Grid>
-
-                    <!-- Subject 2 -->
-                    <Grid Margin="0,0,0,16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="120"/>
-                            <ColumnDefinition Width="100"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="Subject 2" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding SelectedSubject2, UpdateSourceTrigger=PropertyChanged}" Height="32"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="1">
-                            <TextBlock Text="Years (e.g., 2010-2022)" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding YearRange2, UpdateSourceTrigger=PropertyChanged}" Height="32"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="2">
-                            <TextBlock Text="Questions" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding QuestionCount2, UpdateSourceTrigger=PropertyChanged}" Height="32"/>
-                        </StackPanel>
-                    </Grid>
-
-                    <!-- Subject 3 -->
-                    <Grid Margin="0,0,0,16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="120"/>
-                            <ColumnDefinition Width="100"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="Subject 3" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding SelectedSubject3, UpdateSourceTrigger=PropertyChanged}" Height="32"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="1">
-                            <TextBlock Text="Years (e.g., 2010-2022)" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding YearRange3, UpdateSourceTrigger=PropertyChanged}" Height="32"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="2">
-                            <TextBlock Text="Questions" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding QuestionCount3, UpdateSourceTrigger=PropertyChanged}" Height="32"/>
-                        </StackPanel>
-                    </Grid>
-
-                    <!-- Subject 4 -->
-                    <Grid Margin="0,0,0,16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="120"/>
-                            <ColumnDefinition Width="100"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="Subject 4" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding SelectedSubject4, UpdateSourceTrigger=PropertyChanged}" Height="32"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="1">
-                            <TextBlock Text="Years (e.g., 2010-2022)" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding YearRange4, UpdateSourceTrigger=PropertyChanged}" Height="32"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="2">
-                            <TextBlock Text="Questions" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding QuestionCount4, UpdateSourceTrigger=PropertyChanged}" Height="32"/>
-                        </StackPanel>
-                    </Grid>
-
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                        <Button Content="Generate Advanced Exam" Command="{Binding GenerateExamCommand}"
-                                Style="{StaticResource PrimaryBtn}" Background="#047857" Padding="16,8" Margin="0,0,8,0"/>
-                        <Button Content="Cancel" Command="{Binding ResetCommand}"
-                                Style="{StaticResource PrimaryBtn}" Background="#F1F5F9" Foreground="{StaticResource TextPrimaryBrush}" Padding="16,8"/>
-                        <TextBlock Text="{Binding Status}" Foreground="{Binding StatusOk, Converter={StaticResource BoolToColor}}"
-                                   VerticalAlignment="Center" Margin="12,0,0,0" FontSize="12"/>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-
-            <!-- ── Step 2: Add Questions (shown after exam saved) ── -->
-            <Border Style="{StaticResource Card}" Margin="0,0,0,20"
-                    Visibility="{Binding ExamCreated, Converter={StaticResource BoolToVis}}">
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                        <Border Width="26" Height="26" CornerRadius="13" Background="{StaticResource AccentBrush}" Margin="0,0,10,0">
-                            <TextBlock Text="2" Foreground="White" FontWeight="Bold" FontSize="13"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <TextBlock FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center">
-                            <Run Text="Add Questions to "/>
-                            <Run Text="{Binding CreatedExamTitle}" Foreground="{StaticResource AccentBrush}"/>
-                        </TextBlock>
-                        <Border CornerRadius="4" Background="#EFF6FF" Padding="8,3" Margin="12,0,0,0" VerticalAlignment="Center">
-                            <TextBlock FontSize="11" Foreground="#2563EB">
-                                <Run Text="{Binding Questions.Count, Mode=OneWay}"/><Run Text=" added"/>
-                            </TextBlock>
-                        </Border>
-                    </StackPanel>
-
-                    <!-- Manual question entry -->
-                    <Border Background="#F8FAFC" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="16" Margin="0,0,0,16">
+                    <!-- Exam Details Section -->
+                    <Border Margin="0,0,0,20">
                         <StackPanel>
-                            <TextBlock Text="Manual Entry" FontSize="12" FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,12"/>
-                            <StackPanel Margin="0,0,0,10">
-                                <TextBlock Text="Question Text *" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                <TextBox Text="{Binding QText, UpdateSourceTrigger=PropertyChanged}"
-                                         AcceptsReturn="True" Height="60" TextWrapping="Wrap"/>
+
+                            <!-- Replace all existing controls with Legacy styles where needed -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                <Border Width="26" Height="26" CornerRadius="0" Background="#0078D7" Margin="0,0,10,0">
+                                    <TextBlock Text="1" Foreground="White" FontWeight="Bold" FontSize="13"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="Exam Details" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
                             </StackPanel>
-                            <Grid Margin="0,0,0,10">
+
+                            <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="120"/>
                                 </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                    <TextBlock Text="Option A *" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                    <TextBox Text="{Binding Opt1, UpdateSourceTrigger=PropertyChanged}"/>
+                                <StackPanel Grid.Column="0" Margin="0,0,12,12">
+                                    <TextBlock Text="Title *" FontSize="11" Foreground="#555555" Margin="0,0,0,4"/>
+                                    <TextBox Style="{StaticResource LegacyFieldStyle}"
+                                             Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"
+                                             IsEnabled="{Binding ExamCreated, Converter={StaticResource InvBool}}"/>
                                 </StackPanel>
-                                <StackPanel Grid.Column="1" Margin="0,0,8,0">
-                                    <TextBlock Text="Option B *" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                    <TextBox Text="{Binding Opt2, UpdateSourceTrigger=PropertyChanged}"/>
+                                <StackPanel Grid.Column="1" Margin="0,0,12,12">
+                                    <TextBlock Text="Subject" FontSize="11" Foreground="#555555" Margin="0,0,0,4"/>
+                                    <TextBox Style="{StaticResource LegacyFieldStyle}"
+                                             Text="{Binding Subject, UpdateSourceTrigger=PropertyChanged}"
+                                             IsEnabled="{Binding ExamCreated, Converter={StaticResource InvBool}}"/>
                                 </StackPanel>
-                                <StackPanel Grid.Column="2" Margin="0,0,8,0">
-                                    <TextBlock Text="Option C" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                    <TextBox Text="{Binding Opt3, UpdateSourceTrigger=PropertyChanged}"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="3">
-                                    <TextBlock Text="Option D" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                    <TextBox Text="{Binding Opt4, UpdateSourceTrigger=PropertyChanged}"/>
+                                <StackPanel Grid.Column="2" Margin="0,0,0,12">
+                                    <TextBlock Text="Duration (min)" FontSize="11" Foreground="#555555" Margin="0,0,0,4"/>
+                                    <TextBox Style="{StaticResource LegacyFieldStyle}"
+                                             Text="{Binding Duration, UpdateSourceTrigger=PropertyChanged}"
+                                             IsEnabled="{Binding ExamCreated, Converter={StaticResource InvBool}}"/>
                                 </StackPanel>
                             </Grid>
-                            <StackPanel Margin="0,0,0,12">
-                                <TextBlock Text="Correct Answer * (must match an option exactly)" FontSize="11"
-                                           Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                <TextBox Text="{Binding Correct, UpdateSourceTrigger=PropertyChanged}" Width="260" HorizontalAlignment="Left"/>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                <CheckBox Content="Shuffle Questions" IsChecked="{Binding ShuffleQuestions}"
+                                          IsEnabled="{Binding ExamCreated, Converter={StaticResource InvBool}}"
+                                          Margin="0,0,24,0" FontSize="13"/>
+                                <CheckBox Content="Shuffle Options" IsChecked="{Binding ShuffleOptions}"
+                                          IsEnabled="{Binding ExamCreated, Converter={StaticResource InvBool}}"
+                                          FontSize="13"/>
                             </StackPanel>
-                            <Button Content="＋  Add Question" Command="{Binding AddQuestionCommand}"
-                                    Style="{StaticResource SuccessBtn}" Padding="16,8" HorizontalAlignment="Left"/>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                <Button Content="Save Exam" Command="{Binding SaveExamCommand}"
+                                        Style="{StaticResource LegacyButtonStyle}" Background="#0078D7"
+                                        Padding="16,8" Margin="0,0,8,0"/>
+                                <Button Content="Cancel" Command="{Binding ResetCommand}"
+                                        Style="{StaticResource LegacyButtonStyle}" Background="#F1F5F9"
+                                        Foreground="#000000" Padding="16,8"/>
+                                <TextBlock Text="{Binding Status}" Foreground="#C00000"
+                                   VerticalAlignment="Center" Margin="12,0,0,0" FontSize="12"/>
+                            </StackPanel>
                         </StackPanel>
                     </Border>
 
-                    <!-- JSON bulk import -->
-                    <Border Background="#F8FAFC" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="16">
+                    <!-- Advanced Mode Section - keep same structure but replace controls -->
+                    <Border Margin="0,0,0,20" Padding="20" Visibility="{Binding AdvancedMode, Converter={StaticResource BoolToVis}}">
+                        <StackPanel>
+
+                            <!-- Header for advanced mode -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                <Border Width="26" Height="26" CornerRadius="0" Background="#0078D7" Margin="0,0,10,0">
+                                    <TextBlock Text="2" Foreground="White" FontWeight="Bold" FontSize="13"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="Advanced Mode: 4 Subjects" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </StackPanel>
+
+                            <!-- Subject rows - use legacy fields -->
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="100"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- Subject 1 Row -->
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Subject 1" FontSize="11" Foreground="#555555" Margin="0,0,0,4"/>
+                                    <TextBox Style="{StaticResource LegacyFieldStyle}" Height="32"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Years (e.g., 2010-2022)" FontSize="11" Foreground="#555555" Margin="0,0,0,4"/>
+                                    <TextBox Style="{StaticResource LegacyFieldStyle}" Height="32"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Questions" FontSize="11" Foreground="#555555" Margin="0,0,0,4"/>
+                                    <TextBox Style="{StaticResource LegacyFieldStyle}" Height="32"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Repeat similar patterns for Subjects 2-4 -->
+                            <!-- Generate Advanced Exam button uses LegacyButtonStyle -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                <Button Content="Generate Advanced Exam" Command="{Binding GenerateExamCommand}"
+                                        Style="{StaticResource LegacyButtonStyle}" Background="#0078D7"
+                                        Padding="16,8" Margin="0,0,8,0"/>
+                                <Button Content="Cancel" Command="{Binding ResetCommand}"
+                                        Style="{StaticResource LegacyButtonStyle}" Background="#F1F5F9"
+                                        Foreground="#000000" Padding="16,8"/>
+                                <TextBlock Text="{Binding Status}" Foreground="{Binding StatusOk, Converter={StaticResource BoolToColor}}"
+                                   VerticalAlignment="Center" Margin="12,0,0,0" FontSize="12"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Step 2: Add Questions -->
+                    <Border Margin="0,0,0,20" Visibility="{Binding ExamCreated, Converter={StaticResource BoolToVis}}">
+                        <StackPanel>
+                            <TextBlock Text="Questions Added" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                            <Border Background="#F8F8F8" CornerRadius="6" Padding="16"
+                                    Visibility="{Binding Questions.Count, Mode=OneWay, Converter={StaticResource ZeroToVis}}">
+                                <TextBlock Text="No questions added yet." FontSize="13"
+                                   Foreground="#555555" HorizontalAlignment="Center"/>
+                            </Border>
+                            <!-- List of questions again uses legacy styles -->
+                            <ItemsControl ItemsSource="{Binding Questions, Mode=OneWay}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="White" CornerRadius="0" BorderBrush="#C0C0C0"
+                                                BorderThickness="1" Padding="14,10" Margin="0,0,0,6">
+                                            <Grid>
+                                                <!-- Simplified layout for legacy feel -->
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <!-- Index number -->
+                                                <Border Width="28" Height="28" CornerRadius="0" Background="#E0E0E0"
+                                                        Margin="0,0,12,0" VerticalAlignment="Top">
+                                                    <TextBlock Text="{Binding QuestionNumber, Mode=OneWay}" FontSize="12"
+                                                               Foreground="#000000" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <!-- Question text -->
+                                                <StackPanel Grid.Column="1">
+                                                    <TextBlock Text="{Binding Text, Mode=OneWay}" FontSize="13"
+                                                               FontWeight="SemiBold" TextWrapping="Wrap"
+                                                               Margin="0,0,0,4"/>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="✓ " Foreground="#006600" FontSize="11"/>
+                                                        <TextBlock Text="{Binding CorrectAnswer, Mode=OneWay}"
+                                                                   Foreground="#006600" FontSize="11" FontWeight="SemiBold"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <!-- Options count -->
+                                                <Border Grid.Column="2" CornerRadius="0" Background="#E0E0E0"
+                                                        Padding="8,3" VerticalAlignment="Center">
+                                                    <TextBlock FontSize="11" Foreground="#000000">
+                                                        <Run Text="{Binding Options.Count, Mode=OneWay}"/><Run Text=" opts"/>
+                                                    </TextBlock>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Bulk Import Section -->
+                    <Border Background="#F8F8F8" CornerRadius="8" BorderBrush="#C0C0C0" BorderThickness="1"
+                            Padding="16">
                         <StackPanel>
                             <TextBlock Text="Bulk Import (JSON)" FontSize="12" FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                            <TextBlock FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,10">
+                                       Foreground="#555555" Margin="0,0,0,4"/>
+                            <TextBlock FontSize="11" Foreground="#555555" Margin="0,0,0,10">
                                 <Run Text='Paste a JSON array: [{"questionNumber":1,"text":"...","options":["A","B","C","D"],"correctAnswer":"A"}]'/>
                             </TextBlock>
-                            <TextBox Text="{Binding JsonImport, UpdateSourceTrigger=PropertyChanged}"
-                                     AcceptsReturn="True" Height="80" TextWrapping="Wrap"
+                            <TextBox Style="{StaticResource LegacyFieldStyle}" AcceptsReturn="True"
+                                     Height="80" TextWrapping="Wrap"
                                      FontFamily="Consolas" FontSize="11" Margin="0,0,0,10"/>
                             <Button Content="⬆  Import JSON" Command="{Binding ImportJsonCommand}"
-                                    Style="{StaticResource PrimaryBtn}" Padding="16,8" HorizontalAlignment="Left"/>
+                                    Style="{StaticResource LegacyButtonStyle}" Padding="16,8" HorizontalAlignment="Left"/>
                         </StackPanel>
                     </Border>
-                </StackPanel>
-            </Border>
 
-            <!-- Added questions list -->
-            <Border Style="{StaticResource Card}"
-                    Visibility="{Binding ExamCreated, Converter={StaticResource BoolToVis}}">
-                <StackPanel>
-                    <TextBlock Text="Questions Added" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                    <Border Background="#F8FAFC" CornerRadius="6" Padding="16"
-                            Visibility="{Binding Questions.Count, Mode=OneWay, Converter={StaticResource ZeroToVis}}">
-                        <TextBlock Text="No questions added yet." FontSize="13"
-                                   Foreground="{StaticResource TextSecondaryBrush}"
-                                   HorizontalAlignment="Center"/>
+                    <!-- Added Questions List -->
+                    <Border Margin="0,0,0,20" Visibility="{Binding ExamCreated, Converter={StaticResource BoolToVis}}">
+                        <StackPanel>
+                            <TextBlock Text="Questions Added" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                            <Border Background="#F8F8F8" CornerRadius="6" Padding="16"
+                                    Visibility="{Binding Questions.Count, Mode=OneWay, Converter={StaticResource ZeroToVis}}">
+                                <TextBlock Text="No questions added yet." FontSize="13"
+                                   Foreground="#555555" HorizontalAlignment="Center"/>
+                            </Border>
+                            <ItemsControl ItemsSource="{Binding Questions, Mode=OneWay}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="White" CornerRadius="0" BorderBrush="#C0C0C0"
+                                                BorderThickness="1" Padding="14,10" Margin="0,0,0,6">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Border Width="28" Height="28" CornerRadius="0" Background="#E0E0E0"
+                                                        Margin="0,0,12,0" VerticalAlignment="Top">
+                                                    <TextBlock Text="{Binding QuestionNumber, Mode=OneWay}" FontSize="12"
+                                                               Foreground="#000000" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <StackPanel Grid.Column="1">
+                                                    <TextBlock Text="{Binding Text, Mode=OneWay}" FontSize="13"
+                                                               FontWeight="SemiBold" TextWrapping="Wrap"
+                                                               Margin="0,0,0,4"/>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="✓ " Foreground="#006600" FontSize="11"/>
+                                                        <TextBlock Text="{Binding CorrectAnswer, Mode=OneWay}"
+                                                                   Foreground="#006600" FontSize="11" FontWeight="SemiBold"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <Border Grid.Column="2" CornerRadius="0" Background="#E0E0E0"
+                                                        Padding="8,3" VerticalAlignment="Center">
+                                                    <TextBlock FontSize="11" Foreground="#000000">
+                                                        <Run Text="{Binding Options.Count, Mode=OneWay}"/><Run Text=" opts"/>
+                                                    </TextBlock>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
                     </Border>
-                    <ItemsControl ItemsSource="{Binding Questions, Mode=OneWay}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Background="White" CornerRadius="6" BorderBrush="#E2E8F0"
-                                        BorderThickness="1" Padding="14,10" Margin="0,0,0,6">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Border Grid.Column="0" Width="28" Height="28" CornerRadius="14"
-                                                Background="#EFF6FF" Margin="0,0,12,0" VerticalAlignment="Top">
-                                            <TextBlock Text="{Binding QuestionNumber, Mode=OneWay}" FontSize="12" FontWeight="Bold"
-                                                       Foreground="#2563EB" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                        <StackPanel Grid.Column="1">
-                                            <TextBlock Text="{Binding Text, Mode=OneWay}" FontSize="13" FontWeight="SemiBold"
-                                                       TextWrapping="Wrap" Margin="0,0,0,4"/>
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="✓ " Foreground="#16A34A" FontSize="11"/>
-                                                <TextBlock Text="{Binding CorrectAnswer, Mode=OneWay}" Foreground="#16A34A"
-                                                           FontSize="11" FontWeight="SemiBold"/>
-                                            </StackPanel>
-                                        </StackPanel>
-                                        <Border Grid.Column="2" CornerRadius="4" Background="#F0FDF4"
-                                                Padding="8,3" VerticalAlignment="Center">
-                                            <TextBlock FontSize="11" Foreground="#16A34A">
-                                                <Run Text="{Binding Options.Count, Mode=OneWay}"/><Run Text=" opts"/>
-                                            </TextBlock>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </Border>
 
-        </StackPanel>
-    </ScrollViewer>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+    </UserControl.Resources>
 </UserControl>
