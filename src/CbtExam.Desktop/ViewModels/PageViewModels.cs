@@ -2228,7 +2228,7 @@ public class StudentsViewModel(ApiClient api) : BaseViewModel, IRefreshable
         var doc = new System.Windows.Documents.FlowDocument();
         doc.Blocks.Add(new System.Windows.Documents.Paragraph(new System.Windows.Documents.Run("Student List")));
         foreach (var s in Students)
-            doc.Blocks.Add(new System.Windows.Documents.Paragraph(new System.Windows.Documents.Run($"{s.FullName} ({s.StudentId})")));
+            doc.Blocks.Add(new System.Windows.Documents.Paragraph(new System.Windows.Documents.Run($"{s.FullName}  —  ID: {s.StudentId}  —  Pass: {s.Password}")));
         var pd = new System.Windows.Controls.PrintDialog();
         if (pd.ShowDialog() == true)
             pd.PrintDocument(((System.Windows.Documents.IDocumentPaginatorSource)doc).DocumentPaginator, "Student List");

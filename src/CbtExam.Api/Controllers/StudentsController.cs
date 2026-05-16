@@ -14,7 +14,7 @@ public class StudentsController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> GetAll() =>
         Ok(await db.Students
             .OrderBy(s => s.FullName)
-            .Select(s => new StudentAdminDto(s.Id, s.FullName, s.StudentId, s.IsActive))
+            .Select(s => new StudentAdminDto(s.Id, s.FullName, s.StudentId, s.IsActive, s.Password))
             .ToListAsync());
 
     [HttpPost]
@@ -60,7 +60,7 @@ public class StudentsController(AppDbContext db) : ControllerBase
         }
 
         await db.SaveChangesAsync();
-        return Ok(new StudentAdminDto(entity.Id, entity.FullName, entity.StudentId, entity.IsActive));
+        return Ok(new StudentAdminDto(entity.Id, entity.FullName, entity.StudentId, entity.IsActive, entity.Password));
     }
 
     [HttpPost("password")]

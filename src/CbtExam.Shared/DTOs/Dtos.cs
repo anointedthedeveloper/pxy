@@ -62,7 +62,7 @@ public record DeviceHeartbeatDto(int StudentExamId, int CurrentQuestion, int Bat
 public record SnapshotDto(int StudentExamId, string ImageBase64);
 
 // --- Student admin management ---
-public record StudentAdminDto(int Id, string FullName, string StudentId, bool IsActive);
+public record StudentAdminDto(int Id, string FullName, string StudentId, bool IsActive, string Password = "");
 public record StudentUpsertDto(int? Id, string FullName, string StudentId, bool IsActive, string? Password = null);
 public record StudentPasswordUpdateDto(int StudentId, string NewPassword);
 public record StudentBulkRowDto(string FullName, string Username, string Password);
