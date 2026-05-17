@@ -289,6 +289,7 @@
                 <Setter Property="FontSize"        Value="13"/>
                 <Setter Property="Foreground"      Value="{DynamicResource TextPrimaryBrush}"/>
                 <Setter Property="CaretBrush"      Value="{DynamicResource TextPrimaryBrush}"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="TextBox">
@@ -298,6 +299,7 @@
                                     BorderThickness="{TemplateBinding BorderThickness}"
                                     CornerRadius="8" Padding="{TemplateBinding Padding}">
                                 <ScrollViewer x:Name="PART_ContentHost"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                               Foreground="{TemplateBinding Foreground}"/>
                             </Border>
                             <ControlTemplate.Triggers>

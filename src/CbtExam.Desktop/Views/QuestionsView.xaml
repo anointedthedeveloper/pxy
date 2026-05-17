@@ -53,13 +53,13 @@
             <!-- Search + Filter toolbar -->
             <Grid Grid.Row="1" Margin="0,0,0,12">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="1.5*"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="180"/>
-                    <ColumnDefinition Width="120"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <Grid Height="42">
-                    <TextBox Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" Padding="38,8,12,8"/>
+                    <TextBox Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" Padding="38,8,12,8" VerticalContentAlignment="Center"/>
                     <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="13"
                                Foreground="{DynamicResource TextSecondaryBrush}"
                                VerticalAlignment="Center" HorizontalAlignment="Left" Margin="12,0,0,0" IsHitTestVisible="False"/>
@@ -69,9 +69,9 @@
                                Visibility="{Binding Search, Converter={StaticResource EmptyStringToVis}}"/>
                 </Grid>
                 <ComboBox Grid.Column="1" ItemsSource="{Binding SubjectFilters}" SelectedItem="{Binding SelectedSubject}"
-                          Width="180" Margin="8,0,0,0"/>
+                          MinWidth="100" Margin="8,0,0,0"/>
                 <ComboBox Grid.Column="2" ItemsSource="{Binding YearFilters}" SelectedItem="{Binding SelectedYear}"
-                          Width="120" Margin="8,0,0,0"/>
+                          MinWidth="80" Margin="8,0,0,0"/>
                 <Border Grid.Column="3" Background="{DynamicResource CardBrush}" CornerRadius="8"
                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="8,0,0,0" Padding="10,0">
                     <TextBlock VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}">
@@ -218,33 +218,27 @@
                                        Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                             <TextBox Text="{Binding QuestionText, UpdateSourceTrigger=PropertyChanged}" 
                                      Height="100" TextWrapping="Wrap" AcceptsReturn="True" 
-                                     VerticalScrollBarVisibility="Auto" Margin="0,0,0,16"/>
+                                     VerticalScrollBarVisibility="Auto" Margin="0,0,0,16"
+                                     VerticalContentAlignment="Top"/>
 
                             <Grid Margin="0,0,0,16">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="3*"/>
                                     <ColumnDefinition Width="16"/>
-                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="2*"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0">
-                                    <TextBlock Text="Subject *" FontSize="12" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <ComboBox Grid.Column="0" Text="{Binding Subject, UpdateSourceTrigger=PropertyChanged}" 
-                                                  IsEditable="True" ItemsSource="{Binding Subjects}" Height="42" VerticalContentAlignment="Center"/>
-                                        <Button Grid.Column="1" Command="{Binding AddSubjectCommand}" Style="{StaticResource PrimaryBtn}" 
-                                                Background="{DynamicResource FieldBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                                                Foreground="{DynamicResource AccentBrush}" Padding="10,0" Margin="8,0,0,0" Height="42" Cursor="Hand" ToolTip="Add New Subject">
-                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                                <TextBlock Text="New" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
-                                            </StackPanel>
-                                        </Button>
+                                    <Grid Margin="0,0,0,6">
+                                        <TextBlock Text="Subject *" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                        <Button Content="+ New" HorizontalAlignment="Right" Style="{StaticResource PrimaryBtn}" 
+                                                Background="Transparent" Foreground="{DynamicResource AccentBrush}"
+                                                BorderThickness="0" Padding="0" Margin="0" FontSize="11" FontWeight="SemiBold"
+                                                Command="{Binding AddSubjectCommand}" Cursor="Hand"/>
                                     </Grid>
+                                    <ComboBox Text="{Binding Subject, UpdateSourceTrigger=PropertyChanged}" 
+                                              SelectedValue="{Binding Subject, UpdateSourceTrigger=PropertyChanged}"
+                                              IsEditable="True" ItemsSource="{Binding Subjects}" Height="42" VerticalContentAlignment="Center"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2">
                                     <TextBlock Text="Year *" FontSize="12" FontWeight="SemiBold"
@@ -254,7 +248,7 @@
                             </Grid>
 
                             <TextBlock Text="Options *" FontSize="12" FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,10"/>
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,16,0,10"/>
                             
                             <Grid Margin="0,0,0,16">
                                 <Grid.ColumnDefinitions>
@@ -287,7 +281,7 @@
                             </Grid>
 
                             <TextBlock Text="Correct Answer *" FontSize="12" FontWeight="SemiBold"
-                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,16,0,6"/>
                             <ComboBox SelectedValue="{Binding CorrectAnswer}" SelectedValuePath="Content" Height="42" VerticalContentAlignment="Center" Margin="0,0,0,24">
                                 <ComboBoxItem Content="A"/>
                                 <ComboBoxItem Content="B"/>
