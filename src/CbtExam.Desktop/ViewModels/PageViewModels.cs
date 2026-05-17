@@ -2197,6 +2197,13 @@ public class SettingsData
     public string AdminPassword { get; set; } = "ADMIN123";
 }
 
+public class JsonStudentImport
+{
+    public string? Name { get; set; }
+    public string? Username { get; set; }
+    public string? Password { get; set; }
+}
+
 public class StudentsViewModel(ApiClient api) : BaseViewModel, IRefreshable
 {
     public ObservableCollection<StudentAdminDto> Students { get; } = [];
@@ -2211,6 +2218,14 @@ public class StudentsViewModel(ApiClient api) : BaseViewModel, IRefreshable
         get => _search;
         set { Set(ref _search, value); Filter(); }
     }
+
+    private string _selectedSort = "Serial";
+    public string SelectedSort
+    {
+        get => _selectedSort;
+        set { Set(ref _selectedSort, value); Filter(); }
+    }
+    public ObservableCollection<string> SortOptions { get; } = ["Serial", "Alphabetical (A-Z)", "Inverse Alphabetical (Z-A)"];
 
     private string _fullName = string.Empty;
     public string FullName { get => _fullName; set => Set(ref _fullName, value); }
@@ -2271,6 +2286,16 @@ public class StudentsViewModel(ApiClient api) : BaseViewModel, IRefreshable
         var list = string.IsNullOrWhiteSpace(q)
             ? _all
             : _all.Where(s => s.FullName.Contains(q, StringComparison.OrdinalIgnoreCase) || s.StudentId.Contains(q, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        if (SelectedSort == "Alphabetical (A-Z)")
+        {
+            list = list.OrderBy(s => s.FullName, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+        else if (SelectedSort == "Inverse Alphabetical (Z-A)")
+        {
+            list = list.OrderByDescending(s => s.FullName, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
         Students.Clear();
         foreach (var s in list) Students.Add(s);
     }
@@ -2374,7 +2399,7 @@ public class StudentsViewModel(ApiClient api) : BaseViewModel, IRefreshable
 
     private async Task UploadCsvAsync()
     {
-        var ofd = new Microsoft.Win32.OpenFileDialog { Filter = "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*" };
+        var ofd = new Microsoft.Win32.OpenFileDialog { Filter = "Import Files (*.csv;*.json)|*.csv;*.json|All Files (*.*)|*.*" };
         if (ofd.ShowDialog() == true)
         {
             try
@@ -2399,30 +2424,67 @@ public class StudentsViewModel(ApiClient api) : BaseViewModel, IRefreshable
 
         try
         {
-            var lines = BulkCsv.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            var text = BulkCsv.Trim();
             int count = 0;
-            foreach (var line in lines)
+
+            if (text.StartsWith('[') || text.StartsWith('{'))
             {
-                var parts = line.Split(',');
-                if (parts.Length < 1) continue;
-
-                var name = parts[0].Trim();
-                if (string.IsNullOrWhiteSpace(name)) continue;
-
-                var id = parts.Length > 1 ? parts[1].Trim() : string.Empty;
-                if (string.IsNullOrWhiteSpace(id))
+                var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var list = System.Text.Json.JsonSerializer.Deserialize<List<JsonStudentImport>>(text, options);
+                if (list != null)
                 {
-                    id = GenerateUniqueUsername(name);
-                }
+                    foreach (var item in list)
+                    {
+                        var name = item.Name?.Trim() ?? string.Empty;
+                        var id = item.Username?.Trim() ?? string.Empty;
+                        var pass = item.Password?.Trim() ?? string.Empty;
 
-                var pass = parts.Length > 2 ? parts[2].Trim() : string.Empty;
-                if (string.IsNullOrWhiteSpace(pass))
+                        if (string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(id))
+                        {
+                            name = id;
+                        }
+                        if (string.IsNullOrWhiteSpace(name)) continue;
+
+                        if (string.IsNullOrWhiteSpace(id))
+                        {
+                            id = GenerateUniqueUsername(name);
+                        }
+                        if (string.IsNullOrWhiteSpace(pass))
+                        {
+                            pass = GeneratePassword5Char();
+                        }
+
+                        await api.UpsertStudentAsync(new StudentUpsertDto(null, name, id, true, pass));
+                        count++;
+                    }
+                }
+            }
+            else
+            {
+                var lines = BulkCsv.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                foreach (var line in lines)
                 {
-                    pass = GeneratePassword5Char();
-                }
+                    var parts = line.Split(',');
+                    if (parts.Length < 1) continue;
 
-                await api.UpsertStudentAsync(new StudentUpsertDto(null, name, id, true, pass));
-                count++;
+                    var name = parts[0].Trim();
+                    if (string.IsNullOrWhiteSpace(name)) continue;
+
+                    var id = parts.Length > 1 ? parts[1].Trim() : string.Empty;
+                    if (string.IsNullOrWhiteSpace(id))
+                    {
+                        id = GenerateUniqueUsername(name);
+                    }
+
+                    var pass = parts.Length > 2 ? parts[2].Trim() : string.Empty;
+                    if (string.IsNullOrWhiteSpace(pass))
+                    {
+                        pass = GeneratePassword5Char();
+                    }
+
+                    await api.UpsertStudentAsync(new StudentUpsertDto(null, name, id, true, pass));
+                    count++;
+                }
             }
 
             BulkStatus = $"Successfully imported {count} students.";
