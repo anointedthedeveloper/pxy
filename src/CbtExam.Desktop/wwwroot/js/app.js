@@ -1,9 +1,62 @@
-/**
- * JAMB CBT Mock System - Student Portal Script
- * Handles real-time data, authentication, and UI states
- */
-
 const API_BASE = '/api';
+
+// --- Device fingerprinting and heartbeat locking ---
+let deviceId = localStorage.getItem('cbt_device_id');
+if (!deviceId) {
+    deviceId = 'NODE-' + Math.random().toString(36).substring(2, 11).toUpperCase();
+    localStorage.setItem('cbt_device_id', deviceId);
+}
+
+function getBrowserAndOS() {
+    const ua = navigator.userAgent;
+    let browser = "Other Browser";
+    let os = "Other OS";
+
+    if (ua.indexOf("Firefox") > -1) browser = "Firefox";
+    else if (ua.indexOf("Chrome") > -1 && ua.indexOf("Edge") === -1 && ua.indexOf("Edg") === -1) browser = "Chrome";
+    else if (ua.indexOf("Safari") > -1 && ua.indexOf("Chrome") === -1) browser = "Safari";
+    else if (ua.indexOf("Edge") > -1 || ua.indexOf("Edg") > -1) browser = "Edge";
+    else if (ua.indexOf("Trident") > -1 || ua.indexOf("MSIE") > -1) browser = "IE";
+
+    if (ua.indexOf("Windows NT 10.0") > -1) os = "Windows 11/10";
+    else if (ua.indexOf("Windows NT 6.3") > -1) os = "Windows 8.1";
+    else if (ua.indexOf("Windows NT 6.2") > -1) os = "Windows 8";
+    else if (ua.indexOf("Windows NT 6.1") > -1) os = "Windows 7";
+    else if (ua.indexOf("Macintosh") > -1) os = "macOS";
+    else if (ua.indexOf("Android") > -1) os = "Android";
+    else if (ua.indexOf("iPhone") > -1 || ua.indexOf("iPad") > -1) os = "iOS";
+    else if (ua.indexOf("Linux") > -1) os = "Linux";
+
+    return `${browser} • ${os}`;
+}
+
+async function runDeviceHeartbeat() {
+    const browserOS = getBrowserAndOS();
+    const studentId = localStorage.getItem('studentId') || "Awaiting Login";
+    
+    let batteryLevel = 100;
+    try {
+        if (navigator.getBattery) {
+            const battery = await navigator.getBattery();
+            batteryLevel = Math.round(battery.level * 100);
+        }
+    } catch (e) { }
+
+    try {
+        await fetch(`${API_BASE}/Student/device`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                deviceId: deviceId,
+                deviceName: browserOS,
+                batteryLevel: batteryLevel,
+                studentId: studentId
+            })
+        });
+    } catch (e) {
+        console.warn("LAN device heartbeat failed", e);
+    }
+}
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,6 +68,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     console.log('JAMB CBT Portal Initialized');
+    
+    // Start device heartbeat loop
+    runDeviceHeartbeat();
+    setInterval(runDeviceHeartbeat, 5000);
 });
 
 // --- UI Utilities ---

@@ -220,7 +220,9 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
                 DeviceName = dto.DeviceName,
                 IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                 LastSeen = DateTime.UtcNow,
-                IsOnline = true
+                IsOnline = true,
+                BatteryLevel = dto.BatteryLevel,
+                StudentId = string.IsNullOrWhiteSpace(dto.StudentId) ? "Awaiting Login" : dto.StudentId
             };
             db.Devices.Add(device);
         }
@@ -230,6 +232,8 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
             device.LastSeen = DateTime.UtcNow;
             device.IsOnline = true;
             device.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? device.IpAddress;
+            device.BatteryLevel = dto.BatteryLevel;
+            device.StudentId = string.IsNullOrWhiteSpace(dto.StudentId) ? "Awaiting Login" : dto.StudentId;
         }
 
         await db.SaveChangesAsync();
@@ -241,10 +245,26 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
     [HttpGet("devices")]
     public async Task<IActionResult> GetDevices()
     {
-        var devices = await db.Devices
-            .Select(d => new DeviceDto(d.DeviceId, d.DeviceName, d.IpAddress, d.LastSeen, d.IsOnline))
-            .ToListAsync();
-        return Ok(devices);
+        var threshold = DateTime.UtcNow.AddSeconds(-12);
+        var devices = await db.Devices.ToListAsync();
+        bool changed = false;
+        foreach (var d in devices)
+        {
+            if (d.LastSeen < threshold && d.IsOnline)
+            {
+                d.IsOnline = false;
+                changed = true;
+            }
+        }
+        if (changed)
+        {
+            await db.SaveChangesAsync();
+        }
+
+        var dtos = devices
+            .Select(d => new DeviceDto(d.DeviceId, d.DeviceName, d.IpAddress, d.LastSeen, d.IsOnline, d.BatteryLevel, d.StudentId))
+            .ToList();
+        return Ok(dtos);
     }
 
     [HttpPost("snapshot")]

@@ -82,3 +82,16 @@ public class PassThroughConverter : IMultiValueConverter
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture) => values?.ToArray() ?? Array.Empty<object>();
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotImplementedException();
 }
+
+public class LessThanConverter : IValueConverter
+{
+    public object Convert(object v, Type t, object p, CultureInfo c)
+    {
+        if (v is int val && p is string paramStr && int.TryParse(paramStr, out var limit))
+        {
+            return val < limit;
+        }
+        return false;
+    }
+    public object ConvertBack(object v, Type t, object p, CultureInfo c) => throw new NotImplementedException();
+}

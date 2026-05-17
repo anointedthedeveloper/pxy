@@ -1006,10 +1006,13 @@ public class DevicesViewModel : BaseViewModel, IRefreshable
     public int Total  { get => _total;  set => Set(ref _total,  value); }
     public int Online { get => _online; set => Set(ref _online, value); }
 
+    private bool _hasDevices;
+    public bool HasDevices { get => _hasDevices; set => Set(ref _hasDevices, value); }
+
     public DevicesViewModel(ApiClient api)
     {
         this.api = api;
-        _refreshTimer = new System.Timers.Timer(5000);
+        _refreshTimer = new System.Timers.Timer(4000);
         _refreshTimer.Elapsed += async (_, _) => await LoadAsync();
         _refreshTimer.Start();
     }
@@ -1022,28 +1025,42 @@ public class DevicesViewModel : BaseViewModel, IRefreshable
         {
             var sessions = await api.GetSessionsAsync();
             var active = sessions?.FirstOrDefault(s => s.IsActive);
-            if (active is null) { 
-                App.Current.Dispatcher.Invoke(() => { Devices.Clear(); SessionInfo = "No active session"; Total = Online = 0; });
-                return; 
-            }
+            
+            App.Current.Dispatcher.Invoke(() => {
+                if (active is not null)
+                {
+                    SessionInfo = $"{active.ExamTitle}  ·  Code: {active.SessionCode}";
+                }
+                else
+                {
+                    SessionInfo = "No active session";
+                }
+            });
 
-            App.Current.Dispatcher.Invoke(() => SessionInfo = $"{active.ExamTitle}  ·  Code: {active.SessionCode}");
-            var students = await api.GetStudentsAsync(active.Id);
-            if (students is null) return;
+            var list = await api.GetDevicesAsync();
+            if (list is null) return;
 
             App.Current.Dispatcher.Invoke(() => {
                 Devices.Clear();
-                foreach (var s in students)
+                foreach (var d in list)
                 {
+                    string lastSeenFormatted = d.LastSeen.ToLocalTime().ToString("HH:mm:ss");
+                    string status = d.IsOnline ? "Connected" : "Disconnected";
+
                     Devices.Add(new DeviceRow(
-                        s.FullName, s.StudentId,
-                        s.JoinedAt.ToLocalTime().ToString("HH:mm:ss"),
-                        s.IsSubmitted ? "Submitted" : s.ConnectionState,
-                        s.TabSwitchCount,
-                        s.BatteryLevel, s.IsOnline, s.DeviceName));
+                        d.DeviceId,
+                        d.StudentId,
+                        lastSeenFormatted,
+                        status,
+                        0,
+                        d.BatteryLevel,
+                        d.IsOnline,
+                        d.DeviceName
+                    ));
                 }
-                Total = students.Count;
-                Online = students.Count(s => !s.IsSubmitted && s.IsOnline);
+                Total = list.Count;
+                Online = list.Count(d => d.IsOnline);
+                HasDevices = list.Count > 0;
             });
         }
         catch { /* ignore */ }

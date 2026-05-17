@@ -20,6 +20,7 @@
             <conv:ZeroToVisibilityConverter      x:Key="ZeroToVis"/>
             <conv:PercentageToWidthConverter     x:Key="PctToWidth"/>
             <conv:PassThroughConverter           x:Key="PassThroughConverter"/>
+            <conv:LessThanConverter              x:Key="LessThanConv"/>
 
             <!-- ── Semantic brushes (all replaced at runtime by ApplyTheme) ── -->
             <SolidColorBrush x:Key="BgBrush"            Color="#F1F5F9"/>
