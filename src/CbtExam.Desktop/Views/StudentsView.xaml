@@ -121,7 +121,7 @@
                                                 <ColumnDefinition Width="60"/>
                                                 <ColumnDefinition Width="70"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Text="{Binding Id}" Margin="16,0,0,0" VerticalAlignment="Center"
+                                            <TextBlock Text="{Binding DisplayNo}" Margin="16,0,0,0" VerticalAlignment="Center"
                                                        FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                             <TextBlock Grid.Column="1" Text="{Binding FullName}" Margin="16,0,0,0"
                                                        VerticalAlignment="Center" FontSize="14" FontWeight="SemiBold"

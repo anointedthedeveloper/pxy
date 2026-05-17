@@ -2204,9 +2204,19 @@ public class JsonStudentImport
     public string? Password { get; set; }
 }
 
+public class StudentUiModel
+{
+    public int DisplayNo { get; set; }
+    public int Id { get; set; }
+    public string FullName { get; set; } = string.Empty;
+    public string StudentId { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
+    public string Password { get; set; } = string.Empty;
+}
+
 public class StudentsViewModel(ApiClient api) : BaseViewModel, IRefreshable
 {
-    public ObservableCollection<StudentAdminDto> Students { get; } = [];
+    public ObservableCollection<StudentUiModel> Students { get; } = [];
     private List<StudentAdminDto> _all = [];
 
     private StudentAdminDto? _selected;
@@ -2249,7 +2259,7 @@ public class StudentsViewModel(ApiClient api) : BaseViewModel, IRefreshable
     public RelayCommand BulkImportCommand => new(async () => await BulkImportAsync());
     public RelayCommand UploadCsvCommand => new(async () => await UploadCsvAsync());
     public RelayCommand PrintCommand => new(PrintStudents);
-    public RelayCommand<StudentAdminDto> PickCommand => new(s => Pick(s));
+    public RelayCommand<StudentUiModel> PickCommand => new(s => Pick(s));
     public RelayCommand ClearCommand => new(Clear);
     public RelayCommand CopySampleCommand => new(() =>
     {
@@ -2297,7 +2307,19 @@ public class StudentsViewModel(ApiClient api) : BaseViewModel, IRefreshable
         }
 
         Students.Clear();
-        foreach (var s in list) Students.Add(s);
+        int num = 1;
+        foreach (var s in list)
+        {
+            Students.Add(new StudentUiModel
+            {
+                DisplayNo = num++,
+                Id = s.Id,
+                FullName = s.FullName,
+                StudentId = s.StudentId,
+                IsActive = s.IsActive,
+                Password = s.Password
+            });
+        }
     }
 
     private string GeneratePassword5Char()
@@ -2375,10 +2397,10 @@ public class StudentsViewModel(ApiClient api) : BaseViewModel, IRefreshable
         NewPassword = string.Empty;
     }
 
-    private void Pick(StudentAdminDto? s)
+    private void Pick(StudentUiModel? s)
     {
         if (s is null) return;
-        Selected = s;
+        Selected = new StudentAdminDto(s.Id, s.FullName, s.StudentId, s.IsActive, s.Password);
         FullName = s.FullName;
         StudentId = s.StudentId;
         IsActive = s.IsActive;
@@ -2506,6 +2528,25 @@ public class StudentsViewModel(ApiClient api) : BaseViewModel, IRefreshable
         }
     }
 
+    private void DrawFooter(XGraphics gfx, PdfPage page, double margin)
+    {
+        try
+        {
+#pragma warning disable CS0618
+            var footerFont = new XFont("Segoe UI", 8, XFontStyleEx.Regular);
+#pragma warning restore CS0618
+            var footerMuted = XBrushes.DarkGray;
+            var dividerPen = new XPen(XColor.FromArgb(226, 232, 240), 0.75);
+            
+            double footerY = page.Height.Point - margin + 10;
+            
+            gfx.DrawLine(dividerPen, margin, footerY, page.Width.Point - margin, footerY);
+            gfx.DrawString("Powered by Anobyte Technologies", footerFont, footerMuted, new XRect(margin, footerY + 4, page.Width.Point - (margin * 2), 15), XStringFormats.TopLeft);
+            gfx.DrawString("Confidential Student Roster", footerFont, footerMuted, new XRect(margin, footerY + 4, page.Width.Point - (margin * 2), 15), XStringFormats.TopRight);
+        }
+        catch { }
+    }
+
     private void PrintStudents()
     {
         var sfd = new Microsoft.Win32.SaveFileDialog
@@ -2519,6 +2560,31 @@ public class StudentsViewModel(ApiClient api) : BaseViewModel, IRefreshable
 
         try
         {
+            XImage? logoImage = null;
+            try
+            {
+                var info = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/prep4jamb.png"));
+                if (info != null)
+                {
+                    var ms = new MemoryStream();
+                    info.Stream.CopyTo(ms);
+                    ms.Position = 0;
+                    logoImage = XImage.FromStream(ms);
+                }
+            }
+            catch
+            {
+                try
+                {
+                    var localPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "prep4jamb.png");
+                    if (File.Exists(localPath))
+                    {
+                        logoImage = XImage.FromFile(localPath);
+                    }
+                }
+                catch { }
+            }
+
             using (var document = new PdfDocument())
             {
                 document.Info.Title = "Student Roster & Credentials";
@@ -2549,6 +2615,18 @@ public class StudentsViewModel(ApiClient api) : BaseViewModel, IRefreshable
                 
                 double y = margin;
                 gfx.DrawString("STUDENT ROSTER & CREDENTIALS", titleFont, textPrimary, new XRect(margin, y, width, 30), XStringFormats.TopLeft);
+                
+                if (logoImage != null)
+                {
+                    try
+                    {
+                        double logoW = 90;
+                        double logoH = 30;
+                        gfx.DrawImage(logoImage, page.Width.Point - margin - logoW, y, logoW, logoH);
+                    }
+                    catch { }
+                }
+                
                 y += 24;
                 
                 string subText = $"Generated on {DateTime.Now:MMMM dd, yyyy - hh:mm tt}  |  Total: {Students.Count} Candidates";
@@ -2580,6 +2658,8 @@ public class StudentsViewModel(ApiClient api) : BaseViewModel, IRefreshable
                 
                 y += rowHeight;
 
+                DrawFooter(gfx, page, margin);
+
                 int idx = 1;
                 foreach (var s in Students)
                 {
@@ -2601,6 +2681,8 @@ public class StudentsViewModel(ApiClient api) : BaseViewModel, IRefreshable
                         gfx.DrawString("PASSWORD", headerFont, textDark, new XRect(colPassX + 8, y + 6, colPassWidth - 16, rowHeight - 12), XStringFormats.CenterLeft);
                         
                         y += rowHeight;
+
+                        DrawFooter(gfx, page, margin);
                     }
 
                     if (idx % 2 == 0)
