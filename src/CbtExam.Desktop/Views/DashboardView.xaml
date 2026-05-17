@@ -156,7 +156,10 @@
                             <Ellipse Stroke="#22FFFFFF" StrokeThickness="16"/>
                             <Ellipse Stroke="#D1FAE5" StrokeThickness="16" StrokeDashArray="3,1" RenderTransformOrigin="0.5,0.5">
                                 <Ellipse.RenderTransform>
-                                    <RotateTransform x:Name="RingRotator" Angle="0"/>
+                                    <TransformGroup>
+                                        <RotateTransform Angle="0"/>
+                                        <RotateTransform Angle="0"/>
+                                    </TransformGroup>
                                 </Ellipse.RenderTransform>
                                 <Ellipse.Style>
                                     <Style TargetType="Ellipse">
@@ -165,8 +168,12 @@
                                                 <DataTrigger.EnterActions>
                                                     <BeginStoryboard x:Name="SpinStoryboard">
                                                         <Storyboard RepeatBehavior="Forever">
-                                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
-                                                                             From="0" To="1440" Duration="0:0:6">
+                                                            <!-- Linear continuous baseline spin (guarantees it never stops) -->
+                                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(RotateTransform.Angle)"
+                                                                             From="0" To="360" Duration="0:0:3.5"/>
+                                                            <!-- Eased forward/backward surge (creates realistic speed variation) -->
+                                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[1].(RotateTransform.Angle)"
+                                                                             From="-60" To="60" Duration="0:0:1.8" AutoReverse="True">
                                                                 <DoubleAnimation.EasingFunction>
                                                                     <CubicEase EasingMode="EaseInOut"/>
                                                                 </DoubleAnimation.EasingFunction>
