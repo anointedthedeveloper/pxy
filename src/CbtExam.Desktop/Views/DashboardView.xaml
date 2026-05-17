@@ -154,7 +154,34 @@
                         <!-- Donut ring -->
                         <Grid Grid.Column="1" Width="160" Height="160" VerticalAlignment="Center" Margin="20,0,0,0">
                             <Ellipse Stroke="#22FFFFFF" StrokeThickness="16"/>
-                            <Ellipse Stroke="#D1FAE5" StrokeThickness="16" StrokeDashArray="3,1"/>
+                            <Ellipse Stroke="#D1FAE5" StrokeThickness="16" StrokeDashArray="3,1" RenderTransformOrigin="0.5,0.5">
+                                <Ellipse.RenderTransform>
+                                    <RotateTransform x:Name="RingRotator" Angle="0"/>
+                                </Ellipse.RenderTransform>
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasActiveSession}" Value="True">
+                                                <DataTrigger.EnterActions>
+                                                    <BeginStoryboard x:Name="SpinStoryboard">
+                                                        <Storyboard RepeatBehavior="Forever">
+                                                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                                                             From="0" To="1440" Duration="0:0:6">
+                                                                <DoubleAnimation.EasingFunction>
+                                                                    <CubicEase EasingMode="EaseInOut"/>
+                                                                </DoubleAnimation.EasingFunction>
+                                                            </DoubleAnimation>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.EnterActions>
+                                                <DataTrigger.ExitActions>
+                                                    <StopStoryboard BeginStoryboardName="SpinStoryboard"/>
+                                                </DataTrigger.ExitActions>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
                             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding ActiveCount, Mode=OneWay}" FontSize="48" FontWeight="Black"
                                            Foreground="White" HorizontalAlignment="Center"/>
