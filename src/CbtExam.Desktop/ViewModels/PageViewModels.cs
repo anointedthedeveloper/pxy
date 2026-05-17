@@ -1127,9 +1127,12 @@ public class DevicesViewModel : BaseViewModel, IRefreshable
                 {
                     string lastSeenFormatted = d.LastSeen.ToLocalTime().ToString("HH:mm:ss");
                     string status = d.IsOnline ? "Connected" : "Disconnected";
+                    
+                    string cleanId = d.DeviceId?.Replace("NODE-", "") ?? "Unknown";
+                    string cleanIp = d.IpAddress?.Replace("::ffff:", "") ?? "unknown";
 
                     Devices.Add(new DeviceRow(
-                        d.DeviceId,
+                        cleanId,
                         d.StudentId,
                         d.StudentName,
                         d.ExamTitle,
@@ -1139,7 +1142,7 @@ public class DevicesViewModel : BaseViewModel, IRefreshable
                         d.BatteryLevel,
                         d.IsOnline,
                         d.DeviceName,
-                        d.IpAddress
+                        cleanIp
                     ));
                 }
                 Total = list.Count;
@@ -2851,13 +2854,21 @@ public class NotificationsViewModel : BaseViewModel, IRefreshable
     }
 
     public ObservableCollection<NotificationItem> Items { get; } = [];
-    public int UnreadCount => Items.Count;
+    
+    private int _unreadCount;
+    public int UnreadCount { get => _unreadCount; set => Set(ref _unreadCount, value); }
+    
     public Task LoadAsync() => Task.CompletedTask;
+
+    public void MarkAsRead()
+    {
+        UnreadCount = 0;
+    }
 
     public RelayCommand ClearAllCommand => new(() =>
     {
         Items.Clear();
-        OnPropertyChanged(nameof(UnreadCount));
+        UnreadCount = 0;
     });
 
     public void Add(NotificationItem item)
@@ -2867,7 +2878,7 @@ public class NotificationsViewModel : BaseViewModel, IRefreshable
             Items.Insert(0, item);
             if (Items.Count > 100)
                 Items.RemoveAt(Items.Count - 1);
-            OnPropertyChanged(nameof(UnreadCount));
+            UnreadCount++;
         });
     }
 }

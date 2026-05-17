@@ -124,9 +124,16 @@ public class MainViewModel : BaseViewModel
             Settings.ApplyThemeCommand.Execute(null);
             ThemeChanged?.Invoke();
         });
-        OpenNotificationsCommand = new RelayCommand(() => Navigate("Notifications"));
+        OpenNotificationsCommand = new RelayCommand(() =>
+        {
+            Notifications.MarkAsRead();
+            Navigate("Notifications");
+        });
 
-        Notifications.Items.CollectionChanged += (s, e) => OnPropertyChanged(nameof(NotificationCount));
+        Notifications.PropertyChanged += (s, e) => {
+            if (e.PropertyName == nameof(NotificationsViewModel.UnreadCount))
+                OnPropertyChanged(nameof(NotificationCount));
+        };
 
         List<StudentStatusDto>? lastStudentStatuses = null;
 
@@ -227,7 +234,7 @@ public class MainViewModel : BaseViewModel
                     LiveMetricIcon = "\uE839"; // Network icon
                     break;
                 case 1: // Active connections
-                    LiveMetricText = $"Connected Students: {Dashboard.ActiveCount + Dashboard.SubmittedCount}";
+                    LiveMetricText = $"Connected Nodes: {Devices.Online}";
                     LiveMetricIcon = "\uE716"; // People icon
                     break;
                 case 2: // Submissions

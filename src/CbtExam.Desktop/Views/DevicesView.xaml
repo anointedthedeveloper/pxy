@@ -101,206 +101,196 @@
                             <ColumnDefinition Width="1.5*"/>
                             <ColumnDefinition Width="1.2*"/>
                             <ColumnDefinition Width="1.2*"/>
-                            <ColumnDefinition Width="90"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="DEVICE (ID / IP / BROWSER)" Margin="24,0,0,0" VerticalAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
                         <TextBlock Grid.Column="1" Text="CANDIDATE (NAME / ID)" VerticalAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
                         <TextBlock Grid.Column="2" Text="EXAM SESSION" VerticalAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
                         <TextBlock Grid.Column="3" Text="EXAM STATUS" VerticalAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
                         <TextBlock Grid.Column="4" Text="CONNECTION" VerticalAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                        <TextBlock Grid.Column="5" Text="BATTERY" VerticalAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Grid>
                 </Border>
                 
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                    <Grid>
-                        <!-- Grid of Devices -->
-                        <ItemsControl ItemsSource="{Binding Devices}" Visibility="{Binding HasDevices, Converter={StaticResource BoolToVis}}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Background="Transparent">
-                                        <Grid Height="66">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="1.5*"/>
-                                                <ColumnDefinition Width="1.5*"/>
-                                                <ColumnDefinition Width="1.5*"/>
-                                                <ColumnDefinition Width="1.2*"/>
-                                                <ColumnDefinition Width="1.2*"/>
-                                                <ColumnDefinition Width="90"/>
-                                            </Grid.ColumnDefinitions>
-                                            
-                                            <!-- DEVICE -->
-                                            <StackPanel Orientation="Horizontal" Margin="24,0,0,0" VerticalAlignment="Center">
-                                                <Border Width="40" Height="40" CornerRadius="12" Background="{DynamicResource NavActiveBrush}" Margin="0,0,14,0">
-                                                    <TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="{DynamicResource AccentBrush}"
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                                                        <TextBlock Text="{Binding DeviceName, TargetNullValue='CBT Node'}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                                        <TextBlock Text=" · " FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                                        <TextBlock Text="{Binding IpAddress, TargetNullValue='unknown'}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                                    </StackPanel>
+                <Grid Grid.Row="1">
+                    <!-- Virtualized List of Devices -->
+                    <ListBox ItemsSource="{Binding Devices}" 
+                             Visibility="{Binding HasDevices, Converter={StaticResource BoolToVis}}"
+                             Background="Transparent" BorderThickness="0"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ScrollViewer.CanContentScroll="True"
+                             VirtualizingStackPanel.IsVirtualizing="True"
+                             VirtualizingStackPanel.VirtualizationMode="Recycling"
+                             HorizontalContentAlignment="Stretch">
+                        
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="Margin" Value="0"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <ContentPresenter />
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Background="Transparent">
+                                    <Grid Height="66">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="1.5*"/>
+                                            <ColumnDefinition Width="1.5*"/>
+                                            <ColumnDefinition Width="1.5*"/>
+                                            <ColumnDefinition Width="1.2*"/>
+                                            <ColumnDefinition Width="1.2*"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <!-- DEVICE -->
+                                        <StackPanel Orientation="Horizontal" Margin="24,0,10,0" VerticalAlignment="Center">
+                                            <Border Width="40" Height="40" CornerRadius="12" Background="{DynamicResource NavActiveBrush}" Margin="0,0,14,0">
+                                                <TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="{DynamicResource AccentBrush}"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <StackPanel VerticalAlignment="Center" MaxWidth="160">
+                                                <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                    <TextBlock Text="{Binding DeviceName, TargetNullValue='CBT Node'}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" MaxWidth="60" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text=" · " FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                    <TextBlock Text="{Binding IpAddress, TargetNullValue='unknown'}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" MaxWidth="80" TextTrimming="CharacterEllipsis"/>
                                                 </StackPanel>
                                             </StackPanel>
- 
-                                            <!-- CANDIDATE -->
-                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding StudentName}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                                <TextBlock Text="{Binding StudentId}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0" FontFamily="Consolas"/>
-                                            </StackPanel>
-                                            
-                                            <!-- EXAM -->
-                                            <TextBlock Grid.Column="2" Text="{Binding ExamTitle}" VerticalAlignment="Center" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" MaxWidth="170" HorizontalAlignment="Left"/>
-                                            
-                                            <!-- EXAM STATUS -->
-                                            <Grid Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Left">
-                                                <Border CornerRadius="8" Padding="10,4" BorderThickness="1">
-                                                    <Border.Style>
-                                                        <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="#F1F5F9"/>
-                                                            <Setter Property="BorderBrush" Value="#E2E8F0"/>
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding ExamStatus}" Value="Selecting Exam">
-                                                                    <Setter Property="Background" Value="#E0F2FE"/>
-                                                                    <Setter Property="BorderBrush" Value="#BAE6FD"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding ExamStatus}" Value="Waiting Room">
-                                                                    <Setter Property="Background" Value="#FEF3C7"/>
-                                                                    <Setter Property="BorderBrush" Value="#FDE68A"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding ExamStatus}" Value="Examining">
-                                                                    <Setter Property="Background" Value="#DCFCE7"/>
-                                                                    <Setter Property="BorderBrush" Value="#BBF7D0"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding ExamStatus}" Value="Submitted">
-                                                                    <Setter Property="Background" Value="#F3E8FF"/>
-                                                                    <Setter Property="BorderBrush" Value="#E9D5FF"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Border.Style>
-                                                    
-                                                    <TextBlock Text="{Binding ExamStatus}" FontSize="11" FontWeight="Bold">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
-                                                                <Setter Property="Foreground" Value="#64748B"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding ExamStatus}" Value="Selecting Exam">
-                                                                        <Setter Property="Foreground" Value="#0369A1"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding ExamStatus}" Value="Waiting Room">
-                                                                        <Setter Property="Foreground" Value="#B45309"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding ExamStatus}" Value="Examining">
-                                                                        <Setter Property="Foreground" Value="#15803D"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding ExamStatus}" Value="Submitted">
-                                                                        <Setter Property="Foreground" Value="#6B21A8"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
-                                                </Border>
-                                            </Grid>
-                                            
-                                            <!-- CONNECTION STATUS -->
-                                            <Border Grid.Column="4" CornerRadius="12" Padding="12,5" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                        </StackPanel>
+
+                                        <!-- CANDIDATE -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,10,0">
+                                            <TextBlock Text="{Binding StudentName}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text="{Binding StudentId}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0" FontFamily="Consolas" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                        
+                                        <!-- EXAM -->
+                                        <TextBlock Grid.Column="2" Text="{Binding ExamTitle}" VerticalAlignment="Center" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" Margin="0,0,10,0"/>
+                                        
+                                        <!-- EXAM STATUS -->
+                                        <Grid Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Left">
+                                            <Border CornerRadius="8" Padding="10,4" BorderThickness="1">
                                                 <Border.Style>
                                                     <Style TargetType="Border">
-                                                        <Setter Property="Background" Value="#FEF2F2"/>
-                                                        <Setter Property="BorderBrush" Value="#FCA5A5"/>
-                                                        <Setter Property="BorderThickness" Value="1"/>
+                                                        <Setter Property="Background" Value="#F1F5F9"/>
+                                                        <Setter Property="BorderBrush" Value="#E2E8F0"/>
                                                         <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Status}" Value="Connected">
-                                                                <Setter Property="Background" Value="#E6F4EA"/>
-                                                                <Setter Property="BorderBrush" Value="#A3E2D7"/>
-                                                                <Setter Property="BorderThickness" Value="1"/>
+                                                            <DataTrigger Binding="{Binding ExamStatus}" Value="Selecting Exam">
+                                                                <Setter Property="Background" Value="#E0F2FE"/>
+                                                                <Setter Property="BorderBrush" Value="#BAE6FD"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding ExamStatus}" Value="Waiting Room">
+                                                                <Setter Property="Background" Value="#FEF3C7"/>
+                                                                <Setter Property="BorderBrush" Value="#FDE68A"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding ExamStatus}" Value="Examining">
+                                                                <Setter Property="Background" Value="#DCFCE7"/>
+                                                                <Setter Property="BorderBrush" Value="#BBF7D0"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding ExamStatus}" Value="Submitted">
+                                                                <Setter Property="Background" Value="#F3E8FF"/>
+                                                                <Setter Property="BorderBrush" Value="#E9D5FF"/>
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
                                                 </Border.Style>
-                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <Ellipse Width="6" Height="6" Margin="0,0,6,0" VerticalAlignment="Center">
-                                                        <Ellipse.Style>
-                                                            <Style TargetType="Ellipse">
-                                                                <Setter Property="Fill" Value="#EF4444"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Status}" Value="Connected">
-                                                                        <Setter Property="Fill" Value="#137333"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Ellipse.Style>
-                                                    </Ellipse>
-                                                    <TextBlock Text="{Binding Status}" FontSize="11" FontWeight="Bold">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
-                                                                <Setter Property="Foreground" Value="#EF4444"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Status}" Value="Connected">
-                                                                        <Setter Property="Foreground" Value="#137333"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
-                                                </StackPanel>
-                                            </Border>
- 
-                                            <!-- BATTERY -->
-                                            <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center">
-                                                <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="18" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                
+                                                <TextBlock Text="{Binding ExamStatus}" FontSize="11" FontWeight="Bold">
                                                     <TextBlock.Style>
                                                         <Style TargetType="TextBlock">
-                                                            <Setter Property="Text" Value="&#xEBB0;"/>
-                                                            <Setter Property="Foreground" Value="#10B981"/>
+                                                            <Setter Property="Foreground" Value="#64748B"/>
                                                             <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding Battery, Converter={StaticResource LessThanConv}, ConverterParameter=20}" Value="True">
-                                                                    <Setter Property="Foreground" Value="#EF4444"/>
-                                                                    <Setter Property="Text" Value="&#xEBAE;"/>
-                                                                    <DataTrigger.EnterActions>
-                                                                        <BeginStoryboard x:Name="FlashLowBattery">
-                                                                            <Storyboard RepeatBehavior="Forever" AutoReverse="True">
-                                                                                <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1.0" To="0.2" Duration="0:0:0.6"/>
-                                                                            </Storyboard>
-                                                                        </BeginStoryboard>
-                                                                    </DataTrigger.EnterActions>
-                                                                    <DataTrigger.ExitActions>
-                                                                        <StopStoryboard BeginStoryboardName="FlashLowBattery"/>
-                                                                    </DataTrigger.ExitActions>
+                                                                <DataTrigger Binding="{Binding ExamStatus}" Value="Selecting Exam">
+                                                                    <Setter Property="Foreground" Value="#0369A1"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding ExamStatus}" Value="Waiting Room">
+                                                                    <Setter Property="Foreground" Value="#B45309"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding ExamStatus}" Value="Examining">
+                                                                    <Setter Property="Foreground" Value="#15803D"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding ExamStatus}" Value="Submitted">
+                                                                    <Setter Property="Foreground" Value="#6B21A8"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </TextBlock.Style>
                                                 </TextBlock>
-                                                <TextBlock Text="{Binding Battery, StringFormat='{}{0}%'}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                                            </StackPanel>
+                                            </Border>
                                         </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        
-                        <!-- Empty State Panel -->
-                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="48"
-                                    Visibility="{Binding HasDevices, Converter={StaticResource BoolToVisInverse}}">
-                            <Grid HorizontalAlignment="Center" Margin="0,0,0,20">
-                                <Ellipse Width="80" Height="80" Fill="#F8FAFC"/>
-                                <TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets" FontSize="40" Foreground="#94A3B8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                <TextBlock Text="&#xE701;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,12,12,0">
-                                    <TextBlock.RenderTransform>
-                                        <TranslateTransform X="5" Y="-5"/>
-                                    </TextBlock.RenderTransform>
-                                </TextBlock>
-                            </Grid>
-                            <TextBlock Text="Scanning for local station nodes..." FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
-                            <TextBlock Text="Devices connecting to your local network server IP will automatically register here in real time." FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,8,0,0" TextAlignment="Center" MaxWidth="380" TextWrapping="Wrap"/>
-                        </StackPanel>
-                    </Grid>
-                </ScrollViewer>
+                                        
+                                        <!-- CONNECTION STATUS -->
+                                        <Border Grid.Column="4" CornerRadius="12" Padding="12,5" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#FEF2F2"/>
+                                                    <Setter Property="BorderBrush" Value="#FCA5A5"/>
+                                                    <Setter Property="BorderThickness" Value="1"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Connected">
+                                                            <Setter Property="Background" Value="#E6F4EA"/>
+                                                            <Setter Property="BorderBrush" Value="#A3E2D7"/>
+                                                            <Setter Property="BorderThickness" Value="1"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Ellipse Width="6" Height="6" Margin="0,0,6,0" VerticalAlignment="Center">
+                                                    <Ellipse.Style>
+                                                        <Style TargetType="Ellipse">
+                                                            <Setter Property="Fill" Value="#EF4444"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Status}" Value="Connected">
+                                                                    <Setter Property="Fill" Value="#137333"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Ellipse.Style>
+                                                </Ellipse>
+                                                <TextBlock Text="{Binding Status}" FontSize="11" FontWeight="Bold">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="#EF4444"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Status}" Value="Connected">
+                                                                    <Setter Property="Foreground" Value="#137333"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    
+                    <!-- Empty State Panel -->
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="48"
+                                Visibility="{Binding HasDevices, Converter={StaticResource BoolToVisInverse}}">
+                        <Grid HorizontalAlignment="Center" Margin="0,0,0,20">
+                            <Ellipse Width="80" Height="80" Fill="#F8FAFC"/>
+                            <TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets" FontSize="40" Foreground="#94A3B8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Text="&#xE701;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,12,12,0">
+                                <TextBlock.RenderTransform>
+                                    <TranslateTransform X="5" Y="-5"/>
+                                </TextBlock.RenderTransform>
+                            </TextBlock>
+                        </Grid>
+                        <TextBlock Text="Scanning for local station nodes..." FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Devices connecting to your local network server IP will automatically register here in real time." FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,8,0,0" TextAlignment="Center" MaxWidth="380" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Grid>
             </Grid>
         </Border>
     </Grid>
