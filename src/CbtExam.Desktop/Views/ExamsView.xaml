@@ -53,7 +53,7 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="26,0,26,26">
                         
-                        <!-- Create/Edit Form (Wizard) -->
+                        <!-- Create/Edit Form (Unified Single-Screen Form) -->
                         <Border Visibility="{Binding ShowCreateForm, Converter={StaticResource BoolToVis}}"
                                 Background="{DynamicResource CardBrush}" CornerRadius="16" BorderBrush="#E2E8F0"
                                 BorderThickness="1" Margin="0,0,0,20">
@@ -63,19 +63,17 @@
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/> <!-- Header -->
-                                    <RowDefinition Height="*"/>    <!-- Steps -->
-                                    <RowDefinition Height="Auto"/> <!-- Sticky-like Footer -->
+                                    <RowDefinition Height="*"/>    <!-- Content -->
+                                    <RowDefinition Height="Auto"/> <!-- Footer -->
                                 </Grid.RowDefinitions>
 
                                 <!-- Form Header & Close -->
-                                <Border Background="#F8FAFC" CornerRadius="16,16,0,0" Padding="24,18" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+                                <Border Background="#F8FAFC" CornerRadius="16,16,0,0" Padding="24,16" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
                                     <Grid>
-                                        <StackPanel Orientation="Horizontal">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding FormTitle}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                                            <Border Margin="16,0,0,0" Background="#E2E8F0" CornerRadius="12" Padding="12,4" VerticalAlignment="Center">
-                                                <TextBlock FontSize="11" FontWeight="Bold" Foreground="#475569">
-                                                    Step <Run Text="{Binding CurrentStep}"/> of 3
-                                                </TextBlock>
+                                            <Border Margin="16,0,0,0" Background="#ECFDF5" CornerRadius="8" Padding="10,4" VerticalAlignment="Center">
+                                                <TextBlock FontSize="11" FontWeight="Bold" Foreground="#047857">Unified Builder</TextBlock>
                                             </Border>
                                         </StackPanel>
                                         <Button HorizontalAlignment="Right" Command="{Binding ToggleCreateCommand}"
@@ -86,64 +84,49 @@
                                     </Grid>
                                 </Border>
 
-                                <!-- Steps Container -->
+                                <!-- Content Container -->
                                 <Border Grid.Row="1" Padding="24">
-                                    <Grid MinHeight="300">
-                                        
-                                        <!-- Step 1: General Info -->
-                                        <StackPanel Visibility="{Binding IsStep1, Converter={StaticResource BoolToVis}}">
-                                            <TextBlock Text="General Information" FontSize="16" FontWeight="Bold" Margin="0,0,0,4"/>
-                                            <TextBlock Text="Set the basic identity and timing for this exam template." FontSize="13" Foreground="#64748B" Margin="0,0,0,24"/>
-
-                                            <!-- Metadata Grid (Exam Name & Category) -->
-                                            <Grid Margin="0,0,0,20">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="2*"/>
-                                                    <ColumnDefinition Width="1*"/>
-                                                </Grid.ColumnDefinitions>
-                                                <StackPanel Margin="0,0,16,0">
-                                                    <TextBlock Text="Exam Name *" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
-                                                    <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="12" Padding="12,10">
-                                                        <Grid>
-                                                            <TextBox x:Name="TitleInput" Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" Padding="0" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                                            <TextBlock Text="e.g. JAMB Mock Exam 2026" FontSize="14" Foreground="#94A3B8" IsHitTestVisible="False" VerticalAlignment="Center"
-                                                                       Visibility="{Binding Title, Converter={StaticResource EmptyStringToVis}}"/>
-                                                        </Grid>
-                                                    </Border>
-                                                </StackPanel>
-                                                <StackPanel Grid.Column="1">
-                                                    <TextBlock Text="Category / Tag (Optional)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
-                                                    <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="12" Padding="12,10">
-                                                        <Grid>
-                                                            <TextBox Text="{Binding Category, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" Padding="0" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                                            <TextBlock Text="e.g. Mock, Mid-Term" FontSize="14" Foreground="#94A3B8" IsHitTestVisible="False" VerticalAlignment="Center"
-                                                                       Visibility="{Binding Category, Converter={StaticResource EmptyStringToVis}}"/>
-                                                        </Grid>
-                                                    </Border>
-                                                </StackPanel>
-                                            </Grid>
-
-                                            <!-- Timing Control (Duration Input & Quick-Select Badges) -->
-                                            <StackPanel Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <!-- General Settings (Exam Name & Duration side-by-side) -->
+                                        <Grid Margin="0,0,0,20">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="3*"/>
+                                                <ColumnDefinition Width="2*"/>
+                                            </Grid.ColumnDefinitions>
+                                            
+                                            <!-- Exam Name -->
+                                            <StackPanel Margin="0,0,20,0">
+                                                <TextBlock Text="Exam Name *" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                                                <Border Height="40" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="12,0">
+                                                    <Grid>
+                                                        <TextBox x:Name="TitleInput" Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" Padding="0" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="e.g. JAMB Mock Exam 2026" FontSize="13" Foreground="#94A3B8" IsHitTestVisible="False" VerticalAlignment="Center"
+                                                                   Visibility="{Binding Title, Converter={StaticResource EmptyStringToVis}}"/>
+                                                    </Grid>
+                                                </Border>
+                                            </StackPanel>
+                                            
+                                            <!-- Duration -->
+                                            <StackPanel Grid.Column="1">
                                                 <TextBlock Text="Duration (minutes) *" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <!-- Duration Input Box -->
-                                                    <Border Width="120" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="12" Padding="12,10">
-                                                        <TextBox Text="{Binding Duration, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" Padding="0" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalContentAlignment="Center"/>
+                                                    <!-- Compact Input -->
+                                                    <Border Width="70" Height="40" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="8,0">
+                                                        <TextBox Text="{Binding Duration, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" Padding="0" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalContentAlignment="Center" VerticalAlignment="Center"/>
                                                     </Border>
                                                     
-                                                    <!-- Quick-Select Pill Badges -->
-                                                    <StackPanel Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
+                                                    <!-- Compact Duration Badges -->
+                                                    <StackPanel Orientation="Horizontal" Margin="10,0,0,0" VerticalAlignment="Center">
                                                         <StackPanel.Resources>
                                                             <Style x:Key="DurationBadgeBtn" TargetType="Button">
-                                                                <Setter Property="Padding" Value="16,8"/>
-                                                                <Setter Property="FontSize" Value="12"/>
+                                                                <Setter Property="Padding" Value="10,6"/>
+                                                                <Setter Property="FontSize" Value="11"/>
                                                                 <Setter Property="FontWeight" Value="SemiBold"/>
                                                                 <Setter Property="Cursor" Value="Hand"/>
                                                                 <Setter Property="Template">
                                                                     <Setter.Value>
                                                                         <ControlTemplate TargetType="Button">
-                                                                            <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="16" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                                                                            <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="12" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
                                                                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                                             </Border>
                                                                             <ControlTemplate.Triggers>
@@ -157,7 +140,7 @@
                                                             </Style>
                                                         </StackPanel.Resources>
                                                         
-                                                        <Button Command="{Binding SetDuration30}" Margin="0,0,8,0">
+                                                        <Button Command="{Binding SetDuration30}" Margin="0,0,5,0">
                                                             <Button.Style>
                                                                 <Style TargetType="Button" BasedOn="{StaticResource DurationBadgeBtn}">
                                                                     <Setter Property="Background" Value="#F1F5F9"/>
@@ -173,7 +156,7 @@
                                                             30m
                                                         </Button>
                                                         
-                                                        <Button Command="{Binding SetDuration45}" Margin="0,0,8,0">
+                                                        <Button Command="{Binding SetDuration45}" Margin="0,0,5,0">
                                                             <Button.Style>
                                                                 <Style TargetType="Button" BasedOn="{StaticResource DurationBadgeBtn}">
                                                                     <Setter Property="Background" Value="#F1F5F9"/>
@@ -189,7 +172,7 @@
                                                             45m
                                                         </Button>
                                                         
-                                                        <Button Command="{Binding SetDuration60}" Margin="0,0,8,0">
+                                                        <Button Command="{Binding SetDuration60}" Margin="0,0,5,0">
                                                             <Button.Style>
                                                                 <Style TargetType="Button" BasedOn="{StaticResource DurationBadgeBtn}">
                                                                     <Setter Property="Background" Value="#F1F5F9"/>
@@ -205,7 +188,7 @@
                                                             60m
                                                         </Button>
                                                         
-                                                        <Button Command="{Binding SetDuration90}" Margin="0,0,8,0">
+                                                        <Button Command="{Binding SetDuration90}" Margin="0,0,5,0">
                                                             <Button.Style>
                                                                 <Style TargetType="Button" BasedOn="{StaticResource DurationBadgeBtn}">
                                                                     <Setter Property="Background" Value="#F1F5F9"/>
@@ -239,17 +222,19 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </StackPanel>
-                                        </StackPanel>
+                                        </Grid>
 
-                                        <!-- Step 2: Subject Selection -->
-                                        <StackPanel Visibility="{Binding IsStep2, Converter={StaticResource BoolToVis}}">
-                                            <Grid Margin="0,0,0,20">
+                                        <!-- Subject Configuration Title & Add Button -->
+                                        <Border BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="0,16,0,0" Margin="0,0,0,16">
+                                            <Grid>
                                                 <StackPanel>
-                                                    <TextBlock Text="Subject Configuration" FontSize="16" FontWeight="Bold" Margin="0,0,0,4"/>
-                                                    <TextBlock Text="Configure question pooling per subject and year." FontSize="13" Foreground="#64748B"/>
+                                                    <TextBlock Text="Subject Configuration" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                    <TextBlock Text="Add subjects and configure question pooling per subject and source year." FontSize="12" Foreground="#64748B" Margin="0,2,0,0"/>
                                                 </StackPanel>
+                                                
+                                                <!-- Add Subject Button -->
                                                 <Button HorizontalAlignment="Right" Command="{Binding AddSubjectCommand}"
-                                                        Style="{StaticResource PrimaryBtn}" Background="#047857" Padding="14,8"
+                                                        Style="{StaticResource PrimaryBtn}" Background="#047857" Padding="12,6"
                                                         IsEnabled="{Binding CanAddSubject}"
                                                         ToolTip="Left click for single, Right click for batch selection">
                                                     <Button.ContextMenu>
@@ -270,217 +255,166 @@
                                                         </ContextMenu>
                                                     </Button.ContextMenu>
                                                     <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="+" FontSize="14" Margin="0,0,6,0"/>
-                                                        <TextBlock Text="Add Subject" FontSize="12"/>
+                                                        <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Add Subject" FontSize="11" VerticalAlignment="Center"/>
                                                     </StackPanel>
                                                 </Button>
                                             </Grid>
+                                        </Border>
 
-                                            <!-- Subject Rows -->
-                                            <ItemsControl ItemsSource="{Binding SubjectConfigs}">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate DataType="{x:Type vm:ExamSubjectConfigVM}">
-                                                        <Border Background="#F8FAFC" CornerRadius="12" Padding="20" Margin="0,0,0,16" BorderBrush="#E2E8F0" BorderThickness="1">
-                                                            <Grid>
-                                                                <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="Auto"/> <!-- Handle -->
-                                                                    <ColumnDefinition Width="*"/>
-                                                                    <ColumnDefinition Width="Auto"/> <!-- Remove -->
-                                                                </Grid.ColumnDefinitions>
-
-                                                                <!-- Drag Handle -->
-                                                                <TextBlock Text="&#xE700;" FontFamily="Segoe MDL2 Assets" Foreground="#CBD5E1" 
-                                                                           FontSize="18" VerticalAlignment="Center" Margin="0,0,16,0" Cursor="SizeAll"
-                                                                           ToolTip="Drag to reorder (Coming soon)"/>
-
-                                                                <StackPanel Grid.Column="1">
-                                                                    <Grid Margin="0,0,0,16">
-                                                                        <Grid.ColumnDefinitions>
-                                                                            <ColumnDefinition Width="2*"/>
-                                                                            <ColumnDefinition Width="1*"/>
-                                                                        </Grid.ColumnDefinitions>
-                                                                        <StackPanel Margin="0,0,16,0">
-                                                                            <TextBlock Text="Select Subject" FontSize="11" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,6"/>
-                                                                            <ComboBox ItemsSource="{Binding AvailableSubjects}" SelectedItem="{Binding SelectedSubject}" Padding="10,8"/>
+                                        <!-- Subject Rows (Compact, Premium Cards) -->
+                                        <ItemsControl ItemsSource="{Binding SubjectConfigs}" Margin="0,0,0,12">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="{x:Type vm:ExamSubjectConfigVM}">
+                                                    <Border Background="#F8FAFC" CornerRadius="12" Padding="16,14" Margin="0,0,0,12" BorderBrush="#E2E8F0" BorderThickness="1">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/> <!-- Remove button -->
+                                                            </Grid.ColumnDefinitions>
+                                                            
+                                                            <StackPanel>
+                                                                <!-- Subject & Questions Grid -->
+                                                                <Grid Margin="0,0,0,10">
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="2*"/>
+                                                                        <ColumnDefinition Width="1*"/>
+                                                                    </Grid.ColumnDefinitions>
+                                                                    
+                                                                    <!-- Subject Dropdown -->
+                                                                    <StackPanel Margin="0,0,12,0">
+                                                                        <TextBlock Text="Select Subject" FontSize="11" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,4"/>
+                                                                        <ComboBox ItemsSource="{Binding AvailableSubjects}" SelectedItem="{Binding SelectedSubject}" Height="36" Padding="8,4"/>
+                                                                    </StackPanel>
+                                                                    
+                                                                    <!-- Questions Count -->
+                                                                    <StackPanel Grid.Column="1">
+                                                                        <TextBlock Text="Questions to Pick" FontSize="11" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,4"/>
+                                                                        <Border Height="36" CornerRadius="8" BorderThickness="1">
+                                                                            <Border.Style>
+                                                                                <Style TargetType="Border">
+                                                                                    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                                                                                    <Setter Property="Background" Value="White"/>
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding HasPoolWarning}" Value="True">
+                                                                                            <Setter Property="BorderBrush" Value="#EF4444"/>
+                                                                                            <Setter Property="Background" Value="#FFF5F5"/>
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </Border.Style>
+                                                                            <TextBox Text="{Binding QuestionCount, UpdateSourceTrigger=PropertyChanged}" Background="Transparent" BorderThickness="0" Padding="8,0" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" HorizontalContentAlignment="Center"/>
+                                                                        </Border>
+                                                                    </StackPanel>
+                                                                </Grid>
+                                                                
+                                                                <!-- Years Selector -->
+                                                                <StackPanel Visibility="{Binding AvailableYears.Count, Converter={StaticResource IntToVis}}">
+                                                                    <Grid Margin="0,0,0,6">
+                                                                        <StackPanel Orientation="Horizontal">
+                                                                            <TextBlock Text="Source Years" FontSize="11" FontWeight="SemiBold" Foreground="#64748B" VerticalAlignment="Center"/>
+                                                                            <Border Background="#EFF6FF" CornerRadius="8" Padding="6,1" Margin="8,0,0,0">
+                                                                                <TextBlock FontSize="10" FontWeight="Bold" Foreground="#2563EB">
+                                                                                    Pool: <Run Text="{Binding PoolSize, Mode=OneWay}"/> Qs
+                                                                                </TextBlock>
+                                                                            </Border>
                                                                         </StackPanel>
-                                                                        <StackPanel Grid.Column="1">
-                                                                            <TextBlock Text="Questions to Pick" FontSize="11" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,6"/>
-                                                                            <TextBox Text="{Binding QuestionCount, UpdateSourceTrigger=PropertyChanged}" Padding="10,8" FontSize="14" FontWeight="Bold">
-                                                                                <TextBox.Style>
-                                                                                    <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
-                                                                                        <Style.Triggers>
-                                                                                            <DataTrigger Binding="{Binding HasPoolWarning}" Value="True">
-                                                                                                <Setter Property="BorderBrush" Value="#EF4444"/>
-                                                                                                <Setter Property="Background" Value="#FFF5F5"/>
-                                                                                            </DataTrigger>
-                                                                                        </Style.Triggers>
-                                                                                    </Style>
-                                                                                </TextBox.Style>
-                                                                            </TextBox>
+                                                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                                            <Button Content="All" Command="{Binding SelectAllYearsCommand}" Style="{StaticResource PrimaryBtn}" Background="Transparent" Foreground="#2563EB" BorderThickness="0" Padding="6,0" FontSize="9"/>
+                                                                            <Button Content="None" Command="{Binding DeselectAllYearsCommand}" Style="{StaticResource PrimaryBtn}" Background="Transparent" Foreground="#64748B" BorderThickness="0" Padding="6,0" FontSize="9"/>
                                                                         </StackPanel>
                                                                     </Grid>
-
-                                                                    <!-- Years Selection (Chips) -->
-                                                                    <StackPanel Visibility="{Binding AvailableYears.Count, Converter={StaticResource IntToVis}}">
-                                                                        <Grid Margin="0,0,0,8">
-                                                                            <StackPanel Orientation="Horizontal">
-                                                                                <TextBlock Text="Source Years" FontSize="11" FontWeight="SemiBold" Foreground="#64748B" VerticalAlignment="Center"/>
-                                                                                <Border Background="#EFF6FF" CornerRadius="10" Padding="8,2" Margin="10,0,0,0">
-                                                                                    <TextBlock FontSize="10" FontWeight="Bold" Foreground="#2563EB">
-                                                                                        Pool Size: <Run Text="{Binding PoolSize, Mode=OneWay}"/> Qs
-                                                                                    </TextBlock>
-                                                                                </Border>
-                                                                            </StackPanel>
-                                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                                                                <Button Content="All" Command="{Binding SelectAllYearsCommand}" Style="{StaticResource PrimaryBtn}" Background="Transparent" Foreground="#2563EB" BorderThickness="0" Padding="8,0" FontSize="10"/>
-                                                                                <Button Content="None" Command="{Binding DeselectAllYearsCommand}" Style="{StaticResource PrimaryBtn}" Background="Transparent" Foreground="#64748B" BorderThickness="0" Padding="8,0" FontSize="10"/>
-                                                                            </StackPanel>
-                                                                        </Grid>
-                                                                        
-                                                                        <ItemsControl ItemsSource="{Binding AvailableYears}">
-                                                                            <ItemsControl.ItemsPanel>
-                                                                                <ItemsPanelTemplate>
-                                                                                    <WrapPanel/>
-                                                                                </ItemsPanelTemplate>
-                                                                            </ItemsControl.ItemsPanel>
-                                                                            <ItemsControl.ItemTemplate>
-                                                                                <DataTemplate DataType="{x:Type vm:YearToggle}">
-                                                                                    <Button Command="{Binding DataContext.ToggleYearCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                                                            CommandParameter="{Binding}"
-                                                                                            Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,6,6">
-                                                                                        <Border CornerRadius="8" Padding="12,6" Cursor="Hand">
-                                                                                            <Border.Style>
-                                                                                                <Style TargetType="Border">
-                                                                                                    <Setter Property="Background" Value="White"/>
-                                                                                                    <Setter Property="BorderBrush" Value="#CBD5E1"/>
-                                                                                                    <Setter Property="BorderThickness" Value="1"/>
+                                                                    
+                                                                    <ItemsControl ItemsSource="{Binding AvailableYears}">
+                                                                        <ItemsControl.ItemsPanel>
+                                                                            <ItemsPanelTemplate>
+                                                                                <WrapPanel/>
+                                                                            </ItemsPanelTemplate>
+                                                                        </ItemsControl.ItemsPanel>
+                                                                        <ItemsControl.ItemTemplate>
+                                                                            <DataTemplate DataType="{x:Type vm:YearToggle}">
+                                                                                <Button Command="{Binding DataContext.ToggleYearCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                                        CommandParameter="{Binding}"
+                                                                                        Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,4,4">
+                                                                                    <Border CornerRadius="6" Padding="8,4" Cursor="Hand">
+                                                                                        <Border.Style>
+                                                                                            <Style TargetType="Border">
+                                                                                                <Setter Property="Background" Value="White"/>
+                                                                                                <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                                                                                                <Setter Property="BorderThickness" Value="1"/>
+                                                                                                <Style.Triggers>
+                                                                                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                                                        <Setter Property="Background" Value="#ECFDF4"/>
+                                                                                                        <Setter Property="BorderBrush" Value="#10B981"/>
+                                                                                                    </DataTrigger>
+                                                                                                </Style.Triggers>
+                                                                                            </Style>
+                                                                                        </Border.Style>
+                                                                                        <TextBlock Text="{Binding Label}" FontSize="11">
+                                                                                            <TextBlock.Style>
+                                                                                                <Style TargetType="TextBlock">
+                                                                                                    <Setter Property="Foreground" Value="#64748B"/>
                                                                                                     <Style.Triggers>
                                                                                                         <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                                                                            <Setter Property="Background" Value="#ECFDF5"/>
-                                                                                                            <Setter Property="BorderBrush" Value="#10B981"/>
+                                                                                                            <Setter Property="Foreground" Value="#047857"/>
+                                                                                                            <Setter Property="FontWeight" Value="SemiBold"/>
                                                                                                         </DataTrigger>
                                                                                                     </Style.Triggers>
                                                                                                 </Style>
-                                                                                            </Border.Style>
-                                                                                            <TextBlock Text="{Binding Label}" FontSize="12">
-                                                                                                <TextBlock.Style>
-                                                                                                    <Style TargetType="TextBlock">
-                                                                                                        <Setter Property="Foreground" Value="#64748B"/>
-                                                                                                        <Style.Triggers>
-                                                                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                                                                                <Setter Property="Foreground" Value="#047857"/>
-                                                                                                                <Setter Property="FontWeight" Value="SemiBold"/>
-                                                                                                            </DataTrigger>
-                                                                                                        </Style.Triggers>
-                                                                                                    </Style>
-                                                                                                </TextBlock.Style>
-                                                                                            </TextBlock>
-                                                                                        </Border>
-                                                                                    </Button>
-                                                                                </DataTemplate>
-                                                                            </ItemsControl.ItemTemplate>
-                                                                        </ItemsControl>
-                                                                    </StackPanel>
-
-                                                                    <!-- Inventory Warning -->
-                                                                    <Border Background="#FEF2F2" BorderBrush="#FEE2E2" BorderThickness="1" CornerRadius="8" Padding="12,8" Margin="0,8,0,0"
-                                                                            Visibility="{Binding HasPoolWarning, Converter={StaticResource BoolToVis}}">
-                                                                        <StackPanel Orientation="Horizontal">
-                                                                            <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" Foreground="#DC2626" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                                                            <TextBlock Text="{Binding PoolWarningText}" Foreground="#991B1B" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                                                        </StackPanel>
-                                                                    </Border>
+                                                                                            </TextBlock.Style>
+                                                                                        </TextBlock>
+                                                                                    </Border>
+                                                                                </Button>
+                                                                            </DataTemplate>
+                                                                        </ItemsControl.ItemTemplate>
+                                                                    </ItemsControl>
                                                                 </StackPanel>
+                                                            </StackPanel>
+                                                            
+                                                            <!-- Remove row button -->
+                                                            <Button Grid.Column="1" Command="{Binding RemoveCommand}" VerticalAlignment="Center" Margin="12,0,0,0"
+                                                                    Style="{StaticResource PrimaryBtn}" Background="Transparent" Foreground="#94A3B8" Padding="6">
+                                                                <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="13"/>
+                                                            </Button>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
 
-                                                                <Button Grid.Column="1" Command="{Binding RemoveCommand}" VerticalAlignment="Top" Margin="16,0,0,0"
-                                                                        Style="{StaticResource PrimaryBtn}" Background="Transparent" Foreground="#94A3B8" Padding="6">
-                                                                    <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="14"/>
-                                                                </Button>
-                                                            </Grid>
-                                                        </Border>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-
-                                            <!-- Step 2 Summary -->
-                                            <Border Background="#F0FDF4" CornerRadius="12" Padding="20" Margin="0,4,0,0" BorderBrush="#DCFCE7" BorderThickness="1">
-                                                <Grid>
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <Border Background="#10B981" Width="40" Height="40" CornerRadius="20">
-                                                            <TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" Foreground="White" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                        </Border>
-                                                        <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
-                                                            <TextBlock Text="Ready to Generate" FontWeight="Bold" Foreground="#065F46" FontSize="14"/>
-                                                            <TextBlock FontSize="12" Foreground="#047857">
-                                                                <Run Text="{Binding TotalQuestions, Mode=OneWay}" FontWeight="Bold"/> total questions from <Run Text="{Binding TotalPoolSize, Mode=OneWay}"/> available pool.
-                                                            </TextBlock>
-                                                        </StackPanel>
-                                                    </StackPanel>
-                                                    <TextBlock Text="Warning: One or more subjects exceed bank count!" Foreground="#DC2626" FontSize="11" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center"
-                                                               Visibility="{Binding HasAnyPoolWarning, Converter={StaticResource BoolToVis}}"/>
-                                                </Grid>
-                                            </Border>
-                                        </StackPanel>
-
-                                        <!-- Step 3: Advanced Settings & Review -->
-                                        <StackPanel Visibility="{Binding IsStep3, Converter={StaticResource BoolToVis}}">
-                                            <TextBlock Text="Advanced Logic &amp; Review" FontSize="16" FontWeight="Bold" Margin="0,0,0,4"/>
-                                            <TextBlock Text="Finalize shuffling behavior and review the summary before creating." FontSize="13" Foreground="#64748B" Margin="0,0,0,20"/>
-
-                                            <Border Background="#F1F5F9" CornerRadius="12" Padding="20" Margin="0,0,0,20">
+                                        <!-- Shuffling Options -->
+                                        <Border BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="0,14,0,0" Margin="0,4,0,0">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                
                                                 <StackPanel>
-                                                    <TextBlock Text="Question Logic" FontWeight="Bold" Margin="0,0,0,12"/>
-                                                    <CheckBox IsChecked="{Binding ShuffleQuestions}" Margin="0,0,0,12">
-                                                        <StackPanel>
-                                                            <TextBlock Text="Shuffle Questions" FontWeight="SemiBold"/>
-                                                            <TextBlock Text="Questions will appear in a different random order for each student." FontSize="11" Foreground="#64748B"/>
-                                                        </StackPanel>
-                                                    </CheckBox>
-                                                    <CheckBox IsChecked="{Binding ShuffleOptions}">
-                                                        <StackPanel>
-                                                            <TextBlock Text="Shuffle Options" FontWeight="SemiBold"/>
-                                                            <TextBlock Text="The A, B, C, D choices will be randomized for each question." FontSize="11" Foreground="#64748B"/>
-                                                        </StackPanel>
-                                                    </CheckBox>
+                                                    <TextBlock Text="Shuffling Options" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                    <TextBlock Text="Configure random ordering of questions and choices." FontSize="11" Foreground="#64748B" Margin="0,2,0,0"/>
                                                 </StackPanel>
-                                            </Border>
-
-                                            <Border BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="20">
-                                                <StackPanel>
-                                                    <TextBlock Text="Summary Review" FontWeight="Bold" Margin="0,0,0,12"/>
-                                                    <Grid Margin="0,0,0,8">
-                                                        <TextBlock Text="Template Name:" Foreground="#64748B"/>
-                                                        <TextBlock Text="{Binding Title}" FontWeight="Bold" HorizontalAlignment="Right"/>
-                                                    </Grid>
-                                                    <Grid Margin="0,0,0,8">
-                                                        <TextBlock Text="Subjects:" Foreground="#64748B"/>
-                                                        <TextBlock Text="{Binding TotalSubjects}" FontWeight="Bold" HorizontalAlignment="Right"/>
-                                                    </Grid>
-                                                    <Grid Margin="0,0,0,8">
-                                                        <TextBlock Text="Total Questions:" Foreground="#64748B"/>
-                                                        <TextBlock Text="{Binding TotalQuestions}" FontWeight="Bold" HorizontalAlignment="Right"/>
-                                                    </Grid>
-                                                    <Grid>
-                                                        <TextBlock Text="Duration:" Foreground="#64748B"/>
-                                                        <TextBlock Text="{Binding Duration, StringFormat='{}{0} minutes'}" FontWeight="Bold" HorizontalAlignment="Right"/>
-                                                    </Grid>
-                                                    
-                                                    <Button Content="Preview Configuration" Style="{StaticResource PrimaryBtn}" 
-                                                            Background="#F1F5F9" Foreground="#475569" Margin="0,20,0,0" Padding="12,10"
-                                                            ToolTip="Show a summary of the exam structure"/>
+                                                
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <CheckBox IsChecked="{Binding ShuffleQuestions}" Content="Shuffle Questions" Margin="0,0,16,0" FontSize="12" FontWeight="SemiBold"/>
+                                                    <CheckBox IsChecked="{Binding ShuffleOptions}" Content="Shuffle Options" FontSize="12" FontWeight="SemiBold"/>
                                                 </StackPanel>
-                                            </Border>
-                                        </StackPanel>
-                                    </Grid>
+                                            </Grid>
+                                        </Border>
+                                    </StackPanel>
                                 </Border>
 
-                                <!-- Form Footer (Floating/Sticky Style) -->
-                                <Border Grid.Row="2" Background="#F8FAFC" CornerRadius="0,0,16,16" Padding="24,16" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0">
+                                <!-- Form Footer (Unified Save) -->
+                                <Border Grid.Row="2" Background="#F8FAFC" CornerRadius="0,0,16,16" Padding="24,14" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0">
                                     <Grid>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Button Command="{Binding PrevStepCommand}" Visibility="{Binding CanGoBack, Converter={StaticResource BoolToVis}}"
-                                                    Content="Previous" Style="{StaticResource PrimaryBtn}" Background="#F1F5F9" Foreground="#475569" Padding="20,10" Margin="0,0,12,0"/>
-                                            <TextBlock Text="{Binding CreateStatus}" VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <!-- Configuration Summary & Status -->
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding CreateStatus}" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,2">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
@@ -492,10 +426,21 @@
                                                     </Style>
                                                 </TextBlock.Style>
                                             </TextBlock>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="Summary: " FontSize="11" Foreground="#64748B"/>
+                                                <TextBlock FontSize="11" FontWeight="Bold" Foreground="#1E293B">
+                                                    <Run Text="{Binding TotalSubjects, Mode=OneWay}"/> Subject(s) | <Run Text="{Binding TotalQuestions, Mode=OneWay}"/> Question(s) | <Run Text="{Binding Duration, Mode=OneWay}"/> Min(s)
+                                                </TextBlock>
+                                            </StackPanel>
                                         </StackPanel>
-                                        <Button HorizontalAlignment="Right" Command="{Binding NextStepCommand}"
-                                                Style="{StaticResource PrimaryBtn}" Background="{DynamicResource AccentBrush}" Padding="30,10">
-                                            <TextBlock Text="{Binding NextButtonText}" FontSize="13" FontWeight="Bold"/>
+                                        
+                                        <!-- Save Button -->
+                                        <Button Grid.Column="1" Command="{Binding SaveCommand}"
+                                                Style="{StaticResource PrimaryBtn}" Background="{DynamicResource AccentBrush}" Padding="28,8" Height="36">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Save Configuration" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
+                                            </StackPanel>
                                         </Button>
                                     </Grid>
                                 </Border>

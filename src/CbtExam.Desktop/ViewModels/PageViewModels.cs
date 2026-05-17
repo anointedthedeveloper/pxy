@@ -581,6 +581,7 @@ public class ExamsViewModel(ApiClient api) : BaseViewModel, IRefreshable
         CreateStatus = string.Empty;
         if (ShowCreateForm) ClearForm();
     });
+    public RelayCommand SaveCommand => new(async () => await SaveTemplateAsync());
     public RelayCommand NextStepCommand => new(() =>
     {
         if (CurrentStep == 3) { _ = SaveTemplateAsync(); return; }
