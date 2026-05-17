@@ -130,6 +130,15 @@
                 <strong>Disclaimer:</strong> This application is a mock examination system created solely for the purpose of candidate preparation. It is NOT an official JAMB application and is not affiliated with, endorsed by, or connected to the Joint Admissions and Matriculation Board (JAMB) in any way.
             </div>
 
+            <!-- Connection Settings (Visible only on local file load or on demand) -->
+            <div id="connectionSettings" class="connection-box" style="display: none; margin-top: 20px; padding: 16px; border-radius: 12px; background: #f8fafc; border: 1.5px solid #e2e8f0; animation: fadeIn 0.4s ease-out;">
+                <label style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; display: block; margin-bottom: 8px; letter-spacing: 0.5px;">Server Connection IP</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="serverIpInput" value="localhost" style="flex: 1; height: 38px; font-size: 13px; padding: 0 12px; border-radius: 8px; border: 1.5px solid #cbd5e1; outline: none; transition: border-color 0.2s;" placeholder="e.g. 192.168.1.15" onfocus="this.style.borderColor='#16a34a'" onblur="this.style.borderColor='#cbd5e1'">
+                    <button type="button" onclick="saveServerIp()" style="background: #16a34a; color: white; border: none; font-size: 12px; padding: 0 16px; height: 38px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">Save</button>
+                </div>
+            </div>
+
             <footer class="workspace-footer" style="margin-top: 30px; padding-top: 20px; border-top: 1.5px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
                 <div class="copyright">© <span id="currentYear"></span> Anobyte Technologies</div>
             </footer>

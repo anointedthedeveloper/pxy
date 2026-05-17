@@ -1,10 +1,22 @@
-const API_BASE = '/api';
+// --- Dynamic API Base configuration ---
+let API_BASE = '/api';
 
-// --- Device fingerprinting and heartbeat locking ---
-let deviceId = localStorage.getItem('cbt_device_id');
-if (!deviceId) {
+// Auto-detect and fall back to saved Server IP if opened via file:// protocol
+if (window.location.protocol === 'file:') {
+    const savedServerIp = localStorage.getItem('cbt_server_ip') || 'localhost';
+    API_BASE = `http://${savedServerIp}:5000/api`;
+}
+
+// --- Device fingerprinting and heartbeat locking (wrapped in try-catch to prevent crashes in private modes) ---
+let deviceId = 'NODE-UNKNOWN';
+try {
+    deviceId = localStorage.getItem('cbt_device_id');
+    if (!deviceId) {
+        deviceId = 'NODE-' + Math.random().toString(36).substring(2, 11).toUpperCase();
+        localStorage.setItem('cbt_device_id', deviceId);
+    }
+} catch (e) {
     deviceId = 'NODE-' + Math.random().toString(36).substring(2, 11).toUpperCase();
-    localStorage.setItem('cbt_device_id', deviceId);
 }
 
 function getBrowserAndOS() {
@@ -61,6 +73,7 @@ async function runDeviceHeartbeat() {
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
     updateDynamicYear();
+    initConnectionSettings();
     
     // Check if we are on the selection page
     if (document.getElementById('examList')) {
@@ -73,6 +86,32 @@ document.addEventListener('DOMContentLoaded', () => {
     runDeviceHeartbeat();
     setInterval(runDeviceHeartbeat, 5000);
 });
+
+// --- Connection Settings for file:// Protocol ---
+function initConnectionSettings() {
+    const box = document.getElementById('connectionSettings');
+    const input = document.getElementById('serverIpInput');
+    if (!box || !input) return;
+
+    if (window.location.protocol === 'file:') {
+        box.style.display = 'block';
+        const saved = localStorage.getItem('cbt_server_ip') || 'localhost';
+        input.value = saved;
+    }
+}
+
+function saveServerIp() {
+    const input = document.getElementById('serverIpInput');
+    if (!input) return;
+    const ip = input.value.trim();
+    if (ip) {
+        localStorage.setItem('cbt_server_ip', ip);
+        showToast('Connection Saved', `Connected to coordinator server at http://${ip}:5000`, 'success');
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+    }
+}
 
 // --- UI Utilities ---
 function updateDynamicYear() {

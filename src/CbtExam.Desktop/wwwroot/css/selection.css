@@ -260,3 +260,37 @@
     color: #94a3b8;
     font-weight: 500;
 }
+
+@media (max-width: 850px) {
+    .internal-workspace {
+        padding: 24px 16px !important;
+    }
+    .workspace-header {
+        margin-bottom: 24px;
+        gap: 12px;
+    }
+    .user-profile-mini {
+        display: none;
+    }
+    .candidate-notes-modern {
+        padding: 16px;
+        margin-bottom: 20px;
+    }
+    .exam-card-modern {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+        padding: 20px;
+    }
+    .action-btn {
+        width: 100%;
+        text-align: center;
+    }
+    .workspace-footer {
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
+        margin-top: 24px;
+        padding-top: 16px;
+    }
+}

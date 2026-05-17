@@ -287,3 +287,20 @@
         padding: 30px 24px;
     }
 }
+
+@media (max-width: 480px) {
+    .info-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .controls-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .candidate-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 12px;
+    }
+}
