@@ -15,7 +15,7 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports) 
     public async Task<IActionResult> GetAll() =>
         Ok(await db.ExamSessions
             .Include(s => s.Exam)
-            .Select(s => new SessionDto(s.Id, s.ExamId, s.Exam!.Title, s.SessionCode, s.StartedAt, s.IsActive, s.StudentExams.Count))
+            .Select(s => new SessionDto(s.Id, s.ExamId, s.Exam!.Title, s.SessionCode, s.StartedAt, s.IsActive, s.StudentExams.Count, s.IsStarted))
             .ToListAsync());
 
     [HttpPost("start")]
@@ -34,7 +34,17 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports) 
         };
         db.ExamSessions.Add(session);
         await db.SaveChangesAsync();
-        return Ok(new SessionDto(session.Id, session.ExamId, exam.Title, session.SessionCode, session.StartedAt, true, 0));
+        return Ok(new SessionDto(session.Id, session.ExamId, exam.Title, session.SessionCode, session.StartedAt, true, 0, false));
+    }
+
+    [HttpPost("{id}/begin")]
+    public async Task<IActionResult> Begin(int id)
+    {
+        var session = await db.ExamSessions.FindAsync(id);
+        if (session is null || !session.IsActive) return NotFound("Session not found or already ended.");
+        session.IsStarted = true;
+        await db.SaveChangesAsync();
+        return Ok();
     }
 
     [HttpPost("{id}/stop")]

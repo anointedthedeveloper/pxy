@@ -34,6 +34,7 @@ public class ExamSession
     public DateTime StartedAt { get; set; }
     public DateTime? EndedAt { get; set; }
     public bool IsActive { get; set; }
+    public bool IsStarted { get; set; } = false;
     public Exam? Exam { get; set; }
     public ICollection<StudentExam> StudentExams { get; set; } = new List<StudentExam>();
 }
