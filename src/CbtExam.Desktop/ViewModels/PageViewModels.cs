@@ -643,6 +643,10 @@ public class ExamsViewModel(ApiClient api) : BaseViewModel, IRefreshable
             _all.ForEach(Exams.Add);
             FilterExams();
         }
+        catch (Exception ex)
+        {
+            App.Log("Error loading exam templates", ex);
+        }
         finally { IsBusy = false; }
     }
 
