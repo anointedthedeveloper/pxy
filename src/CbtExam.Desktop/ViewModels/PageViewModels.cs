@@ -2517,8 +2517,7 @@ public class StudentsViewModel(ApiClient api) : BaseViewModel, IRefreshable
         {
             Padding = new System.Windows.Thickness(12, 10, 12, 10),
             BorderBrush = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E5E7EB")),
-            BorderThickness = new System.Windows.Thickness(0, 0, 0, 1),
-            VerticalAlignment = System.Windows.VerticalAlignment.Center
+            BorderThickness = new System.Windows.Thickness(0, 0, 0, 1)
         };
     }
 }
