@@ -263,7 +263,7 @@ function createExamCard(exam) {
                 <span class="meta-pill">${exam.durationMinutes} Minutes</span>
             </div>
         </div>
-        <button class="action-btn">Start Session</button>
+                <button class="action-btn">Join Exam</button>
     `;
     
     return div;
