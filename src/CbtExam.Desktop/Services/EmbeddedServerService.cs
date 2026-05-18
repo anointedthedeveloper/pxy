@@ -19,8 +19,28 @@ public class EmbeddedServerService
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Production");
         Environment.SetEnvironmentVariable("DOTNET_ENVIRONMENT",     "Production");
 
-        _app = await ApiBootstrap.BuildApp(dbPath, wwwrootPath, port);
-        await _app.StartAsync();
+        int currentPort = port;
+        int retries = 20;
+        bool started = false;
+
+        while (!started && retries > 0)
+        {
+            try
+            {
+                _app = await ApiBootstrap.BuildApp(dbPath, wwwrootPath, currentPort);
+                await _app.StartAsync();
+                port = currentPort;
+                started = true;
+            }
+            catch (Exception ex) when (ex.Message.Contains("address already in use", StringComparison.OrdinalIgnoreCase) ||
+                                       ex.InnerException is SocketException or System.IO.IOException ||
+                                       ex is SocketException or System.IO.IOException)
+            {
+                currentPort++;
+                retries--;
+                if (retries == 0) throw;
+            }
+        }
 
         ServerUrl = $"http://{GetLocalIp()}:{port}";
         IsRunning = true;
