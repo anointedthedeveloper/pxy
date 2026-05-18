@@ -12,10 +12,23 @@ namespace CbtExam.Api.Controllers;
 public class ExamsController(AppDbContext db) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll() =>
-        Ok(await db.Exams
+    public async Task<IActionResult> GetAll([FromQuery] bool activeOnly = false)
+    {
+        IQueryable<Exam> query = db.Exams;
+        if (activeOnly)
+        {
+            var activeExamIds = await db.ExamSessions
+                .Where(s => s.IsActive)
+                .Select(s => s.ExamId)
+                .Distinct()
+                .ToListAsync();
+            query = query.Where(e => activeExamIds.Contains(e.Id));
+        }
+
+        return Ok(await query
             .Select(e => new ExamDto(e.Id, e.Title, e.Subject, e.DurationMinutes, e.ShuffleQuestions, e.ShuffleOptions, e.AccessPassword, e.CreatedAt, e.Questions.Count))
             .ToListAsync());
+    }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> Get(int id)

@@ -253,7 +253,8 @@
                     localStorage.setItem('examDuration', joinData.durationMinutes);
 
                     statusText.textContent = 'Downloading questions for offline support...';
-                    updateProgress(50);
+                    progressBar.style.width = '50%';
+                    percentText.textContent = '50%';
 
                     // Download Questions (Aggressive Caching)
                     const qRes = await fetch(`${API_BASE}/Student/${studentExamId}/questions`);
@@ -262,7 +263,8 @@
 
                     // Cache to local storage
                     localStorage.setItem('cachedQuestions', JSON.stringify(questions));
-                    updateProgress(100);
+                    progressBar.style.width = '100%';
+                    percentText.textContent = '100%';
 
                     statusText.textContent = 'Student Joined \u2013 Waiting for Coordinator...';
                     statusText.style.color = '#10b981';

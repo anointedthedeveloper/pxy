@@ -223,7 +223,7 @@ async function fetchAndRenderExams() {
     const listContainer = document.getElementById('examList');
     
     try {
-        const response = await fetch(`${API_BASE}/Exams`);
+        const response = await fetch(`${API_BASE}/Exams?activeOnly=true`);
         if (!response.ok) throw new Error('API Error');
         
         const exams = await response.json();
