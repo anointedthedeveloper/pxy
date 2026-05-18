@@ -139,6 +139,9 @@ public class MainViewModel : BaseViewModel
 
         _monitorRealtime.StudentUpdated += payload =>
         {
+            // Also refresh the session waiting room panel via SignalR push
+            _ = Sessions.OnSignalRStudentUpdate();
+
             if (lastStudentStatuses is not null)
             {
                 foreach (var current in payload)

@@ -860,11 +860,39 @@ public class SessionViewModel(ApiClient api) : BaseViewModel, IRefreshable
     public SessionDto? CurrentRoom { get => _currentRoom; set => Set(ref _currentRoom, value); }
     
     private bool _isManagingRoom;
-    public bool IsManagingRoom { get => _isManagingRoom; set { Set(ref _isManagingRoom, value); OnPropertyChanged(nameof(IsNotManagingRoom)); } }
+    public bool IsManagingRoom
+    {
+        get => _isManagingRoom;
+        set
+        {
+            Set(ref _isManagingRoom, value);
+            OnPropertyChanged(nameof(IsNotManagingRoom));
+            if (value) StartRoomPolling(); else StopRoomPolling();
+        }
+    }
     
     public bool IsNotManagingRoom => !IsManagingRoom;
 
     public ObservableCollection<StudentStatusDto> RoomStudents { get; } = [];
+
+    // Auto-polling timer for waiting room student list
+    private System.Timers.Timer? _roomPollTimer;
+
+    private void StartRoomPolling()
+    {
+        StopRoomPolling();
+        _roomPollTimer = new System.Timers.Timer(3000);
+        _roomPollTimer.Elapsed += async (s, e) => await RefreshRoomStudents();
+        _roomPollTimer.AutoReset = true;
+        _roomPollTimer.Start();
+    }
+
+    private void StopRoomPolling()
+    {
+        _roomPollTimer?.Stop();
+        _roomPollTimer?.Dispose();
+        _roomPollTimer = null;
+    }
 
     public string GetJoinUrl(SessionDto session) => $"{api.BaseUrl}?code={session.SessionCode}";
 
@@ -878,13 +906,15 @@ public class SessionViewModel(ApiClient api) : BaseViewModel, IRefreshable
     public RelayCommand<SessionDto> ManageRoomCommand => new(async s => {
         if (s is null) return;
         CurrentRoom = s;
-        IsManagingRoom = true;
+        RoomStudents.Clear();
+        IsManagingRoom = true;  // this triggers StartRoomPolling
         await RefreshRoomStudents();
     });
     
     public RelayCommand CloseRoomCommand => new(() => {
-        IsManagingRoom = false;
+        IsManagingRoom = false;  // this triggers StopRoomPolling
         CurrentRoom = null;
+        RoomStudents.Clear();
     });
     
     public RelayCommand BeginExamCommand => new(async () => {
@@ -903,17 +933,30 @@ public class SessionViewModel(ApiClient api) : BaseViewModel, IRefreshable
         ));
     });
 
-    private async Task RefreshRoomStudents() {
+    /// <summary>Called by MainViewModel on SignalR StudentUpdated events to push live updates into the waiting room panel.</summary>
+    public async Task OnSignalRStudentUpdate()
+    {
+        if (IsManagingRoom && CurrentRoom != null)
+            await RefreshRoomStudents();
+    }
+
+    public async Task RefreshRoomStudents()
+    {
         if (CurrentRoom is null) return;
-        var list = await api.GetStudentsAsync(CurrentRoom.Id);
-        App.Current.Dispatcher.Invoke(() => {
-            RoomStudents.Clear();
-            list?.ForEach(RoomStudents.Add);
-            
-            // Auto-refresh the current room state
-            var updated = ActiveSessions.FirstOrDefault(x => x.Id == CurrentRoom.Id);
-            if (updated != null) CurrentRoom = updated;
-        });
+        try
+        {
+            var list = await api.GetStudentsAsync(CurrentRoom.Id);
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                RoomStudents.Clear();
+                list?.ForEach(RoomStudents.Add);
+
+                // Sync room metadata (IsStarted flag etc.)
+                var updated = ActiveSessions.FirstOrDefault(x => x.Id == CurrentRoom.Id);
+                if (updated != null) CurrentRoom = updated;
+            });
+        }
+        catch { /* silently ignore poll errors */ }
     }
 
     public RelayCommand StartCommand => new(async () => await StartAsync());
@@ -964,6 +1007,10 @@ public class SessionViewModel(ApiClient api) : BaseViewModel, IRefreshable
             "End Session", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (res == MessageBoxResult.Yes)
         {
+            StopRoomPolling();
+            IsManagingRoom = false;
+            CurrentRoom = null;
+            RoomStudents.Clear();
             await api.StopSessionAsync(session.Id);
             await LoadAsync();
             
@@ -984,6 +1031,10 @@ public class SessionViewModel(ApiClient api) : BaseViewModel, IRefreshable
             "End All Sessions", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (res == MessageBoxResult.Yes)
         {
+            StopRoomPolling();
+            IsManagingRoom = false;
+            CurrentRoom = null;
+            RoomStudents.Clear();
             await api.EndAllSessionsAsync();
             await LoadAsync();
             
