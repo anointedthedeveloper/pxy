@@ -4,6 +4,7 @@ using CbtExam.Shared.DTOs;
 using CbtExam.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Concurrent;
 
 namespace CbtExam.Api.Controllers;
 
@@ -11,12 +12,24 @@ namespace CbtExam.Api.Controllers;
 [Route("api/[controller]")]
 public class SessionsController(AppDbContext db, SnapshotExportService exports) : ControllerBase
 {
+    private static readonly ConcurrentDictionary<int, string> _broadcasts = new();
+
+    public static string GetBroadcast(int sessionId) =>
+        _broadcasts.TryGetValue(sessionId, out var msg) ? msg : string.Empty;
     [HttpGet]
-    public async Task<IActionResult> GetAll() =>
-        Ok(await db.ExamSessions
+    public async Task<IActionResult> GetAll()
+    {
+        var sessions = await db.ExamSessions
             .Include(s => s.Exam)
-            .Select(s => new SessionDto(s.Id, s.ExamId, s.Exam!.Title, s.SessionCode, s.StartedAt, s.IsActive, s.StudentExams.Count, s.IsStarted))
-            .ToListAsync());
+            .ToListAsync();
+
+        var result = sessions.Select(s => {
+            _broadcasts.TryGetValue(s.Id, out var msg);
+            return new SessionDto(s.Id, s.ExamId, s.Exam!.Title, s.SessionCode, s.StartedAt, s.IsActive, s.StudentExams.Count, s.IsStarted, msg ?? "");
+        }).ToList();
+
+        return Ok(result);
+    }
 
     [HttpPost("start")]
     public async Task<IActionResult> Start(SessionStartDto dto)
@@ -82,29 +95,57 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports) 
     {
         var cutoff = DateTime.UtcNow.AddSeconds(-30);
 
-        var query = from se in db.StudentExams.Include(se => se.Student).Include(se => se.Answers)
-                    where se.SessionId == id
-                    join d in db.Devices on se.Student!.StudentId equals d.StudentId into devGroup
-                    from device in devGroup.DefaultIfEmpty() // Left Join
-                    select new { se, device };
+        var studentExams = await db.StudentExams
+            .Include(se => se.Student)
+            .Include(se => se.Answers)
+            .Where(se => se.SessionId == id)
+            .ToListAsync();
 
-        var records = await query.ToListAsync();
+        var studentIds = studentExams
+            .Select(se => se.Student?.StudentId)
+            .Where(sid => !string.IsNullOrEmpty(sid))
+            .Distinct()
+            .ToList();
 
-        var result = records.Select(x => {
-            var se = x.se;
-            var device = x.device;
+        var devices = await db.Devices
+            .Where(d => studentIds.Contains(d.StudentId))
+            .ToListAsync();
+
+        var deviceMap = devices
+            .GroupBy(d => d.StudentId, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+        var result = studentExams.Select(se => {
+            var studentId = se.Student?.StudentId ?? "";
+            deviceMap.TryGetValue(studentId, out var device);
+            
             bool isOnline = device != null && device.LastSeen > cutoff && device.IsOnline;
             string status = se.IsSubmitted ? "submitted" : (isOnline ? "online" : "disconnected");
             
             return new StudentStatusDto(
-                se.Id, se.Student!.FullName, se.Student!.StudentId,
-                se.JoinedAt, se.IsSubmitted, se.TabSwitchCount,
-                se.Answers.Count, 0, device?.BatteryLevel ?? 0, isOnline, status, 
+                se.Id, 
+                se.Student?.FullName ?? "Unknown", 
+                studentId,
+                se.JoinedAt, 
+                se.IsSubmitted, 
+                se.TabSwitchCount,
+                se.Answers.Count, 
+                0, 
+                device?.BatteryLevel ?? 0, 
+                isOnline, 
+                status, 
                 device?.DeviceName ?? "Unknown", 
                 device?.DeviceId ?? "");
         }).ToList();
 
         return Ok(result);
+    }
+
+    [HttpPost("{id}/broadcast")]
+    public IActionResult Broadcast(int id, [FromBody] BroadcastDto dto)
+    {
+        _broadcasts[id] = dto.Message;
+        return Ok();
     }
 
     [HttpGet("{id}/results")]

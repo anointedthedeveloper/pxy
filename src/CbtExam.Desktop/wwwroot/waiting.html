@@ -176,8 +176,8 @@
     </div>
 
     <script src="/js/app.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
+    <script>        document.addEventListener('DOMContentLoaded', () => {
+            localStorage.removeItem('last_broadcast_msg');
             const studentName = localStorage.getItem('studentName') || 'Candidate';
             const studentId = localStorage.getItem('studentId') || '';
             const examTitle = localStorage.getItem('selectedExamTitle') || 'Selected Examination';
@@ -218,14 +218,16 @@
                 }
             };
 
-            // Start polling every 3 seconds
+            // Start polling for session
             pollingInterval = setInterval(checkSession, 3000);
+            checkSession();
 
             // Step 2: Join, Download, and Wait for Admin to Start
             const startExamProcess = async (session) => {
                 downloading = true;
-                statusText.textContent = 'Session found. Joining...';
-                updateProgress(20);
+                statusText.textContent = 'Active session found! Downloading questions...';
+                progressBar.style.width = '30%';
+                percentText.textContent = '30%';
 
                 try {
                     // Join Session
@@ -293,9 +295,17 @@
                     if (!response.ok) return;
                     const sessions = await response.json();
                     const s = sessions.find(x => x.id === currentSession.id);
-                    if(s && s.isStarted) {
-                        starting = true;
-                        triggerCountdown();
+                    if(s) {
+                        if(s.isStarted) {
+                            starting = true;
+                            triggerCountdown();
+                        } else if(s.broadcastMessage) {
+                            const lastBroadcast = localStorage.getItem('last_broadcast_msg');
+                            if (lastBroadcast !== s.broadcastMessage) {
+                                localStorage.setItem('last_broadcast_msg', s.broadcastMessage);
+                                showToast('Broadcast from Coordinator', s.broadcastMessage, 'info');
+                            }
+                        }
                     }
                 } catch(e) {}
             };

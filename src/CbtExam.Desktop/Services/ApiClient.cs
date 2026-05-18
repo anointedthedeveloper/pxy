@@ -42,6 +42,7 @@ public class ApiClient
     public Task<HttpResponseMessage> ExportSnapshotAsync() => IsReady ? _http.PostAsync("api/sessions/export", content: null) : OfflineResponse();
     public Task<List<StudentStatusDto>?> GetStudentsAsync(int sessionId) => IsReady ? _http.GetFromJsonAsync<List<StudentStatusDto>>($"api/sessions/{sessionId}/students") : Task.FromResult<List<StudentStatusDto>?>([]);
     public Task<List<ResultDto>?> GetResultsAsync(int sessionId) => IsReady ? _http.GetFromJsonAsync<List<ResultDto>>($"api/sessions/{sessionId}/results") : Task.FromResult<List<ResultDto>?>([]);
+    public Task<HttpResponseMessage> BroadcastMessageAsync(int sessionId, string message) => IsReady ? _http.PostAsJsonAsync($"api/sessions/{sessionId}/broadcast", new BroadcastDto(message)) : OfflineResponse();
 
     // Students admin
     public Task<List<StudentAdminDto>?> GetStudentRosterAsync() => IsReady ? _http.GetFromJsonAsync<List<StudentAdminDto>>("api/students") : Task.FromResult<List<StudentAdminDto>?>([]);

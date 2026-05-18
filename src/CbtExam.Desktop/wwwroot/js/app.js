@@ -450,7 +450,7 @@ function startHeartbeat() {
     const sendHeartbeat = async () => {
         if (examCompleted) return;
         try {
-            await fetch(`${API_BASE}/Student/heartbeat`, {
+            const response = await fetch(`${API_BASE}/Student/heartbeat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -463,6 +463,16 @@ function startHeartbeat() {
                     deviceId: navigator.userAgent
                 })
             });
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data.broadcastMessage) {
+                    const lastBroadcast = localStorage.getItem('last_broadcast_msg');
+                    if (lastBroadcast !== data.broadcastMessage) {
+                        localStorage.setItem('last_broadcast_msg', data.broadcastMessage);
+                        showToast('Broadcast from Coordinator', data.broadcastMessage, 'info');
+                    }
+                }
+            }
         } catch (e) {
             console.warn("Heartbeat update failed.", e);
         }

@@ -893,8 +893,36 @@ public class SessionViewModel(ApiClient api) : BaseViewModel, IRefreshable
     public int IssuesFlaggedCount { get => _issuesFlaggedCount; set => Set(ref _issuesFlaggedCount, value); }
 
     public RelayCommand SyncListCommand => new(async () => await RefreshRoomStudents());
-    public RelayCommand BroadcastCommand => new(() => {
-        System.Windows.MessageBox.Show("Broadcast message feature coming soon.", "Broadcast", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+    public RelayCommand BroadcastCommand => new(async () => {
+        if (CurrentRoom is null) return;
+        
+        var dialog = new CbtExam.Desktop.Views.BroadcastDialog();
+        dialog.Owner = App.Current.MainWindow;
+        if (dialog.ShowDialog() == true)
+        {
+            var msg = dialog.BroadcastMessage;
+            try
+            {
+                var response = await api.BroadcastMessageAsync(CurrentRoom.Id, msg);
+                if (response.IsSuccessStatusCode)
+                {
+                    NotificationsViewModel.Instance?.Add(new NotificationItem(
+                        "Broadcast Sent",
+                        $"Sent broadcast message to candidates: \"{msg}\"",
+                        DateTime.Now,
+                        "success"
+                    ));
+                }
+                else
+                {
+                    System.Windows.MessageBox.Show("Failed to send broadcast message.", "Broadcast Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Error sending broadcast message: {ex.Message}", "Broadcast Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
     });
 
     private void FilterStudents()

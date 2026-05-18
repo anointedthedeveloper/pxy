@@ -203,7 +203,7 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         }
 
         await NotifyAdmin(se.Session!.SessionCode, se.SessionId, dto);
-        return Ok();
+        return Ok(new { broadcastMessage = SessionsController.GetBroadcast(se.SessionId) });
     }
 
     [HttpPost("device")]
@@ -340,29 +340,68 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
 
     private async Task NotifyAdmin(string sessionCode, int sessionId, DeviceHeartbeatDto? heartbeat = null)
     {
-        var students = await db.StudentExams
+        var cutoff = DateTime.UtcNow.AddSeconds(-30);
+
+        var studentExams = await db.StudentExams
             .Include(se => se.Student)
+            .Include(se => se.Answers)
             .Where(se => se.SessionId == sessionId)
-            .Select(se => new StudentStatusDto(
-                se.Id, se.Student!.FullName, se.Student.StudentId, se.JoinedAt, se.IsSubmitted, se.TabSwitchCount,
-                se.Answers.Count, se.Answers.Count, 0, !se.IsSubmitted, se.IsSubmitted ? "submitted" : "online", "", ""))
             .ToListAsync();
-        if (heartbeat is not null)
-        {
-            students = students
-                .Select(s => s.StudentExamId == heartbeat.StudentExamId
-                    ? s with
-                    {
-                        CurrentQuestion = heartbeat.CurrentQuestion,
-                        BatteryLevel = heartbeat.BatteryLevel,
-                        IsOnline = heartbeat.IsOnline,
-                        ConnectionState = heartbeat.ConnectionState,
-                        DeviceName = heartbeat.DeviceName,
-                        DeviceId = heartbeat.DeviceId
-                    }
-                    : s)
-                .ToList();
-        }
+
+        var studentIds = studentExams
+            .Select(se => se.Student?.StudentId)
+            .Where(sid => !string.IsNullOrEmpty(sid))
+            .Distinct()
+            .ToList();
+
+        var devices = await db.Devices
+            .Where(d => studentIds.Contains(d.StudentId))
+            .ToListAsync();
+
+        var deviceMap = devices
+            .GroupBy(d => d.StudentId, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+        var students = studentExams.Select(se => {
+            var studentId = se.Student?.StudentId ?? "";
+            deviceMap.TryGetValue(studentId, out var device);
+
+            bool isOnline = device != null && device.LastSeen > cutoff && device.IsOnline;
+            string status = se.IsSubmitted ? "submitted" : (isOnline ? "online" : "disconnected");
+
+            var dto = new StudentStatusDto(
+                se.Id, 
+                se.Student?.FullName ?? "Unknown", 
+                studentId, 
+                se.JoinedAt, 
+                se.IsSubmitted, 
+                se.TabSwitchCount,
+                se.Answers.Count, 
+                0, 
+                device?.BatteryLevel ?? 0, 
+                isOnline, 
+                status, 
+                device?.DeviceName ?? "Unknown", 
+                device?.DeviceId ?? ""
+            );
+
+            // Override with current heartbeat if applicable
+            if (heartbeat is not null && se.Id == heartbeat.StudentExamId)
+            {
+                dto = dto with
+                {
+                    CurrentQuestion = heartbeat.CurrentQuestion,
+                    BatteryLevel = heartbeat.BatteryLevel,
+                    IsOnline = heartbeat.IsOnline,
+                    ConnectionState = heartbeat.ConnectionState,
+                    DeviceName = heartbeat.DeviceName,
+                    DeviceId = heartbeat.DeviceId
+                };
+            }
+
+            return dto;
+        }).ToList();
+
         await ExamHub.NotifyStudentUpdate(hub, sessionCode, students);
     }
 }

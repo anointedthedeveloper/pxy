@@ -16,7 +16,7 @@ public record QuestionDto(int Id, int ExamId, int QuestionNumber, string Text, s
 
 // --- Session DTOs ---
 public record SessionStartDto(int ExamId);
-public record SessionDto(int Id, int ExamId, string ExamTitle, string SessionCode, DateTime StartedAt, bool IsActive, int StudentCount, bool IsStarted = false);
+public record SessionDto(int Id, int ExamId, string ExamTitle, string SessionCode, DateTime StartedAt, bool IsActive, int StudentCount, bool IsStarted = false, string BroadcastMessage = "");
 
 // --- Student DTOs ---
 public record JoinExamDto(string SessionCode, string FullName, string StudentId, string DeviceId = "", string DeviceName = "");
@@ -82,3 +82,4 @@ public record ExamGenerateDto(string Title, int DurationMinutes, bool ShuffleQue
 
 // --- Notifications ---
 public record NotificationDto(string Title, string Message, DateTime CreatedAt, string Level);
+public record BroadcastDto(string Message);
