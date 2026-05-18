@@ -1368,9 +1368,21 @@ public class SubjectGroupVM : BaseViewModel
     private bool _isExpanded = true;
     public bool IsExpanded { get => _isExpanded; set => Set(ref _isExpanded, value); }
 
+    public int TotalQuestionsCount => Years.Sum(y => y.Questions.Count);
+
     public SubjectGroupVM(string subjectName)
     {
         SubjectName = subjectName;
+        Years.CollectionChanged += (s, e) => {
+            OnPropertyChanged(nameof(TotalQuestionsCount));
+            if (e.NewItems != null)
+            {
+                foreach (YearGroupVM item in e.NewItems)
+                {
+                    item.Questions.CollectionChanged += (s2, e2) => OnPropertyChanged(nameof(TotalQuestionsCount));
+                }
+            }
+        };
     }
 }
 
@@ -1394,7 +1406,37 @@ public class QuestionsViewModel(ApiClient api) : BaseViewModel, IRefreshable
     public ObservableCollection<SubjectGroupVM> GroupedSubjects { get; } = [];
     private List<QuestionBankDto> _all = [];
 
+    public ObservableCollection<QuestionBankCreateDto> ParsedPreviewList { get; } = [];
 
+    private bool _isSingleQuestionMode;
+    public bool IsSingleQuestionMode { get => _isSingleQuestionMode; set => Set(ref _isSingleQuestionMode, value); }
+
+    private string _singleSubject = string.Empty;
+    public string SingleSubject { get => _singleSubject; set => Set(ref _singleSubject, value); }
+
+    private string _singleYear = string.Empty;
+    public string SingleYear { get => _singleYear; set => Set(ref _singleYear, value); }
+
+    private string _singleQNum = string.Empty;
+    public string SingleQNum { get => _singleQNum; set => Set(ref _singleQNum, value); }
+
+    private string _singleText = string.Empty;
+    public string SingleText { get => _singleText; set => Set(ref _singleText, value); }
+
+    private string _singleOptA = string.Empty;
+    public string SingleOptA { get => _singleOptA; set => Set(ref _singleOptA, value); }
+
+    private string _singleOptB = string.Empty;
+    public string SingleOptB { get => _singleOptB; set => Set(ref _singleOptB, value); }
+
+    private string _singleOptC = string.Empty;
+    public string SingleOptC { get => _singleOptC; set => Set(ref _singleOptC, value); }
+
+    private string _singleOptD = string.Empty;
+    public string SingleOptD { get => _singleOptD; set => Set(ref _singleOptD, value); }
+
+    private string _singleCorrect = "A";
+    public string SingleCorrect { get => _singleCorrect; set => Set(ref _singleCorrect, value); }
 
     private string _search = string.Empty;
     public string Search { get => _search; set { Set(ref _search, value); ApplyFilter(); } }
@@ -1441,6 +1483,192 @@ public class QuestionsViewModel(ApiClient api) : BaseViewModel, IRefreshable
 
     public ObservableCollection<string> Subjects { get; } = [];
 
+    public RelayCommand ToggleModeCommand => new(() => {
+        IsSingleQuestionMode = !IsSingleQuestionMode;
+        Status = string.Empty;
+    });
+
+    public RelayCommand CreateSingleQuestionCommand => new(async () => {
+        if (string.IsNullOrWhiteSpace(SingleSubject)) { MessageBox.Show("Subject is required.", "Input Error", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+        if (string.IsNullOrWhiteSpace(SingleYear) || !int.TryParse(SingleYear, out int year)) { MessageBox.Show("Valid Year is required.", "Input Error", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+        if (string.IsNullOrWhiteSpace(SingleQNum) || !int.TryParse(SingleQNum, out int qNum)) { MessageBox.Show("Valid Question Number is required.", "Input Error", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+        if (string.IsNullOrWhiteSpace(SingleText)) { MessageBox.Show("Question Text is required.", "Input Error", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+        if (string.IsNullOrWhiteSpace(SingleOptA) || string.IsNullOrWhiteSpace(SingleOptB)) { MessageBox.Show("At least Option A and Option B are required.", "Input Error", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+
+        var options = new List<string> { SingleOptA, SingleOptB };
+        if (!string.IsNullOrWhiteSpace(SingleOptC)) options.Add(SingleOptC);
+        if (!string.IsNullOrWhiteSpace(SingleOptD)) options.Add(SingleOptD);
+
+        var correct = SingleCorrect;
+        if (correct == "A") correct = SingleOptA;
+        else if (correct == "B") correct = SingleOptB;
+        else if (correct == "C" && options.Count >= 3) correct = SingleOptC;
+        else if (correct == "D" && options.Count >= 4) correct = SingleOptD;
+
+        IsBusy = true;
+        try
+        {
+            var dto = new QuestionBankCreateDto(SingleSubject, year, qNum, SingleText, options, correct);
+            var resp = await api.AddQuestionBankAsync(dto);
+            if (resp.IsSuccessStatusCode)
+            {
+                Status = "Single question created successfully!";
+                StatusOk = true;
+                SingleText = string.Empty;
+                SingleOptA = string.Empty;
+                SingleOptB = string.Empty;
+                SingleOptC = string.Empty;
+                SingleOptD = string.Empty;
+                SingleQNum = (qNum + 1).ToString();
+                await LoadAsync();
+            }
+            else
+            {
+                Status = "Failed to create single question.";
+                StatusOk = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error: {ex.Message}", "Creation Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    });
+
+    public RelayCommand<YearGroupVM> DeleteYearCommand => new(async yg => {
+        if (yg == null) return;
+        var confirm = MessageBox.Show($"Are you sure you want to delete all {yg.Questions.Count} questions for Year {yg.Year}?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (confirm != MessageBoxResult.Yes) return;
+
+        IsBusy = true;
+        try
+        {
+            foreach (var q in yg.Questions)
+            {
+                await api.DeleteQuestionBankAsync(q.Id);
+            }
+            Status = $"Deleted all questions for Year {yg.Year}.";
+            StatusOk = true;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error deleting: {ex.Message}", "Delete Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    });
+
+    public RelayCommand<YearGroupVM> EditYearCommand => new(async yg => {
+        if (yg == null) return;
+        var input = Microsoft.VisualBasic.Interaction.InputBox("Enter the new Year number:", "Edit Year Name", yg.Year.ToString());
+        if (string.IsNullOrWhiteSpace(input) || !int.TryParse(input, out int newYear) || newYear == yg.Year) return;
+
+        IsBusy = true;
+        try
+        {
+            foreach (var q in yg.Questions)
+            {
+                var fullQ = _all.FirstOrDefault(x => x.Id == q.Id);
+                if (fullQ == null) continue;
+                var optionsList = System.Text.Json.JsonSerializer.Deserialize<List<string>>(fullQ.OptionsJson) ?? [];
+                var dto = new QuestionBankCreateDto(fullQ.Subject, newYear, fullQ.QuestionNumber, fullQ.Text, optionsList, fullQ.CorrectAnswer);
+                await api.UpdateQuestionBankAsync(fullQ.Id, dto);
+            }
+            Status = $"Renamed Year to {newYear}.";
+            StatusOk = true;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error renaming year: {ex.Message}", "Edit Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    });
+
+    public RelayCommand<QuestionBankRow> PreviewQuestionCommand => new(q => {
+        if (q == null) return;
+        var fullQ = _all.FirstOrDefault(x => x.Id == q.Id);
+        if (fullQ == null) return;
+
+        var options = string.Join("\n", System.Text.Json.JsonSerializer.Deserialize<List<string>>(fullQ.OptionsJson) ?? []);
+        MessageBox.Show($"[Subject: {fullQ.Subject} | Year: {fullQ.Year} | Q{fullQ.QuestionNumber}]\n\nQuestion:\n{fullQ.Text}\n\nOptions:\n{options}\n\nCorrect Answer: {fullQ.CorrectAnswer}", "Question Details Preview", MessageBoxButton.OK, MessageBoxImage.Information);
+    });
+
+    public RelayCommand<QuestionBankRow> DeleteQuestionCommand => new(async q => {
+        if (q == null) return;
+        var confirm = MessageBox.Show($"Are you sure you want to delete question Q{q.QuestionNumber}?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (confirm != MessageBoxResult.Yes) return;
+
+        IsBusy = true;
+        try
+        {
+            var res = await api.DeleteQuestionBankAsync(q.Id);
+            if (res.IsSuccessStatusCode)
+            {
+                Status = "Question deleted successfully.";
+                StatusOk = true;
+                await LoadAsync();
+            }
+            else
+            {
+                Status = "Failed to delete question.";
+                StatusOk = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error: {ex.Message}", "Delete Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    });
+
+    public RelayCommand<QuestionBankRow> EditQuestionCommand => new(async q => {
+        if (q == null) return;
+        var fullQ = _all.FirstOrDefault(x => x.Id == q.Id);
+        if (fullQ == null) return;
+
+        var newText = Microsoft.VisualBasic.Interaction.InputBox("Edit the question text:", "Edit Question Text", fullQ.Text);
+        if (string.IsNullOrWhiteSpace(newText) || newText == fullQ.Text) return;
+
+        IsBusy = true;
+        try
+        {
+            var optionsList = System.Text.Json.JsonSerializer.Deserialize<List<string>>(fullQ.OptionsJson) ?? [];
+            var dto = new QuestionBankCreateDto(fullQ.Subject, fullQ.Year, fullQ.QuestionNumber, newText, optionsList, fullQ.CorrectAnswer);
+            var res = await api.UpdateQuestionBankAsync(fullQ.Id, dto);
+            if (res.IsSuccessStatusCode)
+            {
+                Status = "Question updated successfully.";
+                StatusOk = true;
+                await LoadAsync();
+            }
+            else
+            {
+                Status = "Failed to update question.";
+                StatusOk = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error: {ex.Message}", "Edit Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    });
 
     public RelayCommand RefreshCommand => new(async () => await LoadAsync());
     public RelayCommand ImportJsonCommand => new(async () => await ImportJsonAsync());
@@ -1503,6 +1731,7 @@ public class QuestionsViewModel(ApiClient api) : BaseViewModel, IRefreshable
     });
 
     public RelayCommand BrowseFileCommand => new(async () => {
+        ParsedPreviewList.Clear();
         var ofd = new Microsoft.Win32.OpenFileDialog
         {
             Filter = "Question Files (*.csv, *.json)|*.csv;*.json|CSV UTF-8 (*.csv)|*.csv|JSON File (*.json)|*.json"
@@ -1598,6 +1827,10 @@ public class QuestionsViewModel(ApiClient api) : BaseViewModel, IRefreshable
                 Subject = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(q.Subject?.Trim().ToLower() ?? "Unknown") 
             }).ToList();
 
+            ParsedPreviewList.Clear();
+            foreach (var q in standardizedList)
+                ParsedPreviewList.Add(q);
+
             var resp = await api.ImportQuestionBankAsync(standardizedList);
             if (resp.IsSuccessStatusCode)
             {
@@ -1673,6 +1906,10 @@ public class QuestionsViewModel(ApiClient api) : BaseViewModel, IRefreshable
             var standardizedList = list.Select(q => q with { 
                 Subject = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(q.Subject?.Trim().ToLower() ?? "Unknown") 
             }).ToList();
+
+            ParsedPreviewList.Clear();
+            foreach (var q in standardizedList)
+                ParsedPreviewList.Add(q);
 
             var resp = await api.ImportQuestionBankAsync(standardizedList);
             if (resp.IsSuccessStatusCode)
@@ -1828,6 +2065,10 @@ public class QuestionsViewModel(ApiClient api) : BaseViewModel, IRefreshable
             var standardizedList = list.Select(q => q with { 
                 Subject = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(q.Subject?.Trim().ToLower() ?? "Unknown") 
             }).ToList();
+
+            ParsedPreviewList.Clear();
+            foreach (var q in standardizedList)
+                ParsedPreviewList.Add(q);
 
             var resp = await api.ImportQuestionBankAsync(standardizedList);
             if (resp.IsSuccessStatusCode)

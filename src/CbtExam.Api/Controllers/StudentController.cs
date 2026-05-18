@@ -13,6 +13,32 @@ namespace CbtExam.Api.Controllers;
 [Route("api/[controller]")]
 public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, SnapshotExportService exports) : ControllerBase
 {
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, string> _decryptionKeys = new();
+
+    public static string GetDecryptionKey(int sessionId)
+    {
+        return _decryptionKeys.GetOrAdd(sessionId, _ => Guid.NewGuid().ToString("N"));
+    }
+
+    private static string EncryptAes(string plainText, string keyString)
+    {
+        byte[] key = System.Text.Encoding.UTF8.GetBytes(keyString.PadRight(32).Substring(0, 32));
+        byte[] iv = System.Text.Encoding.UTF8.GetBytes(keyString.PadRight(16).Substring(0, 16));
+        using var aes = System.Security.Cryptography.Aes.Create();
+        aes.Key = key;
+        aes.IV = iv;
+        using var encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+        using var ms = new System.IO.MemoryStream();
+        using (var cs = new System.Security.Cryptography.CryptoStream(ms, encryptor, System.Security.Cryptography.CryptoStreamMode.Write))
+        {
+            using (var sw = new System.IO.StreamWriter(cs))
+            {
+                sw.Write(plainText);
+            }
+        }
+        return Convert.ToBase64String(ms.ToArray());
+    }
+
     // POST /api/student/login
     [HttpPost("login")]
     public async Task<IActionResult> Login(StudentLoginDto dto)
@@ -76,6 +102,26 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         var exam = se.Session!.Exam!;
         var shuffled = QuestionShuffler.ShuffleAll(exam.Questions, exam.ShuffleQuestions, exam.ShuffleOptions, se.Id);
         return Ok(shuffled);
+    }
+
+    // GET /api/student/{studentExamId}/questions/secure
+    [HttpGet("{studentExamId}/questions/secure")]
+    public async Task<IActionResult> GetQuestionsSecure(int studentExamId)
+    {
+        var se = await db.StudentExams.Include(x => x.Session).ThenInclude(s => s!.Exam).ThenInclude(e => e!.Questions)
+            .FirstOrDefaultAsync(x => x.Id == studentExamId);
+
+        if (se is null) return NotFound();
+        if (se.IsSubmitted) return BadRequest("Exam already submitted.");
+
+        var exam = se.Session!.Exam!;
+        var shuffled = QuestionShuffler.ShuffleAll(exam.Questions, exam.ShuffleQuestions, exam.ShuffleOptions, se.Id);
+        
+        var json = System.Text.Json.JsonSerializer.Serialize(shuffled);
+        var key = GetDecryptionKey(se.SessionId);
+        var encrypted = EncryptAes(json, key);
+        
+        return Ok(new { encryptedQuestions = encrypted });
     }
 
     // GET /api/student/{studentExamId}/progress
@@ -203,7 +249,15 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         }
 
         await NotifyAdmin(se.Session!.SessionCode, se.SessionId, dto);
-        return Ok(new { broadcastMessage = SessionsController.GetBroadcast(se.SessionId) });
+
+        var isStarted = se.Session?.IsStarted ?? false;
+        var decKey = isStarted ? GetDecryptionKey(se.SessionId) : "";
+
+        return Ok(new { 
+            broadcastMessage = SessionsController.GetBroadcast(se.SessionId),
+            isStarted = isStarted,
+            decryptionKey = decKey
+        });
     }
 
     [HttpPost("device")]

@@ -40,11 +40,45 @@
                             <TextBlock Text="Export Questions" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-                    <Button Command="{Binding BulkUploadCommand}" Style="{StaticResource PrimaryBtn}"
-                            Background="#059669" Padding="14,9">
+                    
+                    <!-- Dynamic Toggle Mode Button -->
+                    <Button Command="{Binding ToggleModeCommand}" Padding="14,9">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource PrimaryBtn}">
+                                <Setter Property="Background" Value="#059669"/>
+                                <Setter Property="Foreground" Value="White"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSingleQuestionMode}" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE8A3;" FontFamily="Segoe MDL2 Assets" Margin="0,0,7,0"/>
-                            <TextBlock Text="Bulk Upload"/>
+                            <TextBlock FontFamily="Segoe MDL2 Assets" Margin="0,0,7,0" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="&#xE710;"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSingleQuestionMode}" Value="True">
+                                                <Setter Property="Text" Value="&#xE8A3;"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="Create Single Question"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSingleQuestionMode}" Value="True">
+                                                <Setter Property="Text" Value="Bulk Upload Ingestion"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -111,10 +145,14 @@
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Text="&#xED41;" FontFamily="Segoe MDL2 Assets" FontSize="16" Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
                                                 <TextBlock Grid.Column="1" Text="{Binding SubjectName}" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                
+                                                <!-- Premium quantitative badging -->
                                                 <Border Grid.Column="2" Background="{DynamicResource NavActiveBrush}" CornerRadius="10" Padding="8,3" VerticalAlignment="Center">
                                                     <TextBlock FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}">
+                                                        <Run Text="{Binding TotalQuestionsCount, Mode=OneWay}"/>
+                                                        <Run Text=" Qs in "/>
                                                         <Run Text="{Binding Years.Count, Mode=OneWay}"/>
-                                                        <Run Text=" Years"/>
+                                                        <Run Text=" Yrs"/>
                                                     </TextBlock>
                                                 </Border>
                                             </Grid>
@@ -132,26 +170,55 @@
                                                                     <ColumnDefinition Width="Auto"/>
                                                                     <ColumnDefinition Width="*"/>
                                                                     <ColumnDefinition Width="Auto"/>
+                                                                    <ColumnDefinition Width="Auto"/>
                                                                 </Grid.ColumnDefinitions>
                                                                 <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                                                 <TextBlock Grid.Column="1" Text="{Binding Year, StringFormat='Year {0}'}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                                                                <Border Grid.Column="2" Background="{DynamicResource HeaderBgBrush}" CornerRadius="10" Padding="8,3" VerticalAlignment="Center">
-                                                                    <TextBlock FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}">
+                                                                
+                                                                <!-- Questions Count Badge -->
+                                                                <Border Grid.Column="2" Background="#EFF6FF" CornerRadius="10" Padding="8,3" VerticalAlignment="Center" Margin="0,0,8,0">
+                                                                    <TextBlock FontSize="10" FontWeight="Bold" Foreground="#2563EB">
                                                                         <Run Text="{Binding Questions.Count, Mode=OneWay}"/>
-                                                                        <Run Text=" Questions"/>
+                                                                        <Run Text=" Qs"/>
                                                                     </TextBlock>
                                                                 </Border>
+                                                                
+                                                                <!-- Slide-in hover Year Actions -->
+                                                                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="4,0,0,0">
+                                                                    <StackPanel.Style>
+                                                                        <Style TargetType="StackPanel">
+                                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Grid}}" Value="True">
+                                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </StackPanel.Style>
+                                                                    <Button Style="{StaticResource PrimaryBtn}" Padding="4" Background="Transparent" BorderThickness="0" Margin="0,0,4,0"
+                                                                            Command="{Binding DataContext.EditYearCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" ToolTip="Rename Year">
+                                                                        <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="{DynamicResource AccentBrush}"/>
+                                                                    </Button>
+                                                                    <Button Style="{StaticResource PrimaryBtn}" Padding="4" Background="Transparent" BorderThickness="0"
+                                                                            Command="{Binding DataContext.DeleteYearCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" ToolTip="Delete Year">
+                                                                        <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="#DC2626"/>
+                                                                    </Button>
+                                                                </StackPanel>
                                                             </Grid>
                                                         </Expander.Header>
                                                         
-                                                        <!-- Questions under Year -->
-                                                        <ItemsControl ItemsSource="{Binding Questions}" Margin="16,4,0,8">
+                                                        <!-- Questions under Year with alternating row backgrounds -->
+                                                        <ItemsControl ItemsSource="{Binding Questions}" Margin="16,4,0,8" AlternationCount="2">
                                                             <ItemsControl.ItemTemplate>
                                                                 <DataTemplate>
-                                                                    <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Background="Transparent" Padding="8,6">
+                                                                    <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="8,6" x:Name="RowBorder">
                                                                         <Border.Style>
                                                                             <Style TargetType="Border">
+                                                                                <Setter Property="Background" Value="#FFFFFF"/>
                                                                                 <Style.Triggers>
+                                                                                    <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                                                                        <Setter Property="Background" Value="#F8FAFC"/>
+                                                                                    </Trigger>
                                                                                     <Trigger Property="IsMouseOver" Value="True">
                                                                                         <Setter Property="Background" Value="{DynamicResource RowHoverBrush}"/>
                                                                                     </Trigger>
@@ -163,10 +230,37 @@
                                                                                 <ColumnDefinition Width="35"/>
                                                                                 <ColumnDefinition Width="65"/>
                                                                                 <ColumnDefinition Width="*"/>
+                                                                                <ColumnDefinition Width="Auto"/>
                                                                             </Grid.ColumnDefinitions>
                                                                             <TextBlock Text="{Binding Serial}" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                                                             <TextBlock Grid.Column="1" Text="{Binding QuestionNumber, StringFormat='Q{0}'}" FontWeight="Bold" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource AccentBrush}"/>
                                                                             <TextBlock Grid.Column="2" Text="{Binding Preview}" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                                                            
+                                                                            <!-- Slide-in hover Question Actions -->
+                                                                            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0,0,0">
+                                                                                <StackPanel.Style>
+                                                                                    <Style TargetType="StackPanel">
+                                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                                        <Style.Triggers>
+                                                                                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Grid}}" Value="True">
+                                                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                                                            </DataTrigger>
+                                                                                        </Style.Triggers>
+                                                                                    </Style>
+                                                                                </StackPanel.Style>
+                                                                                <Button Style="{StaticResource PrimaryBtn}" Padding="4" Background="Transparent" BorderThickness="0" Margin="0,0,4,0"
+                                                                                        Command="{Binding DataContext.PreviewQuestionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" ToolTip="Preview Details">
+                                                                                    <TextBlock Text="&#xE890;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="{DynamicResource AccentBrush}"/>
+                                                                                </Button>
+                                                                                <Button Style="{StaticResource PrimaryBtn}" Padding="4" Background="Transparent" BorderThickness="0" Margin="0,0,4,0"
+                                                                                        Command="{Binding DataContext.EditQuestionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" ToolTip="Edit Question Text">
+                                                                                    <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="{DynamicResource AccentBrush}"/>
+                                                                                </Button>
+                                                                                <Button Style="{StaticResource PrimaryBtn}" Padding="4" Background="Transparent" BorderThickness="0"
+                                                                                        Command="{Binding DataContext.DeleteQuestionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" ToolTip="Delete Question">
+                                                                                    <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="11" Foreground="#DC2626"/>
+                                                                                </Button>
+                                                                            </StackPanel>
                                                                         </Grid>
                                                                     </Border>
                                                                 </DataTemplate>
@@ -178,110 +272,255 @@
                                         </ItemsControl>
                                     </Expander>
                                 </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
+                             </ItemsControl.ItemTemplate>
+                         </ItemsControl>
+                     </ScrollViewer>
 
-                    <!-- Empty State Panel -->
-                    <StackPanel Grid.RowSpan="2" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24"
-                                Visibility="{Binding Questions.Count, Converter={StaticResource ZeroToVis}}">
-                        <TextBlock Text="&#xE90A;" FontFamily="Segoe MDL2 Assets" FontSize="64" Foreground="#D1D5DB" HorizontalAlignment="Center" Margin="0,0,0,16"/>
-                        <TextBlock Text="No questions in your bank yet" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Get started by adding questions manually or uploading a bulk sheet on the right panel." FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,6,0,0" TextAlignment="Center" MaxWidth="360" TextWrapping="Wrap"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
-        </Grid>
+                     <!-- Empty State Panel -->
+                     <StackPanel Grid.RowSpan="2" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24"
+                                 Visibility="{Binding Questions.Count, Converter={StaticResource ZeroToVis}}">
+                         <TextBlock Text="&#xE90A;" FontFamily="Segoe MDL2 Assets" FontSize="64" Foreground="#D1D5DB" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                         <TextBlock Text="No questions in your bank yet" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
+                         <TextBlock Text="Get started by adding questions manually or uploading a bulk sheet on the right panel." FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,6,0,0" TextAlignment="Center" MaxWidth="360" TextWrapping="Wrap"/>
+                     </StackPanel>
+                 </Grid>
+             </Border>
+         </Grid>
 
-        <!-- Right panel: Add/Edit Question -->
-        <Border Grid.Column="1" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,0,0,0" Margin="0,24,24,24" CornerRadius="0,16,16,0">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
+         <!-- Right panel: Add/Edit Question -->
+         <Border Grid.Column="1" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,0,0,0" Margin="0,24,24,24" CornerRadius="0,16,16,0">
+             <Grid>
+                 <Grid.RowDefinitions>
+                     <RowDefinition Height="Auto"/>
+                     <RowDefinition Height="*"/>
+                 </Grid.RowDefinitions>
 
-                <Border Background="{DynamicResource HeaderBgBrush}" Padding="16,16,16,16" CornerRadius="0,16,0,0">
-                    <TextBlock Text="Bulk Upload" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
-                </Border>
+                 <Border Background="{DynamicResource HeaderBgBrush}" Padding="16,16,16,16" CornerRadius="0,16,0,0">
+                     <TextBlock FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}">
+                         <TextBlock.Style>
+                             <Style TargetType="TextBlock">
+                                 <Setter Property="Text" Value="Bulk Upload Ingestion"/>
+                                 <Style.Triggers>
+                                     <DataTrigger Binding="{Binding IsSingleQuestionMode}" Value="True">
+                                         <Setter Property="Text" Value="Single Question Creation"/>
+                                     </DataTrigger>
+                                 </Style.Triggers>
+                             </Style>
+                         </TextBlock.Style>
+                     </TextBlock>
+                 </Border>
 
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24">
-                    <Grid>
-                        <!-- Bulk Upload Form -->
-                        <StackPanel>
-                            <TextBlock Text="Bulk Questions Ingestion" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,6"/>
-                            <TextBlock Text="Upload files to seamlessly import hundreds of questions instantly." FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,20" TextWrapping="Wrap"/>
+                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24">
+                     <Grid>
+                         <!-- Bulk Upload Form -->
+                         <StackPanel>
+                             <StackPanel.Style>
+                                 <Style TargetType="StackPanel">
+                                     <Setter Property="Visibility" Value="Visible"/>
+                                     <Style.Triggers>
+                                         <DataTrigger Binding="{Binding IsSingleQuestionMode}" Value="True">
+                                             <Setter Property="Visibility" Value="Collapsed"/>
+                                         </DataTrigger>
+                                     </Style.Triggers>
+                                 </Style>
+                             </StackPanel.Style>
+                             
+                             <TextBlock Text="Bulk Questions Ingestion" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,6"/>
+                             <TextBlock Text="Upload files to seamlessly import hundreds of questions instantly." FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,20" TextWrapping="Wrap"/>
 
-                            <!-- Dashed Ingestion Zone -->
-                            <Border x:Name="UploadZoneBorder" AllowDrop="True" Background="{DynamicResource FieldBg}" CornerRadius="12" BorderThickness="0" Margin="0,0,0,16" Height="180">
-                                <Grid>
-                                    <Rectangle Stroke="{DynamicResource BorderBrush}" StrokeDashArray="4 3" StrokeThickness="1.5" RadiusX="12" RadiusY="12"/>
-                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="20">
-                                        <TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="40" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" Margin="0,0,0,12"/>
-                                        <TextBlock Text="Drag &amp; drop your question file here" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
-                                        <TextBlock Text="or browse local files" FontSize="12" Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,4,0,0" Cursor="Hand">
-                                            <TextBlock.InputBindings>
-                                                <MouseBinding MouseAction="LeftClick" Command="{Binding BrowseFileCommand}"/>
-                                            </TextBlock.InputBindings>
-                                        </TextBlock>
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
+                             <!-- Perfect Rectangle Dashed Ingestion Zone -->
+                             <Border x:Name="UploadZoneBorder" AllowDrop="True" Background="{DynamicResource FieldBg}" CornerRadius="0" BorderThickness="0" Margin="0,0,0,16" Height="180">
+                                 <Grid>
+                                     <Rectangle Stroke="{DynamicResource BorderBrush}" StrokeDashArray="4 3" StrokeThickness="1.5" RadiusX="0" RadiusY="0"/>
+                                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="20">
+                                         <TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="40" Foreground="{DynamicResource AccentBrush}" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                                         <TextBlock Text="Drag &amp; drop your question file here" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center"/>
+                                         <TextBlock Text="or browse local files" FontSize="12" Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,4,0,0" Cursor="Hand">
+                                             <TextBlock.InputBindings>
+                                                 <MouseBinding MouseAction="LeftClick" Command="{Binding BrowseFileCommand}"/>
+                                             </TextBlock.InputBindings>
+                                         </TextBlock>
+                                     </StackPanel>
+                                 </Grid>
+                             </Border>
 
-                            <TextBlock Text="Supports .csv or .json formatted templates" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,24"/>
+                             <TextBlock Text="Supports .csv or .json formatted templates" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,24"/>
 
-                            <!-- Action Buttons -->
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,24">
-                                <Button Command="{Binding DownloadTemplateCommand}" Style="{StaticResource PrimaryBtn}"
-                                        Background="{DynamicResource FieldBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                                        Foreground="{DynamicResource TextPrimaryBrush}" Padding="16,10" Margin="0,0,12,0" Cursor="Hand">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Download CSV Template" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
-                                <Button Command="{Binding BrowseFileCommand}" Style="{StaticResource PrimaryBtn}"
-                                        Background="{DynamicResource AccentBrush}" Foreground="White" Padding="16,10" Cursor="Hand">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Browse File" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
+                             <!-- Ingestion Live Preview Layer -->
+                             <StackPanel Margin="0,0,0,16">
+                                 <StackPanel.Style>
+                                     <Style TargetType="StackPanel">
+                                         <Setter Property="Visibility" Value="Visible"/>
+                                         <Style.Triggers>
+                                             <DataTrigger Binding="{Binding ParsedPreviewList.Count}" Value="0">
+                                                 <Setter Property="Visibility" Value="Collapsed"/>
+                                             </DataTrigger>
+                                         </Style.Triggers>
+                                     </Style>
+                                 </StackPanel.Style>
+                                 <TextBlock Text="Parsed Questions Live Preview" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                                 <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Background="{DynamicResource FieldBg}" Height="220" Margin="0,0,0,16">
+                                     <DataGrid ItemsSource="{Binding ParsedPreviewList}" AutoGenerateColumns="False" HeadersVisibility="Column" GridLinesVisibility="Horizontal" Background="Transparent" BorderThickness="0" RowHeaderWidth="0" IsReadOnly="True" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                         <DataGrid.Columns>
+                                             <DataGridTextColumn Header="Num" Binding="{Binding QuestionNumber}" Width="45"/>
+                                             <DataGridTextColumn Header="Subject" Binding="{Binding Subject}" Width="110"/>
+                                             <DataGridTextColumn Header="Question Preview" Binding="{Binding Text}" Width="*"/>
+                                             <DataGridTextColumn Header="Answer" Binding="{Binding CorrectAnswer}" Width="90"/>
+                                         </DataGrid.Columns>
+                                     </DataGrid>
+                                 </Border>
+                             </StackPanel>
 
-                            <!-- JSON Paste alternative -->
-                            <Expander Header="Alternative: Paste Raw JSON" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" HorizontalAlignment="Stretch">
-                                <StackPanel Margin="0,10,0,0">
-                                    <Grid Margin="0,0,0,6">
-                                        <TextBlock Text="Paste JSON content directly below:" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                                        <Button Command="{Binding CopyTemplateCommand}" HorizontalAlignment="Right" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource AccentBrush}" Cursor="Hand" Padding="0">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="12" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                                                <TextBlock Text="Copy Example Format" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                            </StackPanel>
-                                        </Button>
-                                    </Grid>
-                                    <TextBox Text="{Binding JsonImport, UpdateSourceTrigger=PropertyChanged}" Height="120" TextWrapping="Wrap" AcceptsReturn="True" FontFamily="Consolas" FontSize="12" VerticalScrollBarVisibility="Auto" Margin="0,0,0,12"/>
-                                    <Button Command="{Binding ImportJsonCommand}" Style="{StaticResource PrimaryBtn}" Background="#059669" Padding="16,8" HorizontalAlignment="Left">
-                                        <TextBlock Text="Parse &amp; Import JSON" FontSize="12" FontWeight="Bold"/>
-                                    </Button>
-                                </StackPanel>
-                            </Expander>
+                             <!-- Action Buttons -->
+                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,24">
+                                 <Button Command="{Binding DownloadTemplateCommand}" Style="{StaticResource PrimaryBtn}"
+                                         Background="{DynamicResource FieldBg}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                         Foreground="{DynamicResource TextPrimaryBrush}" Padding="16,10" Margin="0,0,12,0" Cursor="Hand">
+                                     <StackPanel Orientation="Horizontal">
+                                         <TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                         <TextBlock Text="Download CSV Template" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                     </StackPanel>
+                                 </Button>
+                                 <Button Command="{Binding BrowseFileCommand}" Style="{StaticResource PrimaryBtn}"
+                                         Background="{DynamicResource AccentBrush}" Foreground="White" Padding="16,10" Cursor="Hand">
+                                     <StackPanel Orientation="Horizontal">
+                                         <TextBlock Text="&#xE8E5;" FontFamily="Segoe MDL2 Assets" FontSize="12" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                         <TextBlock Text="Browse File" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                     </StackPanel>
+                                 </Button>
+                             </StackPanel>
 
-                            <TextBlock Text="{Binding Status}" FontSize="13" TextWrapping="Wrap" Margin="0,16,0,0" HorizontalAlignment="Center"
-                                       Foreground="{Binding StatusOk, Converter={StaticResource BoolToColor}}"/>
-                        </StackPanel>
-                    </Grid>
-                </ScrollViewer>
-            </Grid>
-        </Border>
+                             <!-- JSON Paste alternative -->
+                             <Expander Header="Alternative: Paste Raw JSON" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" HorizontalAlignment="Stretch">
+                                 <StackPanel Margin="0,10,0,0">
+                                     <Grid Margin="0,0,0,6">
+                                         <TextBlock Text="Paste JSON content directly below:" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                         <Button Command="{Binding CopyTemplateCommand}" HorizontalAlignment="Right" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource AccentBrush}" Cursor="Hand" Padding="0">
+                                             <StackPanel Orientation="Horizontal">
+                                                 <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="12" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                 <TextBlock Text="Copy Example Format" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                             </StackPanel>
+                                         </Button>
+                                     </Grid>
+                                     <TextBox Text="{Binding JsonImport, UpdateSourceTrigger=PropertyChanged}" Height="120" TextWrapping="Wrap" AcceptsReturn="True" FontFamily="Consolas" FontSize="12" VerticalScrollBarVisibility="Auto" Margin="0,0,0,12"/>
+                                     <Button Command="{Binding ImportJsonCommand}" Style="{StaticResource PrimaryBtn}" Background="#059669" Padding="16,8" HorizontalAlignment="Left">
+                                         <TextBlock Text="Parse &amp; Import JSON" FontSize="12" FontWeight="Bold"/>
+                                     </Button>
+                                 </StackPanel>
+                             </Expander>
 
-        <!-- Loading Overlay -->
-        <Border Grid.ColumnSpan="2" Background="#40FFFFFF" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
-            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                <ProgressBar IsIndeterminate="True" Width="120" Height="3" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource AccentBrush}"/>
-                <TextBlock Text="{Binding BusyMessage}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" Margin="0,10,0,0" HorizontalAlignment="Center"/>
-            </StackPanel>
-        </Border>
-    </Grid>
-</UserControl>
+                             <TextBlock Text="{Binding Status}" FontSize="13" TextWrapping="Wrap" Margin="0,16,0,0" HorizontalAlignment="Center"
+                                        Foreground="{Binding StatusOk, Converter={StaticResource BoolToColor}}"/>
+                         </StackPanel>
+
+                         <!-- Single Question Form -->
+                         <StackPanel>
+                             <StackPanel.Style>
+                                 <Style TargetType="StackPanel">
+                                     <Setter Property="Visibility" Value="Collapsed"/>
+                                     <Style.Triggers>
+                                         <DataTrigger Binding="{Binding IsSingleQuestionMode}" Value="True">
+                                             <Setter Property="Visibility" Value="Visible"/>
+                                         </DataTrigger>
+                                     </Style.Triggers>
+                                 </Style>
+                             </StackPanel.Style>
+                             
+                             <TextBlock Text="Add Single Question" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,6"/>
+                             <TextBlock Text="Manually key in questions to populate your CBT bank." FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,20" TextWrapping="Wrap"/>
+
+                             <!-- Subject Field -->
+                             <TextBlock Text="Subject Name" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                             <Grid Margin="0,0,0,12">
+                                 <ComboBox ItemsSource="{Binding Subjects}" Text="{Binding SingleSubject, UpdateSourceTrigger=PropertyChanged}" IsEditable="True" Height="38"/>
+                             </Grid>
+
+                             <!-- Year & Question Number -->
+                             <Grid Margin="0,0,0,12">
+                                 <Grid.ColumnDefinitions>
+                                     <ColumnDefinition Width="*"/>
+                                     <ColumnDefinition Width="12"/>
+                                     <ColumnDefinition Width="*"/>
+                                 </Grid.ColumnDefinitions>
+                                 <StackPanel>
+                                     <TextBlock Text="Exam Year" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                                     <TextBox Text="{Binding SingleYear, UpdateSourceTrigger=PropertyChanged}" Height="38" Padding="10,0" VerticalContentAlignment="Center"/>
+                                 </StackPanel>
+                                 <StackPanel Grid.Column="2">
+                                     <TextBlock Text="Question Number" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                                     <TextBox Text="{Binding SingleQNum, UpdateSourceTrigger=PropertyChanged}" Height="38" Padding="10,0" VerticalContentAlignment="Center"/>
+                                 </StackPanel>
+                             </Grid>
+
+                             <!-- Question Text -->
+                             <TextBlock Text="Question Text" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                             <TextBox Text="{Binding SingleText, UpdateSourceTrigger=PropertyChanged}" Height="100" TextWrapping="Wrap" AcceptsReturn="True" Padding="10" VerticalContentAlignment="Top" Margin="0,0,0,12"/>
+
+                             <!-- Options A and B -->
+                             <Grid Margin="0,0,0,12">
+                                 <Grid.ColumnDefinitions>
+                                     <ColumnDefinition Width="*"/>
+                                     <ColumnDefinition Width="12"/>
+                                     <ColumnDefinition Width="*"/>
+                                 </Grid.ColumnDefinitions>
+                                 <StackPanel>
+                                     <TextBlock Text="Option A" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                                     <TextBox Text="{Binding SingleOptA, UpdateSourceTrigger=PropertyChanged}" Height="38" Padding="10,0" VerticalContentAlignment="Center"/>
+                                 </StackPanel>
+                                 <StackPanel Grid.Column="2">
+                                     <TextBlock Text="Option B" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                                     <TextBox Text="{Binding SingleOptB, UpdateSourceTrigger=PropertyChanged}" Height="38" Padding="10,0" VerticalContentAlignment="Center"/>
+                                 </StackPanel>
+                             </Grid>
+
+                             <!-- Options C and D -->
+                             <Grid Margin="0,0,0,12">
+                                 <Grid.ColumnDefinitions>
+                                     <ColumnDefinition Width="*"/>
+                                     <ColumnDefinition Width="12"/>
+                                     <ColumnDefinition Width="*"/>
+                                 </Grid.ColumnDefinitions>
+                                 <StackPanel>
+                                     <TextBlock Text="Option C (Optional)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                                     <TextBox Text="{Binding SingleOptC, UpdateSourceTrigger=PropertyChanged}" Height="38" Padding="10,0" VerticalContentAlignment="Center"/>
+                                 </StackPanel>
+                                 <StackPanel Grid.Column="2">
+                                     <TextBlock Text="Option D (Optional)" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                                     <TextBox Text="{Binding SingleOptD, UpdateSourceTrigger=PropertyChanged}" Height="38" Padding="10,0" VerticalContentAlignment="Center"/>
+                                 </StackPanel>
+                             </Grid>
+
+                             <!-- Correct Answer Selection -->
+                             <TextBlock Text="Correct Option Letter" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                             <ComboBox SelectedValue="{Binding SingleCorrect, UpdateSourceTrigger=PropertyChanged}" SelectedValuePath="Content" Height="38" Margin="0,0,0,24">
+                                 <ComboBoxItem Content="A" IsSelected="True"/>
+                                 <ComboBoxItem Content="B"/>
+                                 <ComboBoxItem Content="C"/>
+                                 <ComboBoxItem Content="D"/>
+                             </ComboBox>
+
+                             <!-- Action Button -->
+                             <Button Command="{Binding CreateSingleQuestionCommand}" Style="{StaticResource PrimaryBtn}" Background="{DynamicResource AccentBrush}" Foreground="White" Padding="20,12" HorizontalAlignment="Stretch">
+                                 <StackPanel Orientation="Horizontal">
+                                     <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                     <TextBlock Text="Save Question to Bank" FontSize="13" FontWeight="Bold" VerticalAlignment="Center"/>
+                                 </StackPanel>
+                             </Button>
+
+                             <TextBlock Text="{Binding Status}" FontSize="13" TextWrapping="Wrap" Margin="0,16,0,0" HorizontalAlignment="Center"
+                                        Foreground="{Binding StatusOk, Converter={StaticResource BoolToColor}}"/>
+                         </StackPanel>
+                     </Grid>
+                 </ScrollViewer>
+             </Grid>
+         </Border>
+
+         <!-- Loading Overlay -->
+         <Border Grid.ColumnSpan="2" Background="#40FFFFFF" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
+             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                 <ProgressBar IsIndeterminate="True" Width="120" Height="3" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource AccentBrush}"/>
+                 <TextBlock Text="{Binding BusyMessage}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" Margin="0,10,0,0" HorizontalAlignment="Center"/>
+             </StackPanel>
+         </Border>
+     </Grid>
+ </UserControl>
