@@ -394,16 +394,36 @@ public class ExamSubjectConfigVM : BaseViewModel
     private readonly Action _onChanged;
     private List<QuestionBankDto> _bankQuestions = [];
 
-    public ExamSubjectConfigVM(ApiClient api, ObservableCollection<string> availableSubjects, Action<ExamSubjectConfigVM> onRemove, Action onChanged)
+    public ExamSubjectConfigVM(ApiClient api, Action<ExamSubjectConfigVM> onRemove, Action onChanged)
     {
         _api = api;
         _onRemove = onRemove;
         _onChanged = onChanged;
-        AvailableSubjects = availableSubjects;
     }
 
-    public ObservableCollection<string> AvailableSubjects { get; }
+    // Each row owns its own filtered list — excludes subjects already selected in sibling rows
+    public ObservableCollection<string> AvailableSubjects { get; } = [];
     public ObservableCollection<YearToggle> AvailableYears { get; } = [];
+
+    /// <summary>
+    /// Rebuilds this row's dropdown to show only subjects not already selected in other rows,
+    /// plus the row's own current selection (so it never disappears from its own dropdown).
+    /// </summary>
+    public void RefreshAvailableSubjects(IEnumerable<string> allSubjects, IEnumerable<string> otherSelectedSubjects)
+    {
+        var others = new HashSet<string>(otherSelectedSubjects, StringComparer.OrdinalIgnoreCase);
+        var current = AvailableSubjects.ToList();
+        var next = allSubjects
+            .Where(s => !others.Contains(s) || string.Equals(s, _selectedSubject, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        // Only rebuild if the list actually changed to avoid unnecessary UI churn
+        if (current.SequenceEqual(next, StringComparer.OrdinalIgnoreCase)) return;
+
+        AvailableSubjects.Clear();
+        foreach (var s in next)
+            AvailableSubjects.Add(s);
+    }
 
     private string _selectedSubject = string.Empty;
     public string SelectedSubject
@@ -412,7 +432,10 @@ public class ExamSubjectConfigVM : BaseViewModel
         set
         {
             if (Set(ref _selectedSubject, value))
+            {
+                _onChanged(); // triggers RefreshAllRowSubjects in ExamsViewModel
                 _ = LoadYearsAsync();
+            }
         }
     }
 
@@ -641,9 +664,10 @@ public class ExamsViewModel(ApiClient api) : BaseViewModel, IRefreshable
         {
             if (SubjectConfigs.Count < 4 && !SubjectConfigs.Any(s => s.SelectedSubject == single))
             {
-                var row = new ExamSubjectConfigVM(api, AvailableSubjects, RemoveSubjectRow, NotifySummary);
+                var row = new ExamSubjectConfigVM(api, RemoveSubjectRow, NotifySummary);
                 row.SelectedSubject = single;
                 SubjectConfigs.Add(row);
+                RefreshAllRowSubjects();
                 NotifySummary();
             }
         }
@@ -654,11 +678,12 @@ public class ExamsViewModel(ApiClient api) : BaseViewModel, IRefreshable
                 if (item is string subject && SubjectConfigs.Count < 4)
                 {
                     if (SubjectConfigs.Any(s => s.SelectedSubject == subject)) continue;
-                    var row = new ExamSubjectConfigVM(api, AvailableSubjects, RemoveSubjectRow, NotifySummary);
+                    var row = new ExamSubjectConfigVM(api, RemoveSubjectRow, NotifySummary);
                     row.SelectedSubject = subject;
                     SubjectConfigs.Add(row);
                 }
             }
+            RefreshAllRowSubjects();
             NotifySummary();
         }
     });
@@ -676,6 +701,7 @@ public class ExamsViewModel(ApiClient api) : BaseViewModel, IRefreshable
             var subjects = await api.GetQuestionBankSubjectsAsync();
             AvailableSubjects.Clear();
             subjects?.ForEach(AvailableSubjects.Add);
+            RefreshAllRowSubjects(); // update any open rows after subjects reload
 
             // Load exams
             var list = await api.GetExamsAsync();
@@ -694,18 +720,39 @@ public class ExamsViewModel(ApiClient api) : BaseViewModel, IRefreshable
     private void AddSubjectRow()
     {
         if (SubjectConfigs.Count >= 4) return;
-        SubjectConfigs.Add(new ExamSubjectConfigVM(api, AvailableSubjects, RemoveSubjectRow, NotifySummary));
+        var row = new ExamSubjectConfigVM(api, RemoveSubjectRow, NotifySummary);
+        SubjectConfigs.Add(row);
+        RefreshAllRowSubjects();
         NotifySummary();
     }
 
     private void RemoveSubjectRow(ExamSubjectConfigVM row)
     {
         SubjectConfigs.Remove(row);
+        RefreshAllRowSubjects();
         NotifySummary();
+    }
+
+    /// <summary>
+    /// Rebuilds every row's filtered AvailableSubjects so no row shows a subject
+    /// already selected in another row.
+    /// </summary>
+    private void RefreshAllRowSubjects()
+    {
+        for (int i = 0; i < SubjectConfigs.Count; i++)
+        {
+            var row = SubjectConfigs[i];
+            var othersSelected = SubjectConfigs
+                .Where((r, idx) => idx != i)
+                .Select(r => r.SelectedSubject)
+                .Where(s => !string.IsNullOrWhiteSpace(s));
+            row.RefreshAvailableSubjects(AvailableSubjects, othersSelected);
+        }
     }
 
     private void NotifySummary()
     {
+        RefreshAllRowSubjects();
         OnPropertyChanged(nameof(CanAddSubject));
         OnPropertyChanged(nameof(TotalSubjects));
         OnPropertyChanged(nameof(TotalQuestions));
@@ -722,6 +769,18 @@ public class ExamsViewModel(ApiClient api) : BaseViewModel, IRefreshable
         if (SubjectConfigs.Count == 0)
         {
             CreateStatus = "Add at least one subject."; StatusOk = false; CurrentStep = 2; return;
+        }
+
+        // Guard against duplicate subjects across rows
+        var duplicateSubjects = SubjectConfigs
+            .GroupBy(c => c.SelectedSubject, StringComparer.OrdinalIgnoreCase)
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .ToList();
+        if (duplicateSubjects.Count > 0)
+        {
+            CreateStatus = $"Duplicate subject(s): {string.Join(", ", duplicateSubjects)}. Each subject may only appear once.";
+            StatusOk = false; CurrentStep = 2; return;
         }
 
         // Validate each subject config
@@ -817,10 +876,11 @@ public class ExamsViewModel(ApiClient api) : BaseViewModel, IRefreshable
         var subjects = e.Subject.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         foreach (var sub in subjects)
         {
-            var row = new ExamSubjectConfigVM(api, AvailableSubjects, RemoveSubjectRow, NotifySummary);
+            var row = new ExamSubjectConfigVM(api, RemoveSubjectRow, NotifySummary);
             row.SelectedSubject = sub;
             SubjectConfigs.Add(row);
         }
+        RefreshAllRowSubjects();
 
         IsEditing = true;
         ShowCreateForm = true;

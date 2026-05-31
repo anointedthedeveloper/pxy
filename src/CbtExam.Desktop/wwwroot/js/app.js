@@ -567,28 +567,6 @@ function renderSubjectTabs() {
         btn.className = `btn btn-tab ${sub === activeSubject ? 'active' : ''}`;
         btn.textContent = sub;
         btn.onclick = () => switchSubject(sub);
-        
-        // Custom styling for elegant glassmorphic/flat modern tab buttons
-        btn.style.padding = '10px 20px';
-        btn.style.borderRadius = '10px';
-        btn.style.fontWeight = '700';
-        btn.style.cursor = 'pointer';
-        btn.style.transition = 'all 0.2s ease';
-        btn.style.fontSize = '13px';
-        btn.style.textTransform = 'uppercase';
-        btn.style.letterSpacing = '0.5px';
-        
-        if (sub === activeSubject) {
-            btn.style.background = '#10B981'; // Sleek premium emerald green
-            btn.style.color = '#ffffff';
-            btn.style.border = 'none';
-            btn.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.25)';
-        } else {
-            btn.style.background = 'rgba(255, 255, 255, 0.08)';
-            btn.style.color = '#94A3B8';
-            btn.style.border = '1px solid rgba(255, 255, 255, 0.1)';
-        }
-
         container.appendChild(btn);
     });
 }

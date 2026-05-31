@@ -23,6 +23,7 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
     {
         var sessions = await db.ExamSessions
             .Include(s => s.Exam)
+            .Include(s => s.StudentExams)
             .ToListAsync();
 
         var result = sessions.Select(s => {

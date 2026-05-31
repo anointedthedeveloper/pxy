@@ -1,0 +1,12 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  CbtExam.Shared -> C:\Users\Admin\Desktop\Jamb-Mock\src\CbtExam.Shared\bin\Debug\net8.0\CbtExam.Shared.dll
+  CbtExam.Data -> C:\Users\Admin\Desktop\Jamb-Mock\src\CbtExam.Data\bin\Debug\net8.0\CbtExam.Data.dll
+  CbtExam.Api -> C:\Users\Admin\Desktop\Jamb-Mock\src\CbtExam.Api\bin\Debug\net8.0\CbtExam.Api.dll
+  CbtExam.Desktop -> C:\Users\Admin\Desktop\Jamb-Mock\src\CbtExam.Desktop\bin\Debug\net8.0-windows\win-x64\CbtExam.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:08.21

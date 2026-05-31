@@ -331,12 +331,49 @@
                     if (checkIcon) checkIcon.style.display = 'inline-block';
                     
                     btn.innerHTML = '<span>Connected to Room (Offline-Hydrated)</span><div class="spinner"></div>';
-                    
-                    // Start Continuous LAN Heartbeat every 3 seconds
-                    pollHeartbeatSignal(studentExamId, activeDeviceId, activeDeviceName);
+
+                    // If the exam was already started when we joined, skip the heartbeat loop
+                    // and go directly to decrypt + countdown to avoid the race condition
+                    if (session.isStarted) {
+                        statusText.textContent = 'Exam already in progress — decrypting and launching...';
+                        try {
+                            const keyRes = await fetch(`${API_BASE}/Student/heartbeat`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    studentExamId: studentExamId,
+                                    currentQuestion: 0,
+                                    batteryLevel: 100,
+                                    isOnline: true,
+                                    connectionState: 'online',
+                                    deviceName: activeDeviceName,
+                                    deviceId: activeDeviceId
+                                })
+                            });
+                            if (keyRes.ok) {
+                                const keyData = await keyRes.json();
+                                if (keyData.isStarted && keyData.decryptionKey) {
+                                    starting = true;
+                                    const encryptedData = localStorage.getItem('encryptedQuestions');
+                                    if (!encryptedData) throw new Error('No encrypted questions cached!');
+                                    const decrypted = await decryptAes(encryptedData, keyData.decryptionKey);
+                                    localStorage.setItem('cachedQuestions', decrypted);
+                                    triggerCountdown();
+                                    return;
+                                }
+                            }
+                        } catch (earlyErr) {
+                            console.error('Early-start decryption failed:', earlyErr);
+                            // Fall through to normal heartbeat polling
+                        }
+                    }
+
+                    // Assign interval FIRST so clearInterval always has a valid handle
                     heartbeatInterval = setInterval(() => {
                         pollHeartbeatSignal(studentExamId, activeDeviceId, activeDeviceName);
                     }, 3000);
+                    // Then fire the first poll immediately
+                    pollHeartbeatSignal(studentExamId, activeDeviceId, activeDeviceName);
 
                 } catch (error) {
                     console.error(error);
