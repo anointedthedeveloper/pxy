@@ -305,6 +305,7 @@ public class MainViewModel : BaseViewModel
             ServerRunning = true;
             StartupStatus = string.Empty;
             Settings.NotifyServerStarted(_server.ServerUrl);
+            App.StoreServerUrl(_server.ServerUrl);
             App.Log($"Server started at {ServerUrl}");
         }
         catch (Exception ex)
@@ -327,6 +328,7 @@ public class MainViewModel : BaseViewModel
             ServerRunning = false;
             ServerUrl     = string.Empty;
             Settings.NotifyServerStopped();
+            App.ClearServerUrl();
         }
     }
 

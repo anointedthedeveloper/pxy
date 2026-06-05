@@ -70,6 +70,7 @@ public partial class App : Application
         DispatcherUnhandledException          += OnDispatcherUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+        AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
         
         LoadTheme();
 
@@ -104,6 +105,116 @@ public partial class App : Application
         MessageBox.Show(
             $"Fatal error:\n\n{ex?.Message}\n\nSee cbt_error.log for details.",
             "CBT Exam — Fatal Error", MessageBoxButton.OK, MessageBoxImage.Error);
+    }
+
+    // ── Forceful close handler ──────────────────────────────────────────────
+    private void OnProcessExit(object? sender, EventArgs e)
+    {
+        try
+        {
+            Log("Process exit detected - attempting to end all active sessions");
+            
+            // Try to end all active sessions via API
+            // This is a synchronous call since ProcessExit is not async
+            var exeDir = Path.GetDirectoryName(Environment.ProcessPath)
+                          ?? AppDomain.CurrentDomain.BaseDirectory;
+            var serverUrlFile = Path.Combine(exeDir, "server_url.txt");
+            
+            string serverUrl = "http://localhost:5000";
+            
+            // Try to read the actual server URL from file
+            if (File.Exists(serverUrlFile))
+            {
+                try
+                {
+                    serverUrl = File.ReadAllText(serverUrlFile).Trim();
+                }
+                catch { }
+            }
+            else
+            {
+                // Fallback: try to read port from settings.json
+                var settingsFile = Path.Combine(exeDir, "settings.json");
+                if (File.Exists(settingsFile))
+                {
+                    try
+                    {
+                        var json = File.ReadAllText(settingsFile);
+                        using var doc = System.Text.Json.JsonDocument.Parse(json);
+                        if (doc.RootElement.TryGetProperty("Port", out var portProp))
+                        {
+                            var port = portProp.GetInt32();
+                            serverUrl = $"http://localhost:{port}";
+                        }
+                    }
+                    catch { }
+                }
+            }
+            
+            using var httpClient = new System.Net.Http.HttpClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(1); // Very short timeout
+            httpClient.BaseAddress = new Uri(serverUrl + "/");
+            httpClient.DefaultRequestHeaders.Add("X-Admin-Key", 
+                Environment.GetEnvironmentVariable("CBT_ADMIN_KEY") ?? "admin123");
+            
+            // Make a synchronous call to end all sessions
+            try
+            {
+                var response = httpClient.PostAsync("api/sessions/end-all", null).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    Log("Successfully ended all active sessions on forceful close");
+                }
+                else
+                {
+                    Log($"Failed to end sessions: {response.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log("Error calling end-all sessions API", ex);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log("Error in ProcessExit handler", ex);
+        }
+    }
+
+    // ── Server URL persistence for forceful close handling ───────────────────
+    public static void StoreServerUrl(string url)
+    {
+        try
+        {
+            var exeDir = Path.GetDirectoryName(Environment.ProcessPath)
+                          ?? AppDomain.CurrentDomain.BaseDirectory;
+            var serverUrlFile = Path.Combine(exeDir, "server_url.txt");
+            File.WriteAllText(serverUrlFile, url);
+            Log($"Stored server URL: {url}");
+        }
+        catch (Exception ex)
+        {
+            Log("Failed to store server URL", ex);
+        }
+    }
+
+    public static void ClearServerUrl()
+    {
+        try
+        {
+            var exeDir = Path.GetDirectoryName(Environment.ProcessPath)
+                          ?? AppDomain.CurrentDomain.BaseDirectory;
+            var serverUrlFile = Path.Combine(exeDir, "server_url.txt");
+            if (File.Exists(serverUrlFile))
+            {
+                File.Delete(serverUrlFile);
+                Log("Cleared server URL");
+            }
+        }
+        catch (Exception ex)
+        {
+            Log("Failed to clear server URL", ex);
+        }
     }
 
     // ── Theme engine ───────────────────────────────────────────────────────
