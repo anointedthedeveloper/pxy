@@ -3120,74 +3120,119 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
 
     public RelayCommand DownloadRepoCommand => new(async () => await DownloadQuestionsAsync());
 
+    // Friendly display names for known filenames; unknown files fall back to TitleCase of filename
+    private static readonly Dictionary<string, string> KnownSubjectNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["civiledu"]       = "Civic Education",
+        ["crk"]            = "Christian Religious Knowledge",
+        ["irk"]            = "Islamic Religious Knowledge",
+        ["englishlit"]     = "Literature In English",
+        ["currentaffairs"] = "Current Affairs",
+        ["english"]        = "English Language",
+    };
+
+    private static string ToTitleCase(string s) =>
+        System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(s.Trim().ToLower());
+
     private async Task DownloadQuestionsAsync()
     {
-        if (string.IsNullOrWhiteSpace(RepoUrl))
+        var baseUrl = RepoUrl.TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(baseUrl))
         {
-            CopyStatus = "Please enter a valid URL.";
+            CopyStatus = "Please enter the repository base URL.";
             return;
         }
 
         IsBusy = true;
-        BusyMessage = "Downloading questions from repository...";
+        BusyMessage = "Fetching repository file list...";
+        int totalImported = 0, totalSkipped = 0;
+
+        using var client = new HttpClient();
+        client.Timeout = TimeSpan.FromSeconds(60);
+        client.DefaultRequestHeaders.Add("User-Agent", "CbtExam");
+
         try
         {
-            using var client = new HttpClient();
-            var json = await client.GetStringAsync(RepoUrl);
-            var questions = JsonSerializer.Deserialize<List<QuestionBankCreateDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            
-            if (questions == null || questions.Count == 0)
+            // Discover all JSON files dynamically via GitHub API
+            // baseUrl: https://raw.githubusercontent.com/USER/REPO/BRANCH
+            // API URL: https://api.github.com/repos/USER/REPO/git/trees/BRANCH?recursive=1
+            var parts = baseUrl.Replace("https://raw.githubusercontent.com/", "").Split('/');
+            // parts: [user, repo, branch]
+            string apiUrl = $"https://api.github.com/repos/{parts[0]}/{parts[1]}/git/trees/{parts[2]}?recursive=1";
+
+            var treeJson = await client.GetStringAsync(apiUrl);
+            var tree = JsonSerializer.Deserialize<JsonElement>(treeJson);
+            var files = tree.GetProperty("tree").EnumerateArray()
+                .Where(f => f.GetProperty("path").GetString()?.EndsWith(".json", StringComparison.OrdinalIgnoreCase) == true
+                         && f.GetProperty("type").GetString() == "blob")
+                .Select(f => f.GetProperty("path").GetString()!)
+                .ToList();
+
+            if (files.Count == 0)
             {
-                CopyStatus = "No questions found in repository.";
+                CopyStatus = "No JSON files found in repository.";
                 return;
             }
 
-            var resp = await api.ImportQuestionBankAsync(questions);
-            if (resp.IsSuccessStatusCode)
+            int idx = 0;
+            foreach (var filePath in files)
             {
+                idx++;
+                var fileName = Path.GetFileNameWithoutExtension(filePath);
+                var subject = KnownSubjectNames.TryGetValue(fileName, out var known) ? known : ToTitleCase(fileName);
+                BusyMessage = $"Downloading {subject} ({idx}/{files.Count})...";
+
                 try
                 {
-                    var responseJson = await resp.Content.ReadAsStringAsync();
-                    var importResult = JsonSerializer.Deserialize<Dictionary<string, int>>(responseJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    if (importResult != null && importResult.TryGetValue("imported", out int importedCount))
+                    var rawUrl = $"{baseUrl}/{filePath}";
+                    var json = await client.GetStringAsync(rawUrl);
+                    var questions = JsonSerializer.Deserialize<List<JsonElement>>(json,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                    if (questions == null || questions.Count == 0) continue;
+
+                    var resp = await api.ImportRepoQuestionsAsync(subject, questions);
+                    if (resp.IsSuccessStatusCode)
                     {
-                        int skippedCount = importResult.TryGetValue("skipped", out int skipped) ? skipped : 0;
-                        if (skippedCount > 0)
-                        {
-                            CopyStatus = $"Successfully imported {importedCount} questions ({skippedCount} skipped due to formatting).";
-                        }
-                        else
-                        {
-                            CopyStatus = $"Successfully imported all {importedCount} questions!";
-                        }
+                        var resultJson = await resp.Content.ReadAsStringAsync();
+                        var result = JsonSerializer.Deserialize<Dictionary<string, int>>(resultJson,
+                            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        totalImported += result?.GetValueOrDefault("imported") ?? 0;
+                        totalSkipped  += result?.GetValueOrDefault("skipped")  ?? 0;
                     }
                     else
                     {
-                        CopyStatus = $"Successfully imported {questions.Count} questions!";
+                        var err = await resp.Content.ReadAsStringAsync();
+                        App.Log($"Failed to import {subject}", new Exception(err));
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    CopyStatus = $"Successfully imported {questions.Count} questions!";
+                    App.Log($"Error downloading {subject}", ex);
                 }
             }
-            else
-            {
-                var errMsg = await resp.Content.ReadAsStringAsync();
-                CopyStatus = $"Error: {(!string.IsNullOrWhiteSpace(errMsg) ? errMsg : "Failed to import questions to server.")}";
-            }
+
+            CopyStatus = totalSkipped > 0
+                ? $"Done! {totalImported} imported, {totalSkipped} skipped (already exist). Go to Questions Bank to view."
+                : $"Done! {totalImported} questions saved offline. Go to Questions Bank to view.";
+
+            // Notify QuestionsViewModel to reload so bank shows immediately
+            OnRepoDownloadComplete?.Invoke();
         }
         catch (Exception ex)
         {
-            App.Log("Failed to download questions", ex);
+            App.Log("Repo download failed", ex);
             CopyStatus = $"Error: {ex.Message}";
         }
         finally
         {
             IsBusy = false;
-            _ = Task.Delay(5000).ContinueWith(_ => App.Current?.Dispatcher.Invoke(() => CopyStatus = string.Empty));
+            BusyMessage = string.Empty;
+            _ = Task.Delay(7000).ContinueWith(_ => App.Current?.Dispatcher.Invoke(() => CopyStatus = string.Empty));
         }
     }
+
+    public event Action? OnRepoDownloadComplete;
 
     public RelayCommand OpenFirewallCommand => new(() =>
     {

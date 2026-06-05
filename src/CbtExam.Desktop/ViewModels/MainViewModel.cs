@@ -106,6 +106,10 @@ public class MainViewModel : BaseViewModel
         Notifications = new NotificationsViewModel();
         Settings   = new SettingsViewModel(Api, _server);
 
+        // When repo download completes, refresh the question bank so it shows immediately
+        Settings.OnRepoDownloadComplete += () =>
+            App.Current.Dispatcher.Invoke(async () => await Questions.LoadAsync());
+
         _currentPage = Dashboard;
 
         ToggleSidebarCommand = new RelayCommand(() => SidebarOpen = !SidebarOpen);

@@ -54,6 +54,62 @@ public class QuestionBankController(AppDbContext db) : ControllerBase
         return Ok(q.Id);
     }
 
+    // Accepts P4JQ repo format and maps it to QuestionBank
+    [HttpPost("import-repo")]
+    public async Task<IActionResult> ImportRepo([FromQuery] string subject, [FromBody] List<RepoQuestionDto> questions)
+    {
+        if (questions == null || questions.Count == 0) return BadRequest("No questions provided.");
+
+        var subjectClean = System.Globalization.CultureInfo.CurrentCulture.TextInfo
+            .ToTitleCase(subject.Trim().ToLower());
+
+        static string CapitalizeFirst(string s) =>
+            string.IsNullOrWhiteSpace(s) ? s : char.ToUpper(s[0]) + s.Substring(1);
+        var valid = new List<QuestionBank>();
+        int qNum = 1;
+        foreach (var q in questions)
+        {
+            if (string.IsNullOrWhiteSpace(q.Question) || q.Option == null) continue;
+            var options = new List<string> { q.Option.A ?? "", q.Option.B ?? "", q.Option.C ?? "", q.Option.D ?? "" }
+                .Where(o => !string.IsNullOrWhiteSpace(o))
+                .Select(o => CapitalizeFirst(o.Trim()))
+                .ToList();
+            if (options.Count < 2) continue;
+
+            var answerLetter = (q.Answer ?? "").Trim().ToUpper();
+            string correctAnswer = answerLetter switch
+            {
+                "A" => options.Count >= 1 ? options[0] : "",
+                "B" => options.Count >= 2 ? options[1] : "",
+                "C" => options.Count >= 3 ? options[2] : "",
+                "D" => options.Count >= 4 ? options[3] : "",
+                _ => ""
+            };
+            if (string.IsNullOrWhiteSpace(correctAnswer)) continue;
+
+            int.TryParse(q.Examyear, out int year);
+
+            // Skip if already exists (subject + year + questionNumber)
+            bool exists = await db.QuestionBank.AnyAsync(x =>
+                x.Subject == subjectClean && x.Year == year && x.QuestionNumber == qNum);
+            if (exists) { qNum++; continue; }
+
+            valid.Add(new QuestionBank
+            {
+                Subject = subjectClean,
+                Year = year > 0 ? year : 0,
+                QuestionNumber = qNum++,
+                Text = CapitalizeFirst(q.Question.Trim()),
+                OptionsJson = System.Text.Json.JsonSerializer.Serialize(options),
+                CorrectAnswer = CapitalizeFirst(correctAnswer)
+            });
+        }
+
+        db.QuestionBank.AddRange(valid);
+        await db.SaveChangesAsync();
+        return Ok(new { imported = valid.Count, skipped = questions.Count - valid.Count });
+    }
+
     [HttpPost("import")]
     public async Task<IActionResult> Import(List<QuestionBankCreateDto> questions)
     {
@@ -161,4 +217,32 @@ public class QuestionBankController(AppDbContext db) : ControllerBase
         
         return correctAnswer;
     }
+}
+
+// DTOs for P4JQ repo format
+public class RepoQuestionDto
+{
+    public int Id { get; set; }
+    public string? Question { get; set; }
+    public RepoOptionDto? Option { get; set; }
+    public string? Answer { get; set; }
+    public string? Examyear { get; set; }
+    public string? Examtype { get; set; }
+    public string? Section { get; set; }
+    public string? Image { get; set; }
+    public string? Solution { get; set; }
+}
+
+public class RepoOptionDto
+{
+    public string? A { get; set; }
+    public string? B { get; set; }
+    public string? C { get; set; }
+    public string? D { get; set; }
+}
+
+internal static class StringExtensions
+{
+    public static string CapitalizeFirst(string s) =>
+        string.IsNullOrWhiteSpace(s) ? s : char.ToUpper(s[0]) + s.Substring(1);
 }
