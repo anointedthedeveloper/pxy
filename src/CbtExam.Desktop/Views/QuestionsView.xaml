@@ -3,8 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid Background="{DynamicResource BgBrush}">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="400"/>
+            <ColumnDefinition Width="*" MinWidth="480"/>
+            <ColumnDefinition Width="380" MinWidth="340"/>
         </Grid.ColumnDefinitions>
 
         <!-- Left: Questions List -->
@@ -32,13 +32,6 @@
                             Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
                             Padding="12,9" Margin="0,0,8,0" ToolTip="Refresh">
                         <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets"/>
-                    </Button>
-                    <Button Command="{Binding DownloadQuestionsCommand}" Style="{StaticResource PrimaryBtn}"
-                            Background="{DynamicResource AccentBrush}" Foreground="White" Padding="14,9" Margin="0,0,8,0" ToolTip="Export Questions">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" Margin="0,0,7,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Export Questions" VerticalAlignment="Center"/>
-                        </StackPanel>
                     </Button>
                     
                     <!-- Dynamic Toggle Mode Button -->
@@ -108,9 +101,11 @@
                           MinWidth="80" Margin="8,0,0,0"/>
                 <Border Grid.Column="3" Background="{DynamicResource CardBrush}" CornerRadius="8"
                         BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="8,0,0,0" Padding="10,0">
-                    <TextBlock VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}">
-                        <Run Text="{Binding Questions.Count, Mode=OneWay}"/><Run Text=" questions"/>
-                    </TextBlock>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}">
+                            <Run Text="{Binding Questions.Count, Mode=OneWay}"/><Run Text=" questions"/>
+                        </TextBlock>
+                    </StackPanel>
                 </Border>
             </Grid>
 
@@ -225,19 +220,38 @@
                                                                                 </Style.Triggers>
                                                                             </Style>
                                                                         </Border.Style>
-                                                                        <Grid Height="36">
+                                                                        <Grid>
                                                                             <Grid.ColumnDefinitions>
                                                                                 <ColumnDefinition Width="35"/>
-                                                                                <ColumnDefinition Width="65"/>
+                                                                                <ColumnDefinition Width="55"/>
                                                                                 <ColumnDefinition Width="*"/>
+                                                                                <ColumnDefinition Width="Auto"/>
                                                                                 <ColumnDefinition Width="Auto"/>
                                                                             </Grid.ColumnDefinitions>
                                                                             <TextBlock Text="{Binding Serial}" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                                                             <TextBlock Grid.Column="1" Text="{Binding QuestionNumber, StringFormat='Q{0}'}" FontWeight="Bold" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource AccentBrush}"/>
                                                                             <TextBlock Grid.Column="2" Text="{Binding Preview}" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
                                                                             
+                                                                            <!-- Tags -->
+                                                                            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="4,0">
+                                                                                <Border Background="#DBEAFE" CornerRadius="4" Padding="5,2" Margin="0,0,4,0"
+                                                                                        Visibility="{Binding HasImage, Converter={StaticResource BoolToVis}}">
+                                                                                    <StackPanel Orientation="Horizontal">
+                                                                                        <TextBlock Text="&#xE8B9;" FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="#1D4ED8" Margin="0,0,3,0" VerticalAlignment="Center"/>
+                                                                                        <TextBlock Text="IMG" FontSize="10" FontWeight="Bold" Foreground="#1D4ED8"/>
+                                                                                    </StackPanel>
+                                                                                </Border>
+                                                                                <Border Background="#D1FAE5" CornerRadius="4" Padding="5,2"
+                                                                                        Visibility="{Binding HasSection, Converter={StaticResource BoolToVis}}">
+                                                                                    <StackPanel Orientation="Horizontal">
+                                                                                        <TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" FontSize="10" Foreground="#065F46" Margin="0,0,3,0" VerticalAlignment="Center"/>
+                                                                                        <TextBlock Text="SEC" FontSize="10" FontWeight="Bold" Foreground="#065F46"/>
+                                                                                    </StackPanel>
+                                                                                </Border>
+                                                                            </StackPanel>
+
                                                                             <!-- Slide-in hover Question Actions -->
-                                                                            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0,0,0">
+                                                                            <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0,0,0">
                                                                                 <StackPanel.Style>
                                                                                     <Style TargetType="StackPanel">
                                                                                         <Setter Property="Visibility" Value="Collapsed"/>

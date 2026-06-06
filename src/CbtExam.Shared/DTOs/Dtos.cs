@@ -73,8 +73,8 @@ public record StudentPasswordUpdateDto(int StudentId, string NewPassword);
 public record StudentBulkRowDto(string FullName, string Username, string Password);
 
 // --- Question Bank DTOs ---
-public record QuestionBankCreateDto(string Subject, int Year, int QuestionNumber, string Text, List<string> Options, string CorrectAnswer);
-public record QuestionBankDto(int Id, string Subject, int Year, int QuestionNumber, string Text, string OptionsJson, string CorrectAnswer);
+public record QuestionBankCreateDto(string Subject, int Year, int QuestionNumber, string Text, List<string> Options, string CorrectAnswer, string Section = "", string ImageUrl = "");
+public record QuestionBankDto(int Id, string Subject, int Year, int QuestionNumber, string Text, string OptionsJson, string CorrectAnswer, string Section = "", string ImageUrl = "");
 public record QuestionBankSubjectYearDto(string Subject, List<int> Years, int QuestionCount);
 
 // --- Exam generation from question bank ---

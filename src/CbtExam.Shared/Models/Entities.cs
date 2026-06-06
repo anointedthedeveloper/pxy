@@ -61,6 +61,8 @@ public class QuestionBank
     public string Text { get; set; } = string.Empty;
     public string OptionsJson { get; set; } = "[]";
     public string CorrectAnswer { get; set; } = string.Empty;
+    public string Section { get; set; } = string.Empty;   // passage/context for the question
+    public string ImageUrl { get; set; } = string.Empty;  // local relative path or remote URL
 }
 
 public class StudentExam

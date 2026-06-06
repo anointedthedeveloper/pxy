@@ -1415,7 +1415,7 @@ public record ExamSubjectConfig(string Subject, List<int> Years, int QuestionCou
 
 public record DeviceRow(string Name, string StudentId, string StudentName, string ExamTitle, string ExamStatus, string JoinedAt, string Status, int Battery, bool Online, string DeviceName, string IpAddress);
 
-public record QuestionBankRow(int Serial, int Id, string Subject, int Year, int QuestionNumber, string Preview);
+public record QuestionBankRow(int Serial, int Id, string Subject, int Year, int QuestionNumber, string Preview, bool HasImage = false, bool HasSection = false);
 
 public record StudentRow(int Serial, int Id, string FullName, string StudentId, bool IsActive);
 
@@ -1660,7 +1660,11 @@ public class QuestionsViewModel(ApiClient api) : BaseViewModel, IRefreshable
         if (fullQ == null) return;
 
         var options = string.Join("\n", System.Text.Json.JsonSerializer.Deserialize<List<string>>(fullQ.OptionsJson) ?? []);
-        MessageBox.Show($"[Subject: {fullQ.Subject} | Year: {fullQ.Year} | Q{fullQ.QuestionNumber}]\n\nQuestion:\n{fullQ.Text}\n\nOptions:\n{options}\n\nCorrect Answer: {fullQ.CorrectAnswer}", "Question Details Preview", MessageBoxButton.OK, MessageBoxImage.Information);
+        var sectionInfo = string.IsNullOrWhiteSpace(fullQ.Section) ? "" : $"\n\nSection/Passage:\n{fullQ.Section}";
+        var imageInfo = string.IsNullOrWhiteSpace(fullQ.ImageUrl) ? "" : $"\n\nImage: {fullQ.ImageUrl}";
+        MessageBox.Show(
+            $"[{fullQ.Subject} | Year: {fullQ.Year} | Q{fullQ.QuestionNumber}]{sectionInfo}\n\nQuestion:\n{fullQ.Text}\n\nOptions:\n{options}\n\nCorrect Answer: {fullQ.CorrectAnswer}{imageInfo}",
+            "Question Details Preview", MessageBoxButton.OK, MessageBoxImage.Information);
     });
 
     public RelayCommand<QuestionBankRow> DeleteQuestionCommand => new(async q => {
@@ -1733,62 +1737,6 @@ public class QuestionsViewModel(ApiClient api) : BaseViewModel, IRefreshable
     public RelayCommand RefreshCommand => new(async () => await LoadAsync());
     public RelayCommand ImportJsonCommand => new(async () => await ImportJsonAsync());
     public RelayCommand CopyTemplateCommand => new(() => { Clipboard.SetText(BulkJsonTemplate); Status = "Template copied to clipboard!"; StatusOk = true; });
-    public RelayCommand DownloadQuestionsCommand => new(async () => {
-        if (_all == null || _all.Count == 0)
-        {
-            MessageBox.Show("There are no questions in the bank to export.", "No Questions Available", MessageBoxButton.OK, MessageBoxImage.Information);
-            return;
-        }
-
-        var sfd = new Microsoft.Win32.SaveFileDialog
-        {
-            Filter = "JSON File (*.json)|*.json|CSV UTF-8 (*.csv)|*.csv",
-            FileName = "exported_questions",
-            DefaultExt = ".json"
-        };
-
-        if (sfd.ShowDialog() == true)
-        {
-            try
-            {
-                if (sfd.FileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
-                {
-                    var jsonContent = JsonSerializer.Serialize(_all, new JsonSerializerOptions { WriteIndented = true });
-                    await File.WriteAllTextAsync(sfd.FileName, jsonContent, System.Text.Encoding.UTF8);
-                }
-                else
-                {
-                    var sb = new System.Text.StringBuilder();
-                    sb.AppendLine("Subject,Year,QuestionNumber,QuestionText,OptionA,OptionB,OptionC,OptionD,CorrectAnswer");
-                    foreach (var q in _all)
-                    {
-                        List<string> opts = [];
-                        try
-                        {
-                            opts = JsonSerializer.Deserialize<List<string>>(q.OptionsJson) ?? [];
-                        }
-                        catch {}
-
-                        var optA = opts.Count > 0 ? opts[0] : "";
-                        var optB = opts.Count > 1 ? opts[1] : "";
-                        var optC = opts.Count > 2 ? opts[2] : "";
-                        var optD = opts.Count > 3 ? opts[3] : "";
-
-                        string Escape(string value) => $"\"{value.Replace("\"", "\"\"")}\"";
-
-                        sb.AppendLine($"{Escape(q.Subject)},{q.Year},{q.QuestionNumber},{Escape(q.Text)},{Escape(optA)},{Escape(optB)},{Escape(optC)},{Escape(optD)},{Escape(q.CorrectAnswer)}");
-                    }
-                    await File.WriteAllTextAsync(sfd.FileName, sb.ToString(), System.Text.Encoding.UTF8);
-                }
-
-                MessageBox.Show($"{_all.Count} questions exported successfully!", "Export Complete", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error exporting questions: {ex.Message}", "Export Failed", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-    });
 
     public RelayCommand BrowseFileCommand => new(async () => {
         ParsedPreviewList.Clear();
@@ -2068,7 +2016,10 @@ public class QuestionsViewModel(ApiClient api) : BaseViewModel, IRefreshable
         Questions.Clear();
         int i = 1;
         foreach (var question in result.OrderBy(qb => qb.Subject).ThenBy(qb => qb.Year).ThenBy(qb => qb.QuestionNumber))
-            Questions.Add(new QuestionBankRow(i++, question.Id, question.Subject, question.Year, question.QuestionNumber, question.Text.Substring(0, Math.Min(100, question.Text.Length)) + "..."));
+            Questions.Add(new QuestionBankRow(i++, question.Id, question.Subject, question.Year, question.QuestionNumber,
+                question.Text.Substring(0, Math.Min(100, question.Text.Length)) + "...",
+                !string.IsNullOrWhiteSpace(question.ImageUrl),
+                !string.IsNullOrWhiteSpace(question.Section)));
 
         // Rebuild GroupedSubjects hierarchical collection
         GroupedSubjects.Clear();
@@ -2098,7 +2049,9 @@ public class QuestionsViewModel(ApiClient api) : BaseViewModel, IRefreshable
                         q.Subject,
                         q.Year,
                         q.QuestionNumber,
-                        q.Text.Substring(0, Math.Min(100, q.Text.Length)) + "..."
+                        q.Text.Substring(0, Math.Min(100, q.Text.Length)) + "...",
+                        !string.IsNullOrWhiteSpace(q.ImageUrl),
+                        !string.IsNullOrWhiteSpace(q.Section)
                     ));
                 }
 
@@ -3120,7 +3073,6 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
 
     public RelayCommand DownloadRepoCommand => new(async () => await DownloadQuestionsAsync());
 
-    // Friendly display names for known filenames; unknown files fall back to TitleCase of filename
     private static readonly Dictionary<string, string> KnownSubjectNames = new(StringComparer.OrdinalIgnoreCase)
     {
         ["civiledu"]       = "Civic Education",
@@ -3133,6 +3085,24 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
 
     private static string ToTitleCase(string s) =>
         System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(s.Trim().ToLower());
+
+    // Strip git merge conflict markers so malformed files can still be parsed
+    private static string StripMergeConflicts(string json)
+    {
+        var lines = json.Split('\n');
+        var result = new System.Text.StringBuilder();
+        bool inConflict = false;
+        bool keepOurs = true; // keep lines between <<<< and ====
+        foreach (var line in lines)
+        {
+            if (line.StartsWith("<<<<<<")) { inConflict = true; keepOurs = true; continue; }
+            if (line.StartsWith("======")) { keepOurs = false; continue; }
+            if (line.StartsWith(">>>>>>")) { inConflict = false; keepOurs = true; continue; }
+            if (!inConflict || keepOurs)
+                result.AppendLine(line);
+        }
+        return result.ToString();
+    }
 
     private async Task DownloadQuestionsAsync()
     {
@@ -3151,16 +3121,27 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
         client.Timeout = TimeSpan.FromSeconds(60);
         client.DefaultRequestHeaders.Add("User-Agent", "CbtExam");
 
+        // Images folder next to the exe
+        var exeDir = System.IO.Path.GetDirectoryName(Environment.ProcessPath)
+                     ?? AppDomain.CurrentDomain.BaseDirectory;
+        var imagesDir = System.IO.Path.Combine(exeDir, "wwwroot", "images", "questions");
+        System.IO.Directory.CreateDirectory(imagesDir);
+
         try
         {
             // Discover all JSON files dynamically via GitHub API
-            // baseUrl: https://raw.githubusercontent.com/USER/REPO/BRANCH
-            // API URL: https://api.github.com/repos/USER/REPO/git/trees/BRANCH?recursive=1
             var parts = baseUrl.Replace("https://raw.githubusercontent.com/", "").Split('/');
-            // parts: [user, repo, branch]
+            if (parts.Length < 3)
+            {
+                CopyStatus = "Invalid repo URL. Expected format: https://raw.githubusercontent.com/owner/repo/branch";
+                return;
+            }
             string apiUrl = $"https://api.github.com/repos/{parts[0]}/{parts[1]}/git/trees/{parts[2]}?recursive=1";
 
-            var treeJson = await client.GetStringAsync(apiUrl);
+            string treeJson;
+            try { treeJson = await client.GetStringAsync(apiUrl); }
+            catch (Exception ex) { App.Log("Repo download failed", ex); CopyStatus = $"Error fetching repo list: {ex.Message}"; return; }
+
             var tree = JsonSerializer.Deserialize<JsonElement>(treeJson);
             var files = tree.GetProperty("tree").EnumerateArray()
                 .Where(f => f.GetProperty("path").GetString()?.EndsWith(".json", StringComparison.OrdinalIgnoreCase) == true
@@ -3168,30 +3149,99 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
                 .Select(f => f.GetProperty("path").GetString()!)
                 .ToList();
 
-            if (files.Count == 0)
-            {
-                CopyStatus = "No JSON files found in repository.";
-                return;
-            }
+            if (files.Count == 0) { CopyStatus = "No JSON files found in repository."; return; }
 
             int idx = 0;
             foreach (var filePath in files)
             {
                 idx++;
-                var fileName = Path.GetFileNameWithoutExtension(filePath);
+                var fileName = System.IO.Path.GetFileNameWithoutExtension(filePath);
                 var subject = KnownSubjectNames.TryGetValue(fileName, out var known) ? known : ToTitleCase(fileName);
                 BusyMessage = $"Downloading {subject} ({idx}/{files.Count})...";
 
                 try
                 {
                     var rawUrl = $"{baseUrl}/{filePath}";
-                    var json = await client.GetStringAsync(rawUrl);
-                    var questions = JsonSerializer.Deserialize<List<JsonElement>>(json,
-                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    string raw;
+                    try { raw = await client.GetStringAsync(rawUrl); }
+                    catch (Exception ex) { App.Log($"Error downloading {subject}", ex); continue; }
+
+                    // If the response looks like HTML (404 page etc.), skip it
+                    var trimmed = raw.TrimStart();
+                    if (trimmed.StartsWith("<") || trimmed.StartsWith("{") == false && trimmed.StartsWith("[") == false)
+                    {
+                        App.Log($"Skipping {subject}: response is not valid JSON", new Exception(raw[..Math.Min(80, raw.Length)]));
+                        continue;
+                    }
+
+                    // Strip git merge conflict markers if present
+                    if (raw.Contains("<<<<<<"))
+                        raw = StripMergeConflicts(raw);
+
+                    List<JsonElement>? questions;
+                    try
+                    {
+                        questions = JsonSerializer.Deserialize<List<JsonElement>>(raw,
+                            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    }
+                    catch (Exception ex) { App.Log($"Error parsing {subject}", ex); continue; }
 
                     if (questions == null || questions.Count == 0) continue;
 
-                    var resp = await api.ImportRepoQuestionsAsync(subject, questions);
+                    // Download images locally for questions that have them
+                    BusyMessage = $"Processing images for {subject} ({idx}/{files.Count})...";
+                    var processed = new List<object>();
+                    foreach (var q in questions)
+                    {
+                        // Skip incomplete questions early: must have question text + options (A+B) + answer
+                        if (!q.TryGetProperty("question", out var qText) || string.IsNullOrWhiteSpace(qText.GetString())) continue;
+                        if (!q.TryGetProperty("option", out var optProp)) continue;
+                        if (!q.TryGetProperty("answer", out var answerProp) || string.IsNullOrWhiteSpace(answerProp.GetString())) continue;
+                        var optA = optProp.TryGetProperty("a", out var pa) ? pa.GetString() : null;
+                        var optB = optProp.TryGetProperty("b", out var pb) ? pb.GetString() : null;
+                        if (string.IsNullOrWhiteSpace(optA) || string.IsNullOrWhiteSpace(optB)) continue;
+
+                        string imageUrl = string.Empty;
+                        if (q.TryGetProperty("image", out var imgProp))
+                        {
+                            var imgRaw = imgProp.GetString() ?? string.Empty;
+                            if (!string.IsNullOrWhiteSpace(imgRaw) && imgRaw.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                            {
+                                try
+                                {
+                                    var uri = new Uri(imgRaw);
+                                    var localName = System.IO.Path.GetFileName(uri.LocalPath);
+                                    if (string.IsNullOrWhiteSpace(localName)) localName = Guid.NewGuid().ToString("N") + ".jpg";
+                                    var localPath = System.IO.Path.Combine(imagesDir, localName);
+                                    if (!System.IO.File.Exists(localPath))
+                                    {
+                                        var imgBytes = await client.GetByteArrayAsync(imgRaw);
+                                        await System.IO.File.WriteAllBytesAsync(localPath, imgBytes);
+                                    }
+                                    imageUrl = $"/images/questions/{localName}";
+                                }
+                                catch { imageUrl = imgRaw; } // fallback to remote URL
+                            }
+                        }
+
+                        var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(q.GetRawText())!;
+                        var patched = new Dictionary<string, object?>();
+                        foreach (var kv in dict)
+                        {
+                            patched[kv.Key] = kv.Value.ValueKind switch
+                            {
+                                JsonValueKind.String => kv.Value.GetString(),
+                                JsonValueKind.Number => (object?)kv.Value.GetInt32(),
+                                _ => (object?)kv.Value
+                            };
+                        }
+                        patched["image"] = imageUrl;
+                        processed.Add(patched);
+                    }
+
+                    if (processed.Count == 0) continue;
+
+                    var resp = await api.ImportRepoQuestionsAsync(subject, processed);
                     if (resp.IsSuccessStatusCode)
                     {
                         var resultJson = await resp.Content.ReadAsStringAsync();
@@ -3201,22 +3251,15 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
                         totalSkipped  += result?.GetValueOrDefault("skipped")  ?? 0;
                     }
                     else
-                    {
-                        var err = await resp.Content.ReadAsStringAsync();
-                        App.Log($"Failed to import {subject}", new Exception(err));
-                    }
+                        App.Log($"Failed to import {subject}", new Exception(await resp.Content.ReadAsStringAsync()));
                 }
-                catch (Exception ex)
-                {
-                    App.Log($"Error downloading {subject}", ex);
-                }
+                catch (Exception ex) { App.Log($"Error downloading {subject}", ex); }
             }
 
             CopyStatus = totalSkipped > 0
                 ? $"Done! {totalImported} imported, {totalSkipped} skipped (already exist). Go to Questions Bank to view."
                 : $"Done! {totalImported} questions saved offline. Go to Questions Bank to view.";
 
-            // Notify QuestionsViewModel to reload so bank shows immediately
             OnRepoDownloadComplete?.Invoke();
         }
         catch (Exception ex)
