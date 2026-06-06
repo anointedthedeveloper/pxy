@@ -315,12 +315,34 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         var se = await db.StudentExams.Include(x => x.Session).FirstOrDefaultAsync(x => x.Id == dto.StudentExamId);
         if (se is null) return NotFound();
 
-        // Update device status
-        var device = await db.Devices.FirstOrDefaultAsync(d => d.DeviceId == dto.DeviceId);
-        if (device is not null)
+        // Always upsert device so LastSeen stays fresh regardless of whether /device was called first
+        if (!string.IsNullOrWhiteSpace(dto.DeviceId))
         {
-            device.LastSeen = DateTime.UtcNow;
-            device.IsOnline = true;
+            var device = await db.Devices.FirstOrDefaultAsync(d => d.DeviceId == dto.DeviceId);
+            var studentIdStr = se.Student != null ? se.Student.StudentId
+                : (await db.Students.FindAsync(se.StudentId))?.StudentId ?? "";
+            if (device is null)
+            {
+                device = new Device
+                {
+                    DeviceId = dto.DeviceId,
+                    DeviceName = dto.DeviceName,
+                    IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    LastSeen = DateTime.UtcNow,
+                    IsOnline = true,
+                    BatteryLevel = dto.BatteryLevel,
+                    StudentId = studentIdStr
+                };
+                db.Devices.Add(device);
+            }
+            else
+            {
+                device.LastSeen = DateTime.UtcNow;
+                device.IsOnline = true;
+                device.BatteryLevel = dto.BatteryLevel;
+                if (!string.IsNullOrWhiteSpace(dto.DeviceName)) device.DeviceName = dto.DeviceName;
+                if (!string.IsNullOrWhiteSpace(studentIdStr)) device.StudentId = studentIdStr;
+            }
             await db.SaveChangesAsync();
         }
 
@@ -329,7 +351,7 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         var isStarted = se.Session?.IsStarted ?? false;
         var decKey = isStarted ? GetDecryptionKey(se.SessionId) : "";
 
-        return Ok(new { 
+        return Ok(new {
             broadcastMessage = SessionsController.GetBroadcast(se.SessionId),
             isStarted = isStarted,
             decryptionKey = decKey

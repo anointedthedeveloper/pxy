@@ -28,7 +28,7 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
 
         var result = sessions.Select(s => {
             _broadcasts.TryGetValue(s.Id, out var msg);
-            return new SessionDto(s.Id, s.ExamId, s.Exam!.Title, s.SessionCode, s.StartedAt, s.IsActive, s.StudentExams.Count, s.IsStarted, msg ?? "");
+            return new SessionDto(s.Id, s.ExamId, s.Exam!.Title, s.SessionCode, s.StartedAt, s.IsActive, s.StudentExams.Count, s.IsStarted, msg ?? "", s.AutoApprove);
         }).ToList();
 
         return Ok(result);
@@ -40,17 +40,17 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
         var exam = await db.Exams.FindAsync(dto.ExamId);
         if (exam is null) return NotFound("Exam not found");
 
-        // Multiple simultaneous sessions are allowed
         var session = new ExamSession
         {
             ExamId = dto.ExamId,
             SessionCode = GenerateCode(),
             StartedAt = DateTime.UtcNow,
-            IsActive = true
+            IsActive = true,
+            AutoApprove = dto.AutoApprove
         };
         db.ExamSessions.Add(session);
         await db.SaveChangesAsync();
-        return Ok(new SessionDto(session.Id, session.ExamId, exam.Title, session.SessionCode, session.StartedAt, true, 0, false));
+        return Ok(new SessionDto(session.Id, session.ExamId, exam.Title, session.SessionCode, session.StartedAt, true, 0, false, "", session.AutoApprove));
     }
 
     [HttpPost("{id}/begin")]
@@ -60,6 +60,8 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
         if (session is null || !session.IsActive) return NotFound("Session not found or already ended.");
         session.IsStarted = true;
         await db.SaveChangesAsync();
+        // Push real-time signal to all students in this session
+        await ExamHub.NotifyExamStarted(hub, session.SessionCode);
         return Ok();
     }
 
@@ -73,6 +75,7 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
         await AutoSubmitUnsubmittedAsync(session.Id);
         await db.SaveChangesAsync();
         await exports.ExportAllAsync();
+        await ExamHub.NotifySessionEnded(hub, session.SessionCode);
         return Ok();
     }
 
@@ -86,11 +89,50 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
             session.IsActive = false;
             session.EndedAt = DateTime.UtcNow;
             await AutoSubmitUnsubmittedAsync(session.Id);
+            await ExamHub.NotifySessionEnded(hub, session.SessionCode);
         }
-
         await db.SaveChangesAsync();
         await exports.ExportAllAsync();
         return Ok(active.Count);
+    }
+
+    // POST /api/sessions/{id}/force-submit — force-submit all students in one session
+    [HttpPost("{id}/force-submit")]
+    public async Task<IActionResult> ForceSubmitSession(int id)
+    {
+        var session = await db.ExamSessions.FindAsync(id);
+        if (session is null) return NotFound();
+        await AutoSubmitUnsubmittedAsync(session.Id);
+        await db.SaveChangesAsync();
+        await ExamHub.NotifyForceSubmit(hub, session.SessionCode);
+        await exports.ExportAllAsync();
+        return Ok();
+    }
+
+    // POST /api/sessions/force-submit-all — force-submit all active sessions
+    [HttpPost("force-submit-all")]
+    public async Task<IActionResult> ForceSubmitAll()
+    {
+        var active = await db.ExamSessions.Where(s => s.IsActive).ToListAsync();
+        foreach (var session in active)
+        {
+            await AutoSubmitUnsubmittedAsync(session.Id);
+            await ExamHub.NotifyForceSubmit(hub, session.SessionCode);
+        }
+        await db.SaveChangesAsync();
+        await exports.ExportAllAsync();
+        return Ok(active.Count);
+    }
+
+    // PATCH /api/sessions/{id}/auto-approve — toggle auto-approve for late joiners
+    [HttpPatch("{id}/auto-approve")]
+    public async Task<IActionResult> SetAutoApprove(int id, [FromBody] bool autoApprove)
+    {
+        var session = await db.ExamSessions.FindAsync(id);
+        if (session is null) return NotFound();
+        session.AutoApprove = autoApprove;
+        await db.SaveChangesAsync();
+        return Ok();
     }
 
     [HttpGet("{id}/students")]

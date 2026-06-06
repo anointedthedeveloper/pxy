@@ -226,7 +226,33 @@
                 }
             });
 
-            connection.start().catch(() => {/* offline — fall back to heartbeat poll */});
+            // Real-time: admin started the exam — trigger decrypt + countdown immediately
+            connection.on('ExamStarted', () => {
+                if (starting) return;
+                const seid = parseInt(localStorage.getItem('studentExamId'));
+                const did = localStorage.getItem('cbt_device_id') || 'NODE-UNKNOWN';
+                const dn = typeof getBrowserAndOS === 'function' ? getBrowserAndOS() : 'Browser';
+                if (seid) pollHeartbeatSignal(seid, did, dn);
+            });
+
+            // Real-time: session ended by admin
+            connection.on('SessionEnded', () => {
+                if (typeof showToast === 'function')
+                    showToast('Session Ended', 'This session has been ended by the coordinator.', 'error');
+                setTimeout(() => { window.location.href = 'selection.html'; }, 3000);
+            });
+
+            connection.start()
+                .then(() => {
+                    // Join student group once session code is known
+                    const code = localStorage.getItem('cbt_session_code');
+                    if (code) connection.invoke('JoinStudentGroup', code).catch(() => {});
+                    // Expose joiner so startExamProcess can call it after we get the session code
+                    window._signalRJoinStudents = (code) => connection.invoke('JoinStudentGroup', code).catch(() => {});
+                })
+                .catch(() => {
+                    window._signalRJoinStudents = () => {};
+                });
             // ----------------------------------------------------
 
             document.getElementById('wait-candidate-name').textContent = studentName;

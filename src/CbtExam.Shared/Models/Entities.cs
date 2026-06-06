@@ -39,6 +39,7 @@ public class ExamSession
     public DateTime? EndedAt { get; set; }
     public bool IsActive { get; set; }
     public bool IsStarted { get; set; } = false;
+    public bool AutoApprove { get; set; } = true;  // auto-approve late joiners
     public Exam? Exam { get; set; }
     public ICollection<StudentExam> StudentExams { get; set; } = new List<StudentExam>();
 }
