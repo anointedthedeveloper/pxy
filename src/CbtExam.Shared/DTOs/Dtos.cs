@@ -22,7 +22,7 @@ public record SessionDto(int Id, int ExamId, string ExamTitle, string SessionCod
 public record JoinExamDto(string SessionCode, string FullName, string StudentId, string DeviceId = "", string DeviceName = "");
 public record JoinResultDto(int StudentExamId, int SessionId, int ExamId, string ExamTitle, int DurationMinutes);
 public record JoinRequestDto(int StudentExamId, int SessionId, string FullName, string StudentId, DateTime RequestedAt, bool IsApproved);
-public record StudentLoginDto(string StudentId, string Password);
+public record StudentLoginDto(string StudentId, string Password, string DeviceId = "");
 
 // --- Question for student (shuffled) ---
 public record ShuffledQuestionDto(int QuestionId, int QuestionNumber, string Text, List<string> Options, int CorrectIndex, string Subject = "", string Section = "", string ImageUrl = "");

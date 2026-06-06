@@ -421,17 +421,32 @@ public class ExamSubjectConfigVM : BaseViewModel
     public void RefreshAvailableSubjects(IEnumerable<string> allSubjects, IEnumerable<string> otherSelectedSubjects)
     {
         var others = new HashSet<string>(otherSelectedSubjects, StringComparer.OrdinalIgnoreCase);
-        var current = AvailableSubjects.ToList();
         var next = allSubjects
             .Where(s => !others.Contains(s) || string.Equals(s, _selectedSubject, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
-        // Only rebuild if the list actually changed to avoid unnecessary UI churn
-        if (current.SequenceEqual(next, StringComparer.OrdinalIgnoreCase)) return;
+        // Patch in-place: remove items no longer valid, add new ones — never Clear()
+        // so WPF ComboBox keeps its SelectedItem reference intact.
+        var toRemove = AvailableSubjects.Where(s => !next.Contains(s, StringComparer.OrdinalIgnoreCase)).ToList();
+        foreach (var r in toRemove)
+            AvailableSubjects.Remove(r);
 
-        AvailableSubjects.Clear();
-        foreach (var s in next)
-            AvailableSubjects.Add(s);
+        for (int i = 0; i < next.Count; i++)
+        {
+            if (i < AvailableSubjects.Count)
+            {
+                if (!string.Equals(AvailableSubjects[i], next[i], StringComparison.OrdinalIgnoreCase))
+                    AvailableSubjects.Insert(i, next[i]);
+            }
+            else
+            {
+                AvailableSubjects.Add(next[i]);
+            }
+        }
+
+        // Trim any excess that crept in
+        while (AvailableSubjects.Count > next.Count)
+            AvailableSubjects.RemoveAt(AvailableSubjects.Count - 1);
     }
 
     private string _selectedSubject = string.Empty;
@@ -440,11 +455,11 @@ public class ExamSubjectConfigVM : BaseViewModel
         get => _selectedSubject;
         set
         {
+            // value can arrive as null from WPF when the ComboBox list is patched
+            if (value is null) return;
             if (Set(ref _selectedSubject, value))
             {
-                // Auto-set question count based on subject
-                var isEnglish = value.Equals("Use of English", StringComparison.OrdinalIgnoreCase)
-                             || value.Contains("english", StringComparison.OrdinalIgnoreCase);
+                var isEnglish = value.Equals("Use of English", StringComparison.OrdinalIgnoreCase);
                 _questionCount = isEnglish ? 60 : 40;
                 OnPropertyChanged(nameof(QuestionCount));
                 _onChanged();

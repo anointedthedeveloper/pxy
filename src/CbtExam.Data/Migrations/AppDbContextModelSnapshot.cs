@@ -104,8 +104,10 @@ partial class AppDbContextModelSnapshot : ModelSnapshot
             b.Property<string>("CorrectAnswer").IsRequired().HasColumnType("TEXT");
             b.Property<string>("Section").IsRequired().HasDefaultValue("").HasColumnType("TEXT");
             b.Property<string>("ImageUrl").IsRequired().HasDefaultValue("").HasColumnType("TEXT");
+            b.Property<int?>("SourceId").HasColumnType("INTEGER");
             b.HasKey("Id");
             b.HasIndex("Subject", "Year");
+            b.HasIndex("SourceId");
             b.ToTable("QuestionBank");
         });
 

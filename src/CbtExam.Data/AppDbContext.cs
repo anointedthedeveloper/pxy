@@ -26,5 +26,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         mb.Entity<Student>().Property(s => s.Password).HasDefaultValue("1234");
         mb.Entity<Student>().Property(s => s.IsActive).HasDefaultValue(true);
         mb.Entity<QuestionBank>().HasIndex(q => new { q.Subject, q.Year });
+        mb.Entity<QuestionBank>().HasIndex(q => q.SourceId);
+        // SourceId is nullable — existing rows will be null, new imports will have the repo's ID
     }
 }

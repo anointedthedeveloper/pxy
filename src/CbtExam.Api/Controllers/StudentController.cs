@@ -15,6 +15,9 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
 {
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, string> _decryptionKeys = new();
 
+    // studentDbId -> deviceId currently holding the session lock
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, string> _activeSessions = new();
+
     public static string GetDecryptionKey(int sessionId)
     {
         return _decryptionKeys.GetOrAdd(sessionId, _ => Guid.NewGuid().ToString("N"));
@@ -45,14 +48,28 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
     {
         var username = (dto.StudentId ?? "").Trim();
         var password = (dto.Password ?? "").Trim();
+        var deviceId = (dto.DeviceId ?? "").Trim();
 
         var activeStudents = await db.Students.Where(s => s.IsActive).ToListAsync();
-        var student = activeStudents.FirstOrDefault(s => 
-            (s.StudentId.Equals(username, StringComparison.OrdinalIgnoreCase) || 
-             s.FullName.Equals(username, StringComparison.OrdinalIgnoreCase)) && 
+        var student = activeStudents.FirstOrDefault(s =>
+            (s.StudentId.Equals(username, StringComparison.OrdinalIgnoreCase) ||
+             s.FullName.Equals(username, StringComparison.OrdinalIgnoreCase)) &&
             s.Password.Equals(password, StringComparison.OrdinalIgnoreCase));
 
-        if (student is null) return Unauthorized(new { error = "Invalid student credentials or inactive account." });
+        if (student is null)
+            return Unauthorized(new { error = "Invalid student credentials or inactive account." });
+
+        // Enforce single active session — reject if already logged in on a different device
+        if (_activeSessions.TryGetValue(student.Id, out var lockedDevice))
+        {
+            if (!string.IsNullOrWhiteSpace(deviceId) && !lockedDevice.Equals(deviceId, StringComparison.OrdinalIgnoreCase))
+                return Conflict(new { error = "This account is already logged in on another device. Please ask the invigilator to reset your session." });
+        }
+
+        // Record or refresh this device as the active session holder
+        if (!string.IsNullOrWhiteSpace(deviceId))
+            _activeSessions[student.Id] = deviceId;
+
         return Ok(new StudentAdminDto(student.Id, student.FullName, student.StudentId, student.IsActive, student.Password));
     }
 
@@ -254,6 +271,9 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         await db.SaveChangesAsync();
         await exports.ExportAllAsync();
 
+        // Release the single-device session lock so the student can log in again if needed
+        _activeSessions.TryRemove(se.StudentId, out _);
+
         var total = questions.Count;
 
         // JAMB scaling: each subject ALWAYS scaled to 100 regardless of question count
@@ -264,18 +284,17 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         {
             int pool = qList.Count; // actual questions in this exam for this subject
             int correct = correctBySubject.GetValueOrDefault(sub, 0);
-            // Scale to 100: (correct / pool) * 100, regardless of whether pool is 10, 40, 60, or 70
-            double scaled = pool > 0 ? Math.Round((double)correct / pool * 100, 1) : 0;
+            double scaled = pool > 0 ? Math.Round((double)correct / pool * 100) : 0; // whole number
             jambTotal += scaled;
-            breakdown.Add($"{sub}: {correct}/{pool} ({scaled}/100)");
+            breakdown.Add($"{sub}: {correct}/{pool} ({(int)scaled}/100)");
         }
 
         // Total is out of (subjectCount * 100) — always maps to 400 for 4 subjects
         double maxScore = subjectGroups.Count * 100.0;
-        double percentage = maxScore > 0 ? Math.Round(jambTotal / maxScore * 100, 1) : 0;
+        double percentage = maxScore > 0 ? Math.Round(jambTotal / maxScore * 100) : 0;
 
         await NotifyAdmin(se.Session.SessionCode, se.SessionId);
-        return Ok(new SubmitResultDto(score, total, percentage) { JambScore = Math.Round(jambTotal, 1), SubjectBreakdown = string.Join(" | ", breakdown) });
+        return Ok(new SubmitResultDto(score, total, percentage) { JambScore = Math.Round(jambTotal), SubjectBreakdown = string.Join(" | ", breakdown) });
     }
 
     // POST /api/student/tabswitch
@@ -432,6 +451,17 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         }
 
         return Ok(dtos);
+    }
+
+    // POST /api/student/{studentDbId}/reset-session  (admin only)
+    [HttpPost("{studentDbId}/reset-session")]
+    public IActionResult ResetSession(int studentDbId)
+    {
+        var adminKey = Environment.GetEnvironmentVariable("CBT_ADMIN_KEY") ?? "admin123";
+        if (!Request.Headers.TryGetValue("X-Admin-Key", out var key) || key != adminKey)
+            return Unauthorized();
+        _activeSessions.TryRemove(studentDbId, out _);
+        return Ok(new { message = "Session lock cleared." });
     }
 
     [HttpPost("snapshot")]

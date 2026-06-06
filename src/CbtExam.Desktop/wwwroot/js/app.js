@@ -224,7 +224,7 @@ async function handleLogin(event) {
         const response = await fetch(`${API_BASE}/Student/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ studentId, password })
+            body: JSON.stringify({ studentId, password, deviceId })
         });
 
         if (response.ok) {
@@ -237,6 +237,10 @@ async function handleLogin(event) {
             setTimeout(() => {
                 window.location.href = 'selection.html';
             }, 1000);
+        } else if (response.status === 409) {
+            const err = await response.json();
+            showToast('Already Logged In', err.error || 'This account is active on another device.', 'error');
+            resetLoginButton(btn);
         } else {
             const err = await response.json();
             showToast('Login Failed', err.error || 'Invalid credentials or account inactive.', 'error');
@@ -536,6 +540,7 @@ function startHeartbeat() {
                 })
             });
             if (response.ok) {
+                setNetworkStatus(true); // heartbeat success = we're back online
                 const data = await response.json();
                 if (data && data.broadcastMessage) {
                     const lastBroadcast = localStorage.getItem('last_broadcast_msg');
@@ -544,9 +549,11 @@ function startHeartbeat() {
                         showToast('Broadcast from Coordinator', data.broadcastMessage, 'info');
                     }
                 }
+            } else {
+                setNetworkStatus(false);
             }
         } catch (e) {
-            console.warn("Heartbeat update failed.", e);
+            setNetworkStatus(false);
         }
     };
     
@@ -726,19 +733,21 @@ async function selectOption(questionId, optionText) {
     renderNavigator();
     updateProgressRing();
     
-    // Save progress to local DB
+    // Save progress to server; queue locally if offline
+    const progressPayload = {
+        studentExamId: parseInt(studentExamId),
+        questionId: questionId,
+        selectedAnswer: optionText
+    };
     try {
         await fetch(`${API_BASE}/Student/progress`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                studentExamId: parseInt(studentExamId),
-                questionId: questionId,
-                selectedAnswer: optionText
-            })
+            body: JSON.stringify(progressPayload)
         });
     } catch (e) {
-        console.warn("Network offline. Option saved locally.", e);
+        // Offline — queue for sync when reconnected
+        _pendingProgressSync.push(progressPayload);
     }
 }
 
@@ -876,7 +885,54 @@ function pressCalc(val) {
     }
 }
 
-// ── Offline Submit Queue ──
+// ── Network Status Tracker ──
+let _isOnline = navigator.onLine;
+let _offlineSince = null;
+const _pendingProgressSync = []; // answers that failed to sync while offline
+
+function setNetworkStatus(online) {
+    if (online === _isOnline) return;
+    _isOnline = online;
+
+    const indicator = document.getElementById('network-status-bar');
+    if (indicator) {
+        indicator.textContent = online ? '✓ Connection Restored' : '⚠ No Connection — Answers saving locally';
+        indicator.style.background = online ? '#065f46' : '#7f1d1d';
+        indicator.style.display = 'block';
+        if (online) setTimeout(() => { if (indicator) indicator.style.display = 'none'; }, 3000);
+    }
+
+    if (online) {
+        _offlineSince = null;
+        // Flush any queued submits
+        flushSubmitQueue();
+        // Re-sync any answers that failed to reach the server while offline
+        flushPendingProgress();
+    } else {
+        _offlineSince = Date.now();
+    }
+}
+
+async function flushPendingProgress() {
+    if (_pendingProgressSync.length === 0) return;
+    const toSync = [..._pendingProgressSync];
+    _pendingProgressSync.length = 0;
+    for (const item of toSync) {
+        try {
+            await fetch(`${API_BASE}/Student/progress`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(item)
+            });
+        } catch(e) {
+            _pendingProgressSync.push(item); // re-queue if still failing
+        }
+    }
+}
+
+window.addEventListener('online',  () => setNetworkStatus(true));
+window.addEventListener('offline', () => setNetworkStatus(false));
+
 // Queues failed submits and retries whenever connectivity returns.
 const QUEUE_KEY = 'cbt_submit_queue';
 
@@ -948,18 +1004,18 @@ function computeScoreOffline(cachedQuestions, answers) {
             if (correctOption && selected.trim().toLowerCase() === correctOption.trim().toLowerCase()) correct++;
         });
         totalCorrect += correct;
-        const pool = qList.length; // actual count — always scale to 100 regardless
-        const scaled = pool > 0 ? Math.round((correct / pool) * 1000) / 10 : 0;
+        const pool = qList.length;
+        const scaled = pool > 0 ? Math.round((correct / pool) * 100) : 0; // whole number 0-100
         jambTotal += scaled;
         breakdownParts.push(`${sub}: ${correct}/${pool} (${scaled}/100)`);
     }
 
     const subjectCount = Object.keys(subjectGroups).length;
     const maxScore = subjectCount * 100;
-    const percentage = maxScore > 0 ? Math.round((jambTotal / maxScore) * 1000) / 10 : 0;
-    const jambScore = subjectCount > 0 ? Math.round(jambTotal * 10) / 10 : null;
+    const percentage = maxScore > 0 ? Math.round((jambTotal / maxScore) * 100) : 0;
+    const jambScore = subjectCount > 0 ? Math.round(jambTotal) : null; // whole number
 
-    // Also build structured per-subject array for the results page score cards
+    // Structured per-subject array for results page score cards
     const subjectScores = Object.entries(subjectGroups).map(([sub, qList]) => {
         const pool = qList.length;
         let correct = 0;
@@ -969,7 +1025,7 @@ function computeScoreOffline(cachedQuestions, answers) {
             const correctOption = q.options[q.correctIndex];
             if (correctOption && selected.trim().toLowerCase() === correctOption.trim().toLowerCase()) correct++;
         });
-        const scaled = pool > 0 ? Math.round((correct / pool) * 1000) / 10 : 0;
+        const scaled = pool > 0 ? Math.round((correct / pool) * 100) : 0; // whole number
         return { subject: sub, correct, pool, scaled };
     });
 
@@ -1077,8 +1133,8 @@ async function submitExam(manual = true) {
 
     const hasJamb = resultPayload.jambScore && resultPayload.jambScore > 0;
     const displayScore = hasJamb
-        ? `${resultPayload.jambScore.toFixed(1)} / 400`
-        : `${resultPayload.percentage}%`;
+        ? `${Math.round(resultPayload.jambScore)} / 400`
+        : `${Math.round(resultPayload.percentage)}%`;
     document.getElementById('score-text').textContent = displayScore;
     const scoreLabelEl = document.getElementById('score-label');
     if (scoreLabelEl) scoreLabelEl.textContent = hasJamb ? 'JAMB Score' : 'Official Score';

@@ -69,19 +69,24 @@ public class QuestionBankController(AppDbContext db) : ControllerBase
         static string CapFirst(string s) =>
             string.IsNullOrWhiteSpace(s) ? s : char.ToUpper(s[0]) + s[1..];
 
-        // Pre-load existing (subject, year, qNum) keys to avoid per-row DB round-trips
-        var existingKeys = await db.QuestionBank
-            .Where(x => x.Subject == subjectClean)
-            .Select(x => new { x.Year, x.QuestionNumber })
-            .ToListAsync();
-        var existingSet = existingKeys.Select(x => (x.Year, x.QuestionNumber)).ToHashSet();
+        // Pre-load existing source IDs already stored for this subject to skip true duplicates
+        var existingSourceIds = (await db.QuestionBank
+            .Where(x => x.Subject == subjectClean && x.SourceId != null)
+            .Select(x => x.SourceId!.Value)
+            .ToListAsync()).ToHashSet();
 
-        // Group incoming questions by year so we can renumber per-year sequentially
-        // while preserving source order
-        var byYear = new Dictionary<int, List<RepoQuestionDto>>();
+        // Also track max question number per year for sequential numbering
+        var maxQNumByYear = await db.QuestionBank
+            .Where(x => x.Subject == subjectClean)
+            .GroupBy(x => x.Year)
+            .Select(g => new { Year = g.Key, Max = g.Max(x => x.QuestionNumber) })
+            .ToDictionaryAsync(x => x.Year, x => x.Max);
+
+        var valid = new List<QuestionBank>();
+
         foreach (var q in questions)
         {
-            // Skip clearly incomplete questions — must have question text, options, and an answer
+            // Skip clearly incomplete questions
             if (string.IsNullOrWhiteSpace(q.Question) || q.Option == null || string.IsNullOrWhiteSpace(q.Answer))
                 continue;
 
@@ -94,50 +99,42 @@ public class QuestionBankController(AppDbContext db) : ControllerBase
 
             int year = (int.TryParse(q.Examyear, out int py) && py >= 1990 && py <= 2030) ? py : 2000;
 
-            if (!byYear.ContainsKey(year)) byYear[year] = new List<RepoQuestionDto>();
-            byYear[year].Add(q);
-        }
+            // Skip if this source ID was already imported
+            if (q.Id > 0 && existingSourceIds.Contains(q.Id)) continue;
 
-        var valid = new List<QuestionBank>();
+            var cleanOptions = options
+                .Select(o => CapFirst(o!.Trim()))
+                .ToList();
 
-        foreach (var (year, yearQuestions) in byYear)
-        {
-            // Get next available sequential question number for this subject+year
-            int nextQNum = existingSet.Where(k => k.Year == year).Select(k => k.QuestionNumber)
-                .DefaultIfEmpty(0).Max() + 1;
-
-            foreach (var q in yearQuestions)
+            string correctAnswer = answerLetter switch
             {
-                if (existingSet.Contains((year, nextQNum))) { nextQNum++; continue; }
+                "A" => cleanOptions.Count >= 1 ? cleanOptions[0] : "",
+                "B" => cleanOptions.Count >= 2 ? cleanOptions[1] : "",
+                "C" => cleanOptions.Count >= 3 ? cleanOptions[2] : "",
+                "D" => cleanOptions.Count >= 4 ? cleanOptions[3] : "",
+                _ => ""
+            };
+            if (string.IsNullOrWhiteSpace(correctAnswer)) continue;
 
-                var options = new List<string?> { q.Option!.A, q.Option.B, q.Option.C, q.Option.D }
-                    .Where(o => !string.IsNullOrWhiteSpace(o))
-                    .Select(o => CapFirst(o!.Trim()))
-                    .ToList();
+            maxQNumByYear.TryGetValue(year, out int currentMax);
+            int nextQNum = currentMax + 1;
+            maxQNumByYear[year] = nextQNum; // update for next question in same year
 
-                var answerLetter = q.Answer!.Trim().ToUpper();
-                string correctAnswer = answerLetter switch
-                {
-                    "A" => options.Count >= 1 ? options[0] : "",
-                    "B" => options.Count >= 2 ? options[1] : "",
-                    "C" => options.Count >= 3 ? options[2] : "",
-                    "D" => options.Count >= 4 ? options[3] : "",
-                    _ => ""
-                };
-                if (string.IsNullOrWhiteSpace(correctAnswer)) { nextQNum++; continue; }
+            // Track newly added source IDs within this batch to avoid duplicates in same request
+            if (q.Id > 0) existingSourceIds.Add(q.Id);
 
-                valid.Add(new QuestionBank
-                {
-                    Subject = subjectClean,
-                    Year = year,
-                    QuestionNumber = nextQNum++,
-                    Text = CapFirst(q.Question!.Trim()),
-                    OptionsJson = JsonSerializer.Serialize(options),
-                    CorrectAnswer = CapFirst(correctAnswer),
-                    Section = string.IsNullOrWhiteSpace(q.Section) ? string.Empty : CapFirst(q.Section.Trim()),
-                    ImageUrl = q.Image ?? string.Empty
-                });
-            }
+            valid.Add(new QuestionBank
+            {
+                Subject = subjectClean,
+                Year = year,
+                QuestionNumber = nextQNum,
+                Text = CapFirst(q.Question!.Trim()),
+                OptionsJson = JsonSerializer.Serialize(cleanOptions),
+                CorrectAnswer = CapFirst(correctAnswer),
+                Section = string.IsNullOrWhiteSpace(q.Section) ? string.Empty : CapFirst(q.Section.Trim()),
+                ImageUrl = q.Image ?? string.Empty,
+                SourceId = q.Id > 0 ? q.Id : null
+            });
         }
 
         db.QuestionBank.AddRange(valid);

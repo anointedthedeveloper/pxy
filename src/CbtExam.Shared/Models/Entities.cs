@@ -65,6 +65,7 @@ public class QuestionBank
     public string CorrectAnswer { get; set; } = string.Empty;
     public string Section { get; set; } = string.Empty;   // passage/context for the question
     public string ImageUrl { get; set; } = string.Empty;  // local relative path or remote URL
+    public int? SourceId { get; set; }                    // original ID from the repo JSON (for dedup)
 }
 
 public class StudentExam

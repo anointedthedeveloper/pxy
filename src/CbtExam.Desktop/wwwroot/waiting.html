@@ -102,7 +102,7 @@
                         </div>
                         <div class="info-col">
                             <span class="label">System Status</span>
-                            <span class="value status-online">Connected</span>
+                            <span class="value" id="wait-system-status" style="color:#10b981;">Connecting...</span>
                         </div>
                     </div>
                 </div>
@@ -180,28 +180,24 @@
 
     <script src="/js/app.js"></script>
     <script>
-        // AES decryption helper using native Web Crypto API
+        // AES decryption helper — uses Web Crypto API when available (HTTPS/localhost),
+        // falls back to fetching questions unencrypted when crypto.subtle is unavailable (plain HTTP).
         async function decryptAes(cipherTextBase64, keyString) {
-            const keyBytes = new TextEncoder().encode(keyString.padEnd(32).substring(0, 32));
-            const ivBytes = new TextEncoder().encode(keyString.padEnd(16).substring(0, 16));
-            
-            const key = await crypto.subtle.importKey(
-                "raw",
-                keyBytes,
-                { name: "AES-CBC" },
-                false,
-                ["decrypt"]
-            );
-            
-            const encryptedBytes = Uint8Array.from(atob(cipherTextBase64), c => c.charCodeAt(0));
-            
-            const decryptedBuffer = await crypto.subtle.decrypt(
-                { name: "AES-CBC", iv: ivBytes },
-                key,
-                encryptedBytes
-            );
-            
-            return new TextDecoder().decode(decryptedBuffer);
+            if (window.crypto && window.crypto.subtle) {
+                const keyBytes = new TextEncoder().encode(keyString.padEnd(32).substring(0, 32));
+                const ivBytes  = new TextEncoder().encode(keyString.padEnd(16).substring(0, 16));
+                const key = await crypto.subtle.importKey('raw', keyBytes, { name: 'AES-CBC' }, false, ['decrypt']);
+                const encryptedBytes = Uint8Array.from(atob(cipherTextBase64), c => c.charCodeAt(0));
+                const decryptedBuffer = await crypto.subtle.decrypt({ name: 'AES-CBC', iv: ivBytes }, key, encryptedBytes);
+                return new TextDecoder().decode(decryptedBuffer);
+            } else {
+                // crypto.subtle unavailable (plain HTTP) — fall back to plain question fetch
+                const studentExamId = localStorage.getItem('studentExamId');
+                const res = await fetch(`${API_BASE}/Student/${studentExamId}/questions`);
+                if (!res.ok) throw new Error('Fallback question fetch failed');
+                const questions = await res.json();
+                return JSON.stringify(questions);
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -316,6 +312,17 @@
                     localStorage.setItem('sessionId', joinData.sessionId);
                     localStorage.setItem('examDuration', joinData.durationMinutes);
 
+                    // Register device so admin sees this candidate as connected
+                    fetch(`${API_BASE}/Student/device`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            deviceId: activeDeviceId,
+                            deviceName: activeDeviceName,
+                            batteryLevel: 100,
+                            studentId: studentId
+                        })
+                    }).catch(() => {});
                     statusText.textContent = 'Pre-hydrating secure exam cache...';
                     progressBar.style.width = '60%';
                     percentText.textContent = '60%';
@@ -393,6 +400,7 @@
             // Continuous LAN Heartbeat & Activation Lock poll
             const pollHeartbeatSignal = async (studentExamId, activeDeviceId, activeDeviceName) => {
                 if (starting) return;
+                const statusEl = document.getElementById('wait-system-status');
                 try {
                     const res = await fetch(`${API_BASE}/Student/heartbeat`, {
                         method: 'POST',
@@ -407,7 +415,11 @@
                             deviceId: activeDeviceId
                         })
                     });
-                    if (!res.ok) return;
+                    if (!res.ok) {
+                        if (statusEl) { statusEl.textContent = 'Disconnected'; statusEl.style.color = '#ef4444'; }
+                        return;
+                    }
+                    if (statusEl) { statusEl.textContent = 'Connected'; statusEl.style.color = '#10b981'; }
                     const data = await res.json();
                     
                     if (data.broadcastMessage) {
@@ -438,7 +450,7 @@
                         }
                     }
                 } catch (err) {
-                    console.error('Heartbeat error:', err);
+                    if (statusEl) { statusEl.textContent = 'No Connection'; statusEl.style.color = '#ef4444'; }
                 }
             };
 

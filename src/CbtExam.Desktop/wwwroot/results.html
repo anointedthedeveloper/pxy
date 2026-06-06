@@ -81,7 +81,7 @@
       const maxJamb = result.subjectScores ? result.subjectScores.length * 100 : 400;
       const ringPct = maxJamb > 0 ? jambScore / maxJamb : 0; // 0–1
 
-      document.getElementById('pct-text').textContent = hasJamb ? jambScore.toFixed(1) : (result.percentage || 0) + '%';
+      document.getElementById('pct-text').textContent = hasJamb ? Math.round(jambScore) : Math.round(parseFloat(result.percentage) || 0) + '%';
       document.getElementById('pct-label').textContent = hasJamb ? `/ ${maxJamb}` : '';
 
       const ring = document.getElementById('pct-ring');
@@ -104,7 +104,7 @@
               card.style.cssText = 'min-width:120px; flex:1;';
               const scoreColor = s.scaled < 40 ? '#ef4444' : s.scaled < 70 ? '#f59e0b' : '#10b981';
               card.innerHTML = `
-                  <span class="value" style="color:${scoreColor}; font-size:22px;">${s.scaled.toFixed(1)}</span>
+                  <span class="value" style="color:${scoreColor}; font-size:22px;">${Math.round(s.scaled)}</span>
                   <span class="label" style="font-size:10px; text-transform:uppercase; letter-spacing:0.5px;">${s.subject}</span>
                   <span style="font-size:10px; color:#64748b;">${s.correct}/${s.pool} correct</span>
               `;
@@ -115,7 +115,7 @@
           aggCard.className = 'stat-metric-card correct';
           aggCard.style.cssText = 'min-width:120px; flex:1; border:2px solid #10b981;';
           aggCard.innerHTML = `
-              <span class="value" style="font-size:22px;">${jambScore.toFixed(1)}</span>
+              <span class="value" style="font-size:22px;">${Math.round(jambScore)}</span>
               <span class="label" style="font-size:10px; text-transform:uppercase; letter-spacing:0.5px;">Total Score</span>
               <span style="font-size:10px; color:#64748b;">out of ${maxJamb}</span>
           `;
