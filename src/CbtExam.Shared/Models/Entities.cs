@@ -25,6 +25,8 @@ public class Question
     public string CorrectAnswer { get; set; } = string.Empty;
     public string Subject { get; set; } = string.Empty;
     public int Year { get; set; } = 2026;
+    public string Section { get; set; } = string.Empty;
+    public string ImageUrl { get; set; } = string.Empty;
     public Exam? Exam { get; set; }
 }
 

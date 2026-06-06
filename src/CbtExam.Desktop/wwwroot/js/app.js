@@ -345,12 +345,22 @@ async function initializeExamPage() {
     studentId = localStorage.getItem('studentId') || '00000000';
     studentName = localStorage.getItem('studentName') || 'Candidate';
     examDuration = parseInt(localStorage.getItem('examDuration')) || 60;
-    
+    const examTitle = localStorage.getItem('selectedExamTitle') || 'Examination';
+
+    // Set exam title in header and browser tab
+    const examTitleEl = document.getElementById('exam-title');
+    if (examTitleEl) examTitleEl.textContent = examTitle;
+    document.title = examTitle + ' | CBT Portal';
+
     // Set user info in header
     document.getElementById('user-name').textContent = studentName;
     document.getElementById('user-id').textContent = `ID: ${studentId}`;
     const avatar = document.getElementById('user-avatar-initial');
     if (avatar) avatar.textContent = studentName.charAt(0).toUpperCase();
+
+    // Set completion modal message
+    const completionMsg = document.getElementById('completion-msg');
+    if (completionMsg) completionMsg.textContent = `Your ${examTitle} has been submitted successfully.`;
 
     // Load cached questions
     const cached = localStorage.getItem('cachedQuestions');
@@ -640,6 +650,29 @@ function renderQuestion(index) {
 
     document.getElementById('current-q-num').textContent = `${subIndex + 1} (${sub})`;
     document.getElementById('question-text').textContent = q.text;
+
+    // Section / passage
+    const sectionEl = document.getElementById('question-section');
+    if (sectionEl) {
+        if (q.section && q.section.trim()) {
+            sectionEl.innerHTML = q.section;
+            sectionEl.style.display = 'block';
+        } else {
+            sectionEl.style.display = 'none';
+        }
+    }
+
+    // Image
+    const imgEl = document.getElementById('question-image');
+    if (imgEl) {
+        if (q.imageUrl && q.imageUrl.trim()) {
+            imgEl.src = q.imageUrl;
+            imgEl.style.display = 'block';
+        } else {
+            imgEl.src = '';
+            imgEl.style.display = 'none';
+        }
+    }
 
     // Toggle Flag UI status
     const flagBtn = document.getElementById('btn-flag');

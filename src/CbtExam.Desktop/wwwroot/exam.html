@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Examination | CBT Portal</title>
+<title id="page-title">Examination | CBT Portal</title>
 <link rel="stylesheet" href="/css/style.css"/>
 <link rel="stylesheet" href="/css/exam.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -20,7 +20,7 @@
         <img class="dynamic-logo-mini" src="/img/prep4jamb.png" alt="Logo"/>
       </div>
       <div class="divider"></div>
-      <h1 id="exam-title">Post-UTME Screening 2026</h1>
+      <h1 id="exam-title"></h1>
     </div>
     
     <div class="stats-section">
@@ -39,10 +39,10 @@
     </div>
 
     <div class="user-section">
-      <div class="user-avatar" id="user-avatar-initial">C</div>
+      <div class="user-avatar" id="user-avatar-initial"></div>
       <div class="user-info">
-        <span class="u-name" id="user-name">Candidate Name</span>
-        <span class="u-id" id="user-id">ID: 00000000</span>
+        <span class="u-name" id="user-name"></span>
+        <span class="u-id" id="user-id"></span>
       </div>
     </div>
   </div>
@@ -72,14 +72,16 @@
     
     <div class="question-card-modern" id="question-card">
       <div class="q-header">
-        <span class="q-num">Question <span id="current-q-num">1</span></span>
+        <span class="q-num">Question <span id="current-q-num"></span></span>
         <button class="btn-icon-flag" id="btn-flag" onclick="toggleFlagCurrent()" title="Flag for Review">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
         </button>
       </div>
       
       <div class="q-content">
-        <p class="q-text" id="question-text">Loading question content...</p>
+        <div class="q-section" id="question-section" style="display:none;"></div>
+        <img id="question-image" src="" alt="Question diagram" style="display:none; max-width:100%; border-radius:10px; margin-bottom:14px;"/>
+        <p class="q-text" id="question-text"></p>
       </div>
 
       <div class="options-grid" id="options-list">
@@ -174,7 +176,7 @@
       <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
     </div>
     <h2>Congratulations!</h2>
-    <p>Your screening examination has been submitted successfully.</p>
+    <p id="completion-msg">Your examination has been submitted successfully.</p>
     <div class="score-display-box">
       <div class="score-num"><span id="score-text">0.0%</span></div>
       <div class="score-label">Official Score</div>
