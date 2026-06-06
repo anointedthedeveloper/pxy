@@ -442,7 +442,12 @@ public class ExamSubjectConfigVM : BaseViewModel
         {
             if (Set(ref _selectedSubject, value))
             {
-                _onChanged(); // triggers RefreshAllRowSubjects in ExamsViewModel
+                // Auto-set question count based on subject
+                var isEnglish = value.Equals("Use of English", StringComparison.OrdinalIgnoreCase)
+                             || value.Contains("english", StringComparison.OrdinalIgnoreCase);
+                _questionCount = isEnglish ? 60 : 40;
+                OnPropertyChanged(nameof(QuestionCount));
+                _onChanged();
                 _ = LoadYearsAsync();
             }
         }

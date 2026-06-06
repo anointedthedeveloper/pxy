@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Waiting Room | JAMB CBT Mock System</title>
+    <title>Waiting Room | CBT Portal</title>
+    <script>try { const t = localStorage.getItem('selectedExamTitle'); if(t) document.title = 'Waiting — ' + t; } catch(e){}</script>
     <link rel="icon" type="image/png" href="/img/prep4jamb.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -76,7 +77,7 @@
         <!-- Right Panel: Status & Details -->
         <div class="right-panel">
             <div class="welcome-badge">UTME Preparation Portal</div>
-            <h2>Session Synchronization</h2>
+            <h2 id="wait-page-heading">Session Synchronization</h2>
             <p class="instruction-text">We are preparing your environment for a seamless examination experience.</p>
 
             <div class="status-details-card">
@@ -236,6 +237,11 @@
             document.getElementById('wait-exam-name').textContent = examTitle;
             document.getElementById('userAvatar').textContent = studentName.charAt(0).toUpperCase();
             document.getElementById('currentYear').textContent = currentYear;
+
+            // Update heading and tab title with actual exam name
+            const heading = document.getElementById('wait-page-heading');
+            if (heading) heading.textContent = examTitle;
+            document.title = 'Waiting — ' + examTitle;
 
             const progressBar = document.getElementById('loading-bar');
             const percentText = document.getElementById('progress-percent');

@@ -212,11 +212,24 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         var questions = se.Session!.Exam!.Questions.ToDictionary(q => q.Id);
         int score = 0;
 
+        // Group questions by subject to apply JAMB per-subject scaling
+        var subjectGroups = questions.Values
+            .GroupBy(q => q.Subject ?? "General", StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
+
+        var correctBySubject = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var sub in subjectGroups.Keys) correctBySubject[sub] = 0;
+
         foreach (var ans in dto.Answers.DistinctBy(a => a.QuestionId))
         {
             if (!questions.TryGetValue(ans.QuestionId, out var q)) continue;
             bool correct = q.CorrectAnswer.Equals(ans.SelectedAnswer, StringComparison.OrdinalIgnoreCase);
-            if (correct) score++;
+            if (correct)
+            {
+                score++;
+                var sub = q.Subject ?? "General";
+                correctBySubject[sub] = correctBySubject.GetValueOrDefault(sub, 0) + 1;
+            }
 
             var existing = se.Answers.FirstOrDefault(a => a.QuestionId == ans.QuestionId);
             if (existing is null)
@@ -242,8 +255,27 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         await exports.ExportAllAsync();
 
         var total = questions.Count;
+
+        // JAMB scaling: each subject ALWAYS scaled to 100 regardless of question count
+        // Total is always (number of subjects × 100), max 400 for 4 subjects
+        double jambTotal = 0;
+        var breakdown = new List<string>();
+        foreach (var (sub, qList) in subjectGroups)
+        {
+            int pool = qList.Count; // actual questions in this exam for this subject
+            int correct = correctBySubject.GetValueOrDefault(sub, 0);
+            // Scale to 100: (correct / pool) * 100, regardless of whether pool is 10, 40, 60, or 70
+            double scaled = pool > 0 ? Math.Round((double)correct / pool * 100, 1) : 0;
+            jambTotal += scaled;
+            breakdown.Add($"{sub}: {correct}/{pool} ({scaled}/100)");
+        }
+
+        // Total is out of (subjectCount * 100) — always maps to 400 for 4 subjects
+        double maxScore = subjectGroups.Count * 100.0;
+        double percentage = maxScore > 0 ? Math.Round(jambTotal / maxScore * 100, 1) : 0;
+
         await NotifyAdmin(se.Session.SessionCode, se.SessionId);
-        return Ok(new SubmitResultDto(score, total, total == 0 ? 0 : Math.Round((double)score / total * 100, 1)));
+        return Ok(new SubmitResultDto(score, total, percentage) { JambScore = Math.Round(jambTotal, 1), SubjectBreakdown = string.Join(" | ", breakdown) });
     }
 
     // POST /api/student/tabswitch

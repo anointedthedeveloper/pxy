@@ -361,6 +361,8 @@ async function initializeExamPage() {
     // Set completion modal message
     const completionMsg = document.getElementById('completion-msg');
     if (completionMsg) completionMsg.textContent = `Your ${examTitle} has been submitted successfully.`;
+    const completionExamName = document.getElementById('completion-exam-name');
+    if (completionExamName) completionExamName.textContent = examTitle;
 
     // Load cached questions
     const cached = localStorage.getItem('cachedQuestions');
@@ -874,6 +876,113 @@ function pressCalc(val) {
     }
 }
 
+// ── Offline Submit Queue ──
+// Queues failed submits and retries whenever connectivity returns.
+const QUEUE_KEY = 'cbt_submit_queue';
+
+function queueSubmit(payload) {
+    let queue = [];
+    try { queue = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); } catch(e) {}
+    // Replace any existing entry for the same studentExamId
+    queue = queue.filter(e => e.studentExamId !== payload.studentExamId);
+    queue.push(payload);
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+}
+
+function dequeueSubmit(studentExamId) {
+    let queue = [];
+    try { queue = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); } catch(e) {}
+    queue = queue.filter(e => e.studentExamId !== studentExamId);
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+}
+
+async function flushSubmitQueue() {
+    let queue = [];
+    try { queue = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); } catch(e) {}
+    if (queue.length === 0) return;
+
+    for (const payload of [...queue]) {
+        try {
+            const res = await fetch(`${API_BASE}/Student/submit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ studentExamId: payload.studentExamId, answers: payload.answers })
+            });
+            if (res.ok) {
+                dequeueSubmit(payload.studentExamId);
+                console.log(`[Queue] Flushed queued submit for exam ${payload.studentExamId}`);
+            }
+        } catch(e) { /* still offline, leave in queue */ }
+    }
+}
+
+// Retry queue every 15 seconds in background
+setInterval(flushSubmitQueue, 15000);
+// Also retry when connection comes back
+window.addEventListener('online', () => setTimeout(flushSubmitQueue, 1000));
+
+// ── Offline Score Calculator ──
+// Uses the cached shuffled questions (which include correctIndex) to score locally.
+function computeScoreOffline(cachedQuestions, answers) {
+    const ansMap = {};
+    answers.forEach(a => { ansMap[a.questionId] = a.selectedAnswer; });
+
+    // Group by subject for JAMB scaling
+    const subjectGroups = {};
+    cachedQuestions.forEach(q => {
+        const sub = q.subject || 'General';
+        if (!subjectGroups[sub]) subjectGroups[sub] = [];
+        subjectGroups[sub].push(q);
+    });
+
+    let totalCorrect = 0;
+    let jambTotal = 0;
+    const breakdownParts = [];
+
+    for (const [sub, qList] of Object.entries(subjectGroups)) {
+        let correct = 0;
+        qList.forEach(q => {
+            const selected = ansMap[q.questionId];
+            if (selected === undefined) return;
+            const correctOption = q.options[q.correctIndex];
+            if (correctOption && selected.trim().toLowerCase() === correctOption.trim().toLowerCase()) correct++;
+        });
+        totalCorrect += correct;
+        const pool = qList.length; // actual count — always scale to 100 regardless
+        const scaled = pool > 0 ? Math.round((correct / pool) * 1000) / 10 : 0;
+        jambTotal += scaled;
+        breakdownParts.push(`${sub}: ${correct}/${pool} (${scaled}/100)`);
+    }
+
+    const subjectCount = Object.keys(subjectGroups).length;
+    const maxScore = subjectCount * 100;
+    const percentage = maxScore > 0 ? Math.round((jambTotal / maxScore) * 1000) / 10 : 0;
+    const jambScore = subjectCount > 0 ? Math.round(jambTotal * 10) / 10 : null;
+
+    // Also build structured per-subject array for the results page score cards
+    const subjectScores = Object.entries(subjectGroups).map(([sub, qList]) => {
+        const pool = qList.length;
+        let correct = 0;
+        qList.forEach(q => {
+            const selected = ansMap[q.questionId];
+            if (selected === undefined) return;
+            const correctOption = q.options[q.correctIndex];
+            if (correctOption && selected.trim().toLowerCase() === correctOption.trim().toLowerCase()) correct++;
+        });
+        const scaled = pool > 0 ? Math.round((correct / pool) * 1000) / 10 : 0;
+        return { subject: sub, correct, pool, scaled };
+    });
+
+    return {
+        score: totalCorrect,
+        total: cachedQuestions.length,
+        percentage,
+        jambScore,
+        subjectBreakdown: breakdownParts.join(' | '),
+        subjectScores
+    };
+}
+
 // ── Submit Exam Logic ──
 
 function confirmSubmit() {
@@ -901,7 +1010,6 @@ async function submitExam(manual = true) {
     if (examCompleted) return;
     examCompleted = true;
     
-    // Disable inputs and overlays
     closeSubmitConfirm();
     clearInterval(timerInterval);
     clearInterval(heartbeatInterval);
@@ -910,52 +1018,71 @@ async function submitExam(manual = true) {
     const answersList = [];
     questions.forEach(q => {
         const ans = responses[q.questionId];
-        if (ans !== undefined) {
-            answersList.push({
-                questionId: q.questionId,
-                selectedAnswer: ans
-            });
-        }
+        if (ans !== undefined) answersList.push({ questionId: q.questionId, selectedAnswer: ans });
     });
 
+    // Always compute score offline first — this guarantees the student sees results
+    // even if the server is unreachable.
+    const offlineResult = computeScoreOffline(questions, answersList);
+
+    const examTitle = localStorage.getItem('selectedExamTitle') || 'Examination';
+    const resultPayload = {
+        examTitle,
+        studentName: localStorage.getItem('studentName') || 'Candidate',
+        studentId:   localStorage.getItem('studentId')   || '00000000',
+        score:       offlineResult.score,
+        total:       offlineResult.total,
+        percentage:  offlineResult.percentage,
+        jambScore:   offlineResult.jambScore,
+        subjectBreakdown: offlineResult.subjectBreakdown,
+        subjectScores: offlineResult.subjectScores || [],
+        submittedAt: new Date().toLocaleString(),
+        answers:  answersList,
+        questions: questions
+    };
+
+    // Try submitting to server; fall back to offline queue if unreachable.
+    let serverOk = false;
     try {
         const submitRes = await fetch(`${API_BASE}/Student/submit`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                studentExamId: parseInt(studentExamId),
-                answers: answersList
-            })
+            body: JSON.stringify({ studentExamId: parseInt(studentExamId), answers: answersList })
         });
 
         if (submitRes.ok) {
+            serverOk = true;
             const scoreResult = await submitRes.json();
-            
-            // Save final scores and details in localStorage for high-fidelity client-side review!
-            localStorage.setItem('lastExamResult', JSON.stringify({
-                examTitle: localStorage.getItem('selectedExamTitle') || 'Examination',
-                studentName: localStorage.getItem('studentName') || 'Candidate',
-                studentId: localStorage.getItem('studentId') || '00000000',
-                score: scoreResult.score,
-                total: scoreResult.totalQuestions,
-                percentage: scoreResult.percentage,
-                submittedAt: new Date().toLocaleString(),
-                answers: answersList,
-                questions: questions
-            }));
-
-            // Display animated completion card
-            document.getElementById('score-text').textContent = `${scoreResult.percentage}%`;
-            document.getElementById('completion-modal').classList.remove('hidden');
-        } else {
-            showToast('Submission Failed', 'Server rejected direct submit. Retrying with local payload...', 'error');
-            examCompleted = false; // allow retry
+            // Prefer server score (authoritative) over offline estimate
+            resultPayload.score      = scoreResult.score      ?? offlineResult.score;
+            resultPayload.total      = scoreResult.total      ?? offlineResult.total;
+            resultPayload.percentage = scoreResult.percentage ?? offlineResult.percentage;
+            resultPayload.jambScore  = scoreResult.jambScore  ?? offlineResult.jambScore;
+            resultPayload.subjectBreakdown = scoreResult.subjectBreakdown || offlineResult.subjectBreakdown;
+            resultPayload.subjectScores = offlineResult.subjectScores || [];
         }
     } catch (e) {
-        console.error(e);
-        showToast('Connection Failure', 'Could not sync submit. Please alert the exam invigilator.', 'error');
-        examCompleted = false;
+        // Server unreachable — queue for retry
+        console.warn('[Offline] Submit failed, queuing for retry:', e);
     }
+
+    if (!serverOk) {
+        // Queue the submit so it syncs when server comes back
+        queueSubmit({ studentExamId: parseInt(studentExamId), answers: answersList });
+        showToast('Saved Offline', 'Server unreachable. Your answers are saved and will sync automatically.', 'info');
+    }
+
+    // Save result and show completion — always works even offline
+    localStorage.setItem('lastExamResult', JSON.stringify(resultPayload));
+
+    const hasJamb = resultPayload.jambScore && resultPayload.jambScore > 0;
+    const displayScore = hasJamb
+        ? `${resultPayload.jambScore.toFixed(1)} / 400`
+        : `${resultPayload.percentage}%`;
+    document.getElementById('score-text').textContent = displayScore;
+    const scoreLabelEl = document.getElementById('score-label');
+    if (scoreLabelEl) scoreLabelEl.textContent = hasJamb ? 'JAMB Score' : 'Official Score';
+    document.getElementById('completion-modal').classList.remove('hidden');
 }
 
 function exitExamPortal() {

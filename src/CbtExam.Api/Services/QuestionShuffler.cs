@@ -20,7 +20,7 @@ public static class QuestionShuffler
         if (!shuffleOptions)
         {
             var idx = options.IndexOf(q.CorrectAnswer);
-            return new ShuffledQuestionDto(q.Id, q.QuestionNumber, q.Text, options, idx < 0 ? 0 : idx);
+            return new ShuffledQuestionDto(q.Id, q.QuestionNumber, q.Text, options, idx < 0 ? 0 : idx, q.Subject ?? "", q.Section ?? "", q.ImageUrl ?? "");
         }
 
         // Fisher-Yates shuffle on a copy
@@ -32,7 +32,7 @@ public static class QuestionShuffler
         }
 
         var correctIndex = shuffled.IndexOf(q.CorrectAnswer);
-        return new ShuffledQuestionDto(q.Id, q.QuestionNumber, q.Text, shuffled, correctIndex < 0 ? 0 : correctIndex);
+        return new ShuffledQuestionDto(q.Id, q.QuestionNumber, q.Text, shuffled, correctIndex < 0 ? 0 : correctIndex, q.Subject ?? "", q.Section ?? "", q.ImageUrl ?? "");
     }
 
     public static List<ShuffledQuestionDto> ShuffleAll(IEnumerable<Question> questions, bool shuffleQuestions, bool shuffleOptions, int? seed = null)

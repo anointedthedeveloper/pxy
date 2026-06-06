@@ -25,12 +25,16 @@ public record JoinRequestDto(int StudentExamId, int SessionId, string FullName, 
 public record StudentLoginDto(string StudentId, string Password);
 
 // --- Question for student (shuffled) ---
-public record ShuffledQuestionDto(int QuestionId, int QuestionNumber, string Text, List<string> Options, int CorrectIndex);
+public record ShuffledQuestionDto(int QuestionId, int QuestionNumber, string Text, List<string> Options, int CorrectIndex, string Subject = "", string Section = "", string ImageUrl = "");
 
 // --- Answer submission ---
 public record AnswerSubmitDto(int QuestionId, string SelectedAnswer);
 public record ExamSubmitDto(int StudentExamId, List<AnswerSubmitDto> Answers);
-public record SubmitResultDto(int Score, int Total, double Percentage);
+public record SubmitResultDto(int Score, int Total, double Percentage)
+{
+    public double JambScore { get; init; }
+    public string SubjectBreakdown { get; init; } = string.Empty;
+}
 public record ProgressSaveDto(int StudentExamId, int QuestionId, string SelectedAnswer);
 public record StudentProgressDto(int StudentExamId, bool IsSubmitted, List<AnswerSubmitDto> Answers);
 
