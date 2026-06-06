@@ -92,7 +92,7 @@ public class QuestionBankController(AppDbContext db) : ControllerBase
             var answerLetter = q.Answer.Trim().ToUpper();
             if (answerLetter != "A" && answerLetter != "B" && answerLetter != "C" && answerLetter != "D") continue;
 
-            int year = (int.TryParse(q.Examyear, out int py) && py >= 1990 && py <= 2030) ? py : 0;
+            int year = (int.TryParse(q.Examyear, out int py) && py >= 1990 && py <= 2030) ? py : 2000;
 
             if (!byYear.ContainsKey(year)) byYear[year] = new List<RepoQuestionDto>();
             byYear[year].Add(q);

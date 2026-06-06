@@ -21,6 +21,10 @@ public class DashboardViewModel : BaseViewModel, IRefreshable
     public int PausedCount    { get => _pausedCount;    set => Set(ref _pausedCount,    value); }
     public int RegisteredDevicesCount { get => _registeredDevicesCount; set => Set(ref _registeredDevicesCount, value); }
     public int OnlineDevicesCount     { get => _onlineDevicesCount;     set => Set(ref _onlineDevicesCount,     value); }
+
+    private int _totalBankQuestions, _totalBankImages;
+    public int TotalBankQuestions { get => _totalBankQuestions; set => Set(ref _totalBankQuestions, value); }
+    public int TotalBankImages    { get => _totalBankImages;    set => Set(ref _totalBankImages,    value); }
     public double SubmittedPercent => TotalStudents == 0 ? 0 : Math.Round(SubmittedCount * 100.0 / TotalStudents, 1);
     public double ActivePercent => TotalStudents == 0 ? 0 : Math.Round(ActiveCount * 100.0 / TotalStudents, 1);
 
@@ -141,6 +145,11 @@ public class DashboardViewModel : BaseViewModel, IRefreshable
             exams?.ForEach(Exams.Add);
             RebuildSubjectFilters();
             FilterDashboardExams();
+
+            // Question bank counts
+            var bank = await api.GetQuestionBankAsync();
+            TotalBankQuestions = bank?.Count ?? 0;
+            TotalBankImages    = bank?.Count(q => !string.IsNullOrWhiteSpace(q.ImageUrl)) ?? 0;
         }
         finally { IsBusy = false; }
     }
@@ -3297,6 +3306,45 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
             CopyStatus = totalSkipped > 0
                 ? $"Done! {totalImported} imported, {totalSkipped} skipped (already exist). Go to Questions Bank to view."
                 : $"Done! {totalImported} questions saved offline. Go to Questions Bank to view.";
+
+            // Fix-up pass: any question already in DB whose ImageUrl still points to a remote
+            // URL (http) means the image was never downloaded locally. Fetch and save them now.
+            BusyMessage = "Checking for missing local images...";
+            try
+            {
+                var allQuestions = await api.GetQuestionBankAsync();
+                var needsImage = allQuestions?.Where(q =>
+                    !string.IsNullOrWhiteSpace(q.ImageUrl) &&
+                    q.ImageUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)).ToList() ?? [];
+
+                int fixedCount = 0;
+                foreach (var q in needsImage)
+                {
+                    try
+                    {
+                        var uri = new Uri(q.ImageUrl);
+                        var localName = System.IO.Path.GetFileName(uri.LocalPath);
+                        if (string.IsNullOrWhiteSpace(localName)) localName = Guid.NewGuid().ToString("N") + ".jpg";
+                        var localPath = System.IO.Path.Combine(imagesDir, localName);
+                        if (!System.IO.File.Exists(localPath))
+                        {
+                            var imgBytes = await client.GetByteArrayAsync(q.ImageUrl);
+                            await System.IO.File.WriteAllBytesAsync(localPath, imgBytes);
+                        }
+                        var newUrl = $"/images/questions/{localName}";
+                        var opts = JsonSerializer.Deserialize<List<string>>(q.OptionsJson) ?? [];
+                        var dto = new CbtExam.Shared.DTOs.QuestionBankCreateDto(
+                            q.Subject, q.Year, q.QuestionNumber, q.Text, opts, q.CorrectAnswer,
+                            q.Section, newUrl);
+                        await api.UpdateQuestionBankAsync(q.Id, dto);
+                        fixedCount++;
+                    }
+                    catch { }
+                }
+                if (fixedCount > 0)
+                    CopyStatus = $"Done! {totalImported} imported. Fixed {fixedCount} missing local images.";
+            }
+            catch { /* ignore fix-up errors */ }
 
             OnRepoDownloadComplete?.Invoke();
         }
