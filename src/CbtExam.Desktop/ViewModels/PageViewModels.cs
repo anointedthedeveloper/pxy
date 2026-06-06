@@ -3086,22 +3086,62 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
     private static string ToTitleCase(string s) =>
         System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(s.Trim().ToLower());
 
-    // Strip git merge conflict markers so malformed files can still be parsed
+    // Strip git merge conflict markers — removes ALL conflict blocks entirely,
+    // keeping only lines that are not inside any conflict marker
     private static string StripMergeConflicts(string json)
     {
         var lines = json.Split('\n');
         var result = new System.Text.StringBuilder();
         bool inConflict = false;
-        bool keepOurs = true; // keep lines between <<<< and ====
+        bool keepSection = true;
         foreach (var line in lines)
         {
-            if (line.StartsWith("<<<<<<")) { inConflict = true; keepOurs = true; continue; }
-            if (line.StartsWith("======")) { keepOurs = false; continue; }
-            if (line.StartsWith(">>>>>>")) { inConflict = false; keepOurs = true; continue; }
-            if (!inConflict || keepOurs)
+            var trimmed = line.TrimStart();
+            if (trimmed.StartsWith("<<<<<<")) { inConflict = true; keepSection = true; continue; }
+            if (trimmed.StartsWith("======")) { keepSection = false; continue; }
+            if (trimmed.StartsWith(">>>>>>")) { inConflict = false; keepSection = true; continue; }
+            if (!inConflict || keepSection)
                 result.AppendLine(line);
         }
         return result.ToString();
+    }
+
+    // Extract all valid JSON objects from a potentially malformed JSON array string.
+    // Handles merge conflicts and duplicate objects by parsing object-by-object.
+    private static List<JsonElement> ExtractJsonObjects(string raw)
+    {
+        var results = new List<JsonElement>();
+        var seen = new HashSet<string>(); // deduplicate by id+examyear
+        int depth = 0;
+        int start = -1;
+        for (int i = 0; i < raw.Length; i++)
+        {
+            char c = raw[i];
+            if (c == '{') { if (depth == 0) start = i; depth++; }
+            else if (c == '}') {
+                depth--;
+                if (depth == 0 && start >= 0)
+                {
+                    var chunk = raw.Substring(start, i - start + 1);
+                    try
+                    {
+                        var el = JsonSerializer.Deserialize<JsonElement>(chunk);
+                        // Build dedup key from id + examyear
+                        var idKey = el.TryGetProperty("id", out var idProp) ? idProp.GetInt32().ToString() : "";
+                        var yrKey = el.TryGetProperty("examyear", out var yrProp) ? yrProp.GetString() ?? "" : "";
+                        var key = $"{idKey}|{yrKey}";
+                        if (!string.IsNullOrEmpty(idKey) && !seen.Contains(key))
+                        {
+                            seen.Add(key);
+                            results.Add(el);
+                        }
+                    }
+                    catch { /* skip malformed chunk */ }
+                    start = -1;
+                }
+            }
+        }
+        return results;
     }
 
     private async Task DownloadQuestionsAsync()
@@ -3168,35 +3208,33 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
 
                     // If the response looks like HTML (404 page etc.), skip it
                     var trimmed = raw.TrimStart();
-                    if (trimmed.StartsWith("<") || trimmed.StartsWith("{") == false && trimmed.StartsWith("[") == false)
+                    if (trimmed.StartsWith("<") || (trimmed.StartsWith("{") == false && trimmed.StartsWith("[") == false))
                     {
                         App.Log($"Skipping {subject}: response is not valid JSON", new Exception(raw[..Math.Min(80, raw.Length)]));
                         continue;
                     }
 
-                    // Strip git merge conflict markers if present
-                    if (raw.Contains("<<<<<<"))
-                        raw = StripMergeConflicts(raw);
-
-                    List<JsonElement>? questions;
-                    try
-                    {
-                        questions = JsonSerializer.Deserialize<List<JsonElement>>(raw,
-                            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    }
+                    // Use object-by-object extraction to handle merge conflicts + duplicates
+                    List<JsonElement> questions;
+                    try { questions = ExtractJsonObjects(raw); }
                     catch (Exception ex) { App.Log($"Error parsing {subject}", ex); continue; }
 
-                    if (questions == null || questions.Count == 0) continue;
+                    if (questions.Count == 0) continue;
 
                     // Download images locally for questions that have them
                     BusyMessage = $"Processing images for {subject} ({idx}/{files.Count})...";
                     var processed = new List<object>();
                     foreach (var q in questions)
                     {
-                        // Skip incomplete questions early: must have question text + options (A+B) + answer
+                        // Skip incomplete questions: must have question text + options (a+b) + answer
+                        // Repo uses lowercase property names: question, option, answer, examyear, section, image
                         if (!q.TryGetProperty("question", out var qText) || string.IsNullOrWhiteSpace(qText.GetString())) continue;
                         if (!q.TryGetProperty("option", out var optProp)) continue;
                         if (!q.TryGetProperty("answer", out var answerProp) || string.IsNullOrWhiteSpace(answerProp.GetString())) continue;
+                        // Validate answer is A/B/C/D
+                        var ansLetter = answerProp.GetString()?.Trim().ToUpper() ?? "";
+                        if (ansLetter != "A" && ansLetter != "B" && ansLetter != "C" && ansLetter != "D") continue;
+                        // Need at least options A and B
                         var optA = optProp.TryGetProperty("a", out var pa) ? pa.GetString() : null;
                         var optB = optProp.TryGetProperty("b", out var pb) ? pb.GetString() : null;
                         if (string.IsNullOrWhiteSpace(optA) || string.IsNullOrWhiteSpace(optB)) continue;
