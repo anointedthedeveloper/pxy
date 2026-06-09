@@ -64,16 +64,16 @@ async function runDeviceHeartbeat() {
 function clearAllStudentData() {
     const keysToRemove = [
         'studentId', 'studentName', 'studentExamId', 'selectedExamId', 'selectedExamTitle',
-        'examDuration', 'cachedQuestions', 'encryptedQuestions', 'lastExamResult',
+        'examDuration', 'cachedQuestions', 'encryptedQuestions',
         'sessionId', 'cbt_session_code', 'last_broadcast_msg'
     ];
     keysToRemove.forEach(k => localStorage.removeItem(k));
-    // Remove dynamic exam keys
     Object.keys(localStorage).forEach(k => {
         if (k.startsWith('studentExamAnswers_') || k.startsWith('examStart_')) {
             localStorage.removeItem(k);
         }
     });
+    // NOTE: lastExamResult is intentionally kept so results.html can display after logout redirect
 }
 
 // --- Smart User & Session Detection ---

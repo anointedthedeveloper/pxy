@@ -279,7 +279,6 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         se.SubmittedAt = DateTime.UtcNow;
         se.Score = score;
         await db.SaveChangesAsync();
-        await exports.ExportAllAsync();
 
         _activeSessions.TryRemove(se.StudentId, out _);
 
@@ -299,7 +298,12 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         double maxScore = subjectGroups.Count * 100.0;
         double percentage = maxScore > 0 ? Math.Round(jambTotal / maxScore * 100) : 0;
 
-        await NotifyAdmin(se.Session.SessionCode, se.SessionId);
+        // Fire-and-forget export/notify — do NOT await inside try so cycle errors don't fail the response
+        _ = Task.Run(async () => {
+            try { await exports.ExportAllAsync(); } catch { }
+            try { await NotifyAdmin(se.Session!.SessionCode, se.SessionId); } catch { }
+        });
+
         return Ok(new SubmitResultDto(score, total, percentage) { JambScore = Math.Round(jambTotal), SubjectBreakdown = string.Join(" | ", breakdown) });
         }
         catch (Exception ex)

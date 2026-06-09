@@ -530,38 +530,40 @@ body{font-family:'Outfit',sans-serif;background:var(--gray-100);color:var(--gray
 
 <script src="/js/app.js"></script>
 <script>
-// Render subject tabs in the content area bar (mirrors header tabs)
-function renderContentSubjectBar() {
+// Populate the content-area subject bar whenever subject tabs update
+// We patch switchSubject and initSubjectTabs post-load
+const _origSwitchSubject = window.switchSubject;
+window.switchSubject = function(sub) {
+    if (_origSwitchSubject) _origSwitchSubject(sub);
+    renderContentBar();
+};
+
+function renderContentBar() {
     const bar = document.getElementById('subject-content-bar');
-    if (!bar || typeof subjects === 'undefined') return;
+    if (!bar || typeof subjects === 'undefined' || !subjects.length) return;
     bar.innerHTML = '';
     subjects.forEach(sub => {
         const btn = document.createElement('button');
         btn.className = 'subj-bar-tab' + (sub === activeSubject ? ' active' : '');
         btn.textContent = sub;
-        btn.onclick = () => switchSubject(sub);
+        btn.onclick = () => window.switchSubject(sub);
         bar.appendChild(btn);
     });
 }
 
-// Hook into renderSubjectTabs to also update content bar
-const _origRenderSubjectTabs = typeof renderSubjectTabs === 'function' ? renderSubjectTabs : null;
-function renderSubjectTabs() {
-    // Update header tabs
-    const container = document.getElementById('subject-tabs-bar');
-    if (container && typeof subjects !== 'undefined') {
-        container.innerHTML = '';
-        subjects.forEach(sub => {
-            const btn = document.createElement('button');
-            btn.className = 'subj-tab' + (sub === activeSubject ? ' active' : '');
-            btn.textContent = sub;
-            btn.onclick = () => switchSubject(sub);
-            container.appendChild(btn);
-        });
-    }
-    // Update content bar tabs
-    renderContentSubjectBar();
-}
+// After exam page initialises, populate the content bar
+const _origInit = window.initializeExamPage;
+window.initializeExamPage = async function() {
+    if (_origInit) await _origInit();
+    renderContentBar();
+};
+
+// Also hook renderSubjectTabs so content bar stays in sync
+const _origRST = window.renderSubjectTabs;
+window.renderSubjectTabs = function() {
+    if (_origRST) _origRST();
+    renderContentBar();
+};
 
 // SignalR: ForceSubmit & SessionEnded
 try {
