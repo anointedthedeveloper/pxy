@@ -174,6 +174,8 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
     }
 
     // GET /api/sessions/{id}/students
+    [HttpGet("{id}/students")]
+    public async Task<IActionResult> GetStudents(int id)
     {
         var cutoff = DateTime.UtcNow.AddSeconds(-30);
 
@@ -200,23 +202,23 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
         var result = studentExams.Select(se => {
             var studentId = se.Student?.StudentId ?? "";
             deviceMap.TryGetValue(studentId, out var device);
-            
+
             bool isOnline = device != null && device.LastSeen > cutoff && device.IsOnline;
             string status = se.IsSubmitted ? "submitted" : (isOnline ? "online" : "disconnected");
-            
+
             return new StudentStatusDto(
-                se.Id, 
-                se.Student?.FullName ?? "Unknown", 
+                se.Id,
+                se.Student?.FullName ?? "Unknown",
                 studentId,
-                se.JoinedAt, 
-                se.IsSubmitted, 
+                se.JoinedAt,
+                se.IsSubmitted,
                 se.TabSwitchCount,
-                se.Answers.Count, 
-                0, 
-                device?.BatteryLevel ?? 0, 
-                isOnline, 
-                status, 
-                device?.DeviceName ?? "Unknown", 
+                se.Answers.Count,
+                0,
+                device?.BatteryLevel ?? 0,
+                isOnline,
+                status,
+                device?.DeviceName ?? "Unknown",
                 device?.DeviceId ?? "");
         }).ToList();
 

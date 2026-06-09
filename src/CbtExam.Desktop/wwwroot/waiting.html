@@ -242,17 +242,23 @@
                 setTimeout(() => { window.location.href = 'selection.html'; }, 3000);
             });
 
+            // Expose joiner early so startExamProcess can call it regardless of connection timing
+            window._signalRJoinStudents = (code) => {
+                if (connection.state === signalR.HubConnectionState.Connected) {
+                    connection.invoke('JoinStudentGroup', code).catch(() => {});
+                } else {
+                    // Queue for when connection is established
+                    connection.onreconnected(() => connection.invoke('JoinStudentGroup', code).catch(() => {}));
+                }
+            };
+
             connection.start()
                 .then(() => {
-                    // Join student group once session code is known
+                    // Join student group for any already-known session code
                     const code = localStorage.getItem('cbt_session_code');
                     if (code) connection.invoke('JoinStudentGroup', code).catch(() => {});
-                    // Expose joiner so startExamProcess can call it after we get the session code
-                    window._signalRJoinStudents = (code) => connection.invoke('JoinStudentGroup', code).catch(() => {});
                 })
-                .catch(() => {
-                    window._signalRJoinStudents = () => {};
-                });
+                .catch(() => {});
             // ----------------------------------------------------
 
             document.getElementById('wait-candidate-name').textContent = studentName;
@@ -337,6 +343,11 @@
                     localStorage.setItem('studentExamId', studentExamId);
                     localStorage.setItem('sessionId', joinData.sessionId);
                     localStorage.setItem('examDuration', joinData.durationMinutes);
+
+                    // Join SignalR student group NOW that we have the session code
+                    localStorage.setItem('cbt_session_code', session.sessionCode);
+                    if (typeof window._signalRJoinStudents === 'function')
+                        window._signalRJoinStudents(session.sessionCode);
 
                     // Register device so admin sees this candidate as connected
                     fetch(`${API_BASE}/Student/device`, {

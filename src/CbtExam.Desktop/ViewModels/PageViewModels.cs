@@ -955,8 +955,18 @@ public class ExamsViewModel(ApiClient api) : BaseViewModel, IRefreshable
 }
 
 // ─── Monitor ─────────────────────────────────────────────────────────────────
-public class SessionViewModel(ApiClient api) : BaseViewModel, IRefreshable
+public class SessionViewModel : BaseViewModel, IRefreshable
 {
+    private readonly ApiClient api;
+    private readonly MonitorRealtimeService realtime;
+
+    public SessionViewModel(ApiClient api, MonitorRealtimeService realtime)
+    {
+        this.api = api;
+        this.realtime = realtime;
+
+        realtime.StudentUpdated += payload => { _ = OnSignalRStudentUpdate(); };
+    }
     public ObservableCollection<ExamDto> Exams { get; } = [];
     public ObservableCollection<SessionDto> Sessions { get; } = [];
     public ObservableCollection<SessionDto> ActiveSessions { get; } = [];
@@ -1056,6 +1066,10 @@ public class SessionViewModel(ApiClient api) : BaseViewModel, IRefreshable
         _roomPollTimer.Elapsed += async (s, e) => await RefreshRoomStudents();
         _roomPollTimer.AutoReset = true;
         _roomPollTimer.Start();
+
+        // Connect SignalR for instant student join detection
+        if (CurrentRoom is not null)
+            _ = realtime.ConnectAsync(api.BaseUrl, CurrentRoom.SessionCode);
     }
 
     private void StopRoomPolling()
@@ -1250,10 +1264,9 @@ public class MonitorViewModel(ApiClient api, MonitorRealtimeService realtime) : 
             Students.Clear();
             SessionInfo = "No active session";
             StopAutoRefresh();
-            await realtime.DisconnectAsync();
             return;
         }
-        _sessionId  = active.Id;
+        _sessionId   = active.Id;
         _sessionCode = active.SessionCode;
         SessionInfo = $"{active.ExamTitle}  ·  Code: {active.SessionCode}";
         var list = await api.GetStudentsAsync(_sessionId);

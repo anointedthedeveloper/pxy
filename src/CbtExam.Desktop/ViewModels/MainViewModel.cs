@@ -97,7 +97,7 @@ public class MainViewModel : BaseViewModel
         Exams      = new ExamsViewModel(Api);
         Questions  = new QuestionsViewModel(Api);
         SearchResults = new SearchResultsViewModel("");
-        Sessions   = new SessionViewModel(Api);
+        Sessions   = new SessionViewModel(Api, _monitorRealtime);
         Monitor    = new MonitorViewModel(Api, _monitorRealtime);
         Students   = new StudentsViewModel(Api);
         Devices    = new DevicesViewModel(Api);
@@ -143,7 +143,7 @@ public class MainViewModel : BaseViewModel
 
         _monitorRealtime.StudentUpdated += payload =>
         {
-            // Also refresh the session waiting room panel via SignalR push
+            // Refresh the session waiting room panel via SignalR push
             _ = Sessions.OnSignalRStudentUpdate();
 
             if (lastStudentStatuses is not null)
@@ -210,6 +210,12 @@ public class MainViewModel : BaseViewModel
             {
                 _lastSubmittedStudent = newlySubmitted.FullName;
             }
+        };
+
+        _monitorRealtime.SessionStarted += () =>
+        {
+            // Refresh session list so IsStarted reflects in the admin UI
+            App.Current.Dispatcher.Invoke(async () => await Sessions.LoadAsync());
         };
 
         StartLiveMetricTimer();
