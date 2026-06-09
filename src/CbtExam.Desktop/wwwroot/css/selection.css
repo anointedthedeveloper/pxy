@@ -120,28 +120,43 @@
 /* Exam Grid / Cards */
 .exam-list-modern {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+    max-height: 340px;
+    overflow-y: auto;
+    padding-right: 4px;
 }
+
+.exam-list-modern::-webkit-scrollbar { width: 4px; }
+.exam-list-modern::-webkit-scrollbar-track { background: transparent; }
+.exam-list-modern::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
 
 .exam-card-modern {
     background: #ffffff;
     border: 1.5px solid #f1f5f9;
-    border-radius: 16px;
-    padding: 24px;
+    border-radius: 14px;
+    padding: 16px;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-direction: column;
+    gap: 10px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     position: relative;
     overflow: hidden;
 }
 
+.exam-card-modern::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #16a34a, #22c55e);
+}
+
 .exam-card-modern:hover {
     border-color: #16a34a;
     transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(22, 163, 74, 0.1);
+    box-shadow: 0 8px 20px rgba(22, 163, 74, 0.1);
 }
 
 .exam-card-modern:active {
@@ -150,13 +165,13 @@
 
 .exam-type-badge {
     display: inline-block;
-    padding: 4px 10px;
+    padding: 3px 8px;
     background: rgba(22, 163, 74, 0.1);
     color: #16a34a;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 800;
     border-radius: 6px;
-    margin-bottom: 10px;
+    margin-bottom: 4px;
     letter-spacing: 0.5px;
 }
 
@@ -166,23 +181,25 @@
 }
 
 .exam-card-modern h3 {
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 700;
     color: #0f172a;
-    margin: 0 0 8px 0;
+    margin: 0;
+    line-height: 1.3;
 }
 
 .exam-meta-pills {
     display: flex;
-    gap: 8px;
+    gap: 6px;
+    flex-wrap: wrap;
 }
 
 .meta-pill {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: #64748b;
     background: #f8fafc;
-    padding: 4px 12px;
+    padding: 3px 10px;
     border-radius: 20px;
 }
 
@@ -190,17 +207,18 @@
     background: #16a34a;
     color: white;
     border: none;
-    padding: 12px 24px;
-    border-radius: 12px;
-    font-size: 14px;
+    padding: 9px 16px;
+    border-radius: 10px;
+    font-size: 13px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.25s;
+    width: 100%;
 }
 
 .exam-card-modern:hover .action-btn {
     background: #15803d;
-    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
+    box-shadow: 0 3px 10px rgba(22, 163, 74, 0.25);
 }
 
 .exam-card-modern.locked {

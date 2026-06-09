@@ -977,7 +977,21 @@ public class SessionViewModel : BaseViewModel, IRefreshable
     public bool HasActiveSessions => ActiveSessions.Count > 0;
 
     private SessionDto? _currentRoom;
-    public SessionDto? CurrentRoom { get => _currentRoom; set => Set(ref _currentRoom, value); }
+    public SessionDto? CurrentRoom
+    {
+        get => _currentRoom;
+        set
+        {
+            Set(ref _currentRoom, value);
+            OnPropertyChanged(nameof(CurrentRoomAutoApprove));
+        }
+    }
+
+    public bool CurrentRoomAutoApprove
+    {
+        get => _currentRoom?.AutoApprove ?? true;
+        set { /* toggled via command */ }
+    }
     
     private bool _isManagingRoom;
     public bool IsManagingRoom
@@ -1012,7 +1026,26 @@ public class SessionViewModel : BaseViewModel, IRefreshable
     private int _issuesFlaggedCount;
     public int IssuesFlaggedCount { get => _issuesFlaggedCount; set => Set(ref _issuesFlaggedCount, value); }
 
-    public RelayCommand SyncListCommand => new(async () => await RefreshRoomStudents());
+    public RelayCommand SyncListCommand => new(async () =>
+    {
+        await RefreshRoomStudents();
+        NotificationsViewModel.Instance?.Add(new NotificationItem(
+            "List Synced",
+            $"Candidate list refreshed for '{CurrentRoom?.ExamTitle}'.",
+            DateTime.Now,
+            "info"
+        ));
+    });
+    public RelayCommand ToggleAutoApproveCommand => new(async () =>
+    {
+        if (CurrentRoom is null) return;
+        var newVal = !CurrentRoom.AutoApprove;
+        await api.SetAutoApproveAsync(CurrentRoom.Id, newVal);
+        // Reload to get updated session state
+        await LoadAsync();
+        var updated = ActiveSessions.FirstOrDefault(x => x.Id == CurrentRoom.Id);
+        if (updated != null) { CurrentRoom = updated; OnPropertyChanged(nameof(CurrentRoomAutoApprove)); }
+    });
     public RelayCommand BroadcastCommand => new(async () => {
         if (CurrentRoom is null) return;
         

@@ -37,9 +37,14 @@
 
             <!-- Active sessions cards -->
             <ItemsControl ItemsSource="{Binding ActiveSessions}" Margin="0,0,0,24">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border CornerRadius="20" Padding="32" Margin="0,0,0,16">
+                        <Border CornerRadius="16" Padding="20" Margin="0,0,12,12" Width="320">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                                     <GradientStop Color="#064E3B" Offset="0"/>
@@ -47,66 +52,58 @@
                                 </LinearGradientBrush>
                             </Border.Background>
                             <Border.Effect>
-                                <DropShadowEffect BlurRadius="25" ShadowDepth="8" Opacity="0.15" Color="#064E3B"/>
+                                <DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.15" Color="#064E3B"/>
                             </Border.Effect>
                             <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <StackPanel>
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                                        <!-- Pulse dot -->
-                                        <Grid Width="16" Height="16" Margin="0,0,12,0" VerticalAlignment="Center">
-                                            <Ellipse Width="16" Height="16" Fill="#40FFFFFF"/>
-                                            <Ellipse Width="8" Height="8" Fill="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Grid>
-                                        <TextBlock Text="LIVE SESSION" FontSize="11" FontWeight="Black" Foreground="#A7F3D0" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                    <TextBlock Text="{Binding ExamTitle}" FontSize="26" FontWeight="Bold" Foreground="White"/>
-                                    <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
-                                        <StackPanel Margin="0,0,48,0">
-                                            <TextBlock Text="ACCESS CODE" FontSize="10" Foreground="#A7F3D0" FontWeight="Black"/>
-                                            <TextBlock Text="{Binding SessionCode}"
-                                                       FontSize="32" FontWeight="Black" Foreground="White" FontFamily="Consolas" Margin="0,6,0,0"/>
-                                        </StackPanel>
-                                        <StackPanel>
-                                            <TextBlock Text="CANDIDATES" FontSize="10" Foreground="#A7F3D0" FontWeight="Black"/>
-                                            <TextBlock Text="{Binding StudentCount}"
-                                                       FontSize="32" FontWeight="Black" Foreground="White" Margin="0,6,0,0"/>
-                                        </StackPanel>
-                                    </StackPanel>
-                                    <!-- Join URL / Info -->
-                                    <Border Background="#1AFFFFFF" CornerRadius="12" Padding="16,10" Margin="0,24,0,0"
-                                            HorizontalAlignment="Left">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="&#xE774;" FontFamily="Segoe MDL2 Assets" Foreground="#A7F3D0"
-                                                       FontSize="14" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                            <TextBlock FontFamily="Consolas" FontSize="13" Foreground="White" VerticalAlignment="Center">
-                                                <Run Text="Session Room: "/><Run Text="{Binding SessionCode, Mode=OneWay}" FontWeight="Bold"/>
-                                            </TextBlock>
-                                            <Button Command="{Binding DataContext.CopyJoinUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                    CommandParameter="{Binding}"
-                                                    Style="{StaticResource PrimaryBtn}" Background="Transparent"
-                                                    Padding="8" Margin="14,0,0,0" ToolTip="Copy Join Code">
-                                                <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="White"/>
-                                            </Button>
-                                        </StackPanel>
-                                    </Border>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <!-- Live badge + title -->
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                    <Grid Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center">
+                                        <Ellipse Width="10" Height="10" Fill="#40FFFFFF"/>
+                                        <Ellipse Width="6" Height="6" Fill="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <TextBlock Text="LIVE" FontSize="10" FontWeight="Black" Foreground="#A7F3D0" VerticalAlignment="Center"/>
                                 </StackPanel>
-                                <!-- End session button -->
-                                <!-- Manage Room Button -->
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="24,0,0,0">
-                                    <Button Command="{Binding DataContext.ManageRoomCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                <TextBlock Grid.Row="1" Text="{Binding ExamTitle}" FontSize="16" FontWeight="Bold" Foreground="White"
+                                           TextTrimming="CharacterEllipsis" Margin="0,0,0,12"/>
+                                <!-- Stats row -->
+                                <Grid Grid.Row="2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Border Background="#1AFFFFFF" CornerRadius="8" Padding="10,5" Margin="0,0,8,0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE716;" FontFamily="Segoe MDL2 Assets" Foreground="#A7F3D0" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding StudentCount}" FontSize="13" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <Button Command="{Binding DataContext.CopyJoinUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource PrimaryBtn}" Background="#1AFFFFFF"
+                                                Padding="10,5" ToolTip="Copy Join URL">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="White" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Copy URL" FontSize="11" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                    <Button Grid.Column="1"
+                                            Command="{Binding DataContext.ManageRoomCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                             CommandParameter="{Binding}"
                                             Style="{StaticResource PrimaryBtn}"
-                                            Background="{DynamicResource AccentBrush}" Padding="24,12" HorizontalAlignment="Stretch">
+                                            Background="{DynamicResource AccentBrush}" Padding="14,7">
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Manage Room" FontWeight="Bold" VerticalAlignment="Center"/>
+                                            <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Manage" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Button>
-                                </StackPanel>
+                                </Grid>
                             </Grid>
                         </Border>
                     </DataTemplate>
@@ -375,21 +372,30 @@
                              </Border>
                              
                              <StackPanel Grid.Column="2" Orientation="Horizontal">
-                                 <Button Command="{Binding BroadcastCommand}" Background="Transparent" BorderBrush="#E2E8F0" BorderThickness="1" Foreground="#475569" Padding="16,10" Margin="0,0,12,0">
+                                 <!-- Auto-Approve Toggle -->
+                                 <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="12,8" Margin="0,0,10,0">
+                                     <StackPanel Orientation="Horizontal">
+                                         <TextBlock Text="Auto-Approve" FontSize="13" FontWeight="SemiBold" Foreground="#475569" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                         <CheckBox IsChecked="{Binding CurrentRoomAutoApprove}" Command="{Binding ToggleAutoApproveCommand}" VerticalAlignment="Center" ToolTip="Automatically approve students who join an ongoing exam"/>
+                                     </StackPanel>
+                                 </Border>
+                                 <Button Command="{Binding BroadcastCommand}" Background="Transparent" BorderBrush="#E2E8F0" BorderThickness="1" Foreground="#475569" Padding="14,8" Margin="0,0,10,0">
                                      <Button.Resources>
-                                         <Style TargetType="Border">
-                                             <Setter Property="CornerRadius" Value="12"/>
-                                         </Style>
+                                         <Style TargetType="Border"><Setter Property="CornerRadius" Value="12"/></Style>
                                      </Button.Resources>
-                                     <TextBlock Text="Broadcast Message" FontWeight="SemiBold"/>
+                                     <StackPanel Orientation="Horizontal">
+                                         <TextBlock Text="&#xE789;" FontFamily="Segoe MDL2 Assets" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                         <TextBlock Text="Broadcast" FontWeight="SemiBold"/>
+                                     </StackPanel>
                                  </Button>
-                                 <Button Command="{Binding SyncListCommand}" Background="Transparent" BorderBrush="#E2E8F0" BorderThickness="1" Foreground="#475569" Padding="16,10">
+                                 <Button Command="{Binding SyncListCommand}" Background="Transparent" BorderBrush="#E2E8F0" BorderThickness="1" Foreground="#475569" Padding="14,8">
                                      <Button.Resources>
-                                         <Style TargetType="Border">
-                                             <Setter Property="CornerRadius" Value="12"/>
-                                         </Style>
+                                         <Style TargetType="Border"><Setter Property="CornerRadius" Value="12"/></Style>
                                      </Button.Resources>
-                                     <TextBlock Text="Sync List" FontWeight="SemiBold"/>
+                                     <StackPanel Orientation="Horizontal">
+                                         <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                         <TextBlock Text="Sync List" FontWeight="SemiBold"/>
+                                     </StackPanel>
                                  </Button>
                              </StackPanel>
                          </Grid>

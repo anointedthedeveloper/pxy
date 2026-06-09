@@ -183,7 +183,7 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
 
     // POST /api/student/progress
     [HttpPost("progress")]
-    public async Task<IActionResult> SaveProgress(ProgressSaveDto dto)
+    public async Task<IActionResult> SaveProgress([FromBody] ProgressSaveDto dto)
     {
         var se = await db.StudentExams
             .Include(x => x.Session)
@@ -216,20 +216,28 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
 
     // POST /api/student/submit
     [HttpPost("submit")]
-    public async Task<IActionResult> Submit(ExamSubmitDto dto)
+    public async Task<IActionResult> Submit([FromBody] ExamSubmitDto dto)
     {
+        if (dto is null || dto.StudentExamId <= 0)
+            return BadRequest(new { error = "Invalid submission payload." });
+
+        try
+        {
         var se = await db.StudentExams
             .Include(x => x.Session).ThenInclude(s => s!.Exam).ThenInclude(e => e!.Questions)
             .Include(x => x.Answers)
             .FirstOrDefaultAsync(x => x.Id == dto.StudentExamId);
 
-        if (se is null) return NotFound();
-        if (se.IsSubmitted) return Ok(new SubmitResultDto(se.Score, se.Session!.Exam!.Questions.Count, 0));
+        if (se is null) return NotFound(new { error = "Student exam not found." });
+        if (se.IsSubmitted)
+        {
+            var total2 = se.Session?.Exam?.Questions?.Count ?? 0;
+            return Ok(new SubmitResultDto(se.Score, total2, total2 == 0 ? 0 : Math.Round((double)se.Score / total2 * 100, 1)));
+        }
 
         var questions = se.Session!.Exam!.Questions.ToDictionary(q => q.Id);
         int score = 0;
 
-        // Group questions by subject to apply JAMB per-subject scaling
         var subjectGroups = questions.Values
             .GroupBy(q => q.Subject ?? "General", StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
@@ -237,10 +245,11 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         var correctBySubject = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         foreach (var sub in subjectGroups.Keys) correctBySubject[sub] = 0;
 
-        foreach (var ans in dto.Answers.DistinctBy(a => a.QuestionId))
+        var answers = dto.Answers ?? [];
+        foreach (var ans in answers.DistinctBy(a => a.QuestionId))
         {
             if (!questions.TryGetValue(ans.QuestionId, out var q)) continue;
-            bool correct = q.CorrectAnswer.Equals(ans.SelectedAnswer, StringComparison.OrdinalIgnoreCase);
+            bool correct = q.CorrectAnswer.Equals(ans.SelectedAnswer?.Trim() ?? "", StringComparison.OrdinalIgnoreCase);
             if (correct)
             {
                 score++;
@@ -255,14 +264,15 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
                 {
                     StudentExamId = se.Id,
                     QuestionId = ans.QuestionId,
-                    SelectedAnswer = ans.SelectedAnswer,
+                    SelectedAnswer = ans.SelectedAnswer ?? "",
                     IsCorrect = correct
                 });
-                continue;
             }
-
-            existing.SelectedAnswer = ans.SelectedAnswer;
-            existing.IsCorrect = correct;
+            else
+            {
+                existing.SelectedAnswer = ans.SelectedAnswer ?? "";
+                existing.IsCorrect = correct;
+            }
         }
 
         se.IsSubmitted = true;
@@ -271,30 +281,31 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         await db.SaveChangesAsync();
         await exports.ExportAllAsync();
 
-        // Release the single-device session lock so the student can log in again if needed
         _activeSessions.TryRemove(se.StudentId, out _);
 
         var total = questions.Count;
 
-        // JAMB scaling: each subject ALWAYS scaled to 100 regardless of question count
-        // Total is always (number of subjects × 100), max 400 for 4 subjects
         double jambTotal = 0;
         var breakdown = new List<string>();
         foreach (var (sub, qList) in subjectGroups)
         {
-            int pool = qList.Count; // actual questions in this exam for this subject
+            int pool = qList.Count;
             int correct = correctBySubject.GetValueOrDefault(sub, 0);
-            double scaled = pool > 0 ? Math.Round((double)correct / pool * 100) : 0; // whole number
+            double scaled = pool > 0 ? Math.Round((double)correct / pool * 100) : 0;
             jambTotal += scaled;
             breakdown.Add($"{sub}: {correct}/{pool} ({(int)scaled}/100)");
         }
 
-        // Total is out of (subjectCount * 100) — always maps to 400 for 4 subjects
         double maxScore = subjectGroups.Count * 100.0;
         double percentage = maxScore > 0 ? Math.Round(jambTotal / maxScore * 100) : 0;
 
         await NotifyAdmin(se.Session.SessionCode, se.SessionId);
         return Ok(new SubmitResultDto(score, total, percentage) { JambScore = Math.Round(jambTotal), SubjectBreakdown = string.Join(" | ", breakdown) });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Submit failed: " + ex.Message });
+        }
     }
 
     // POST /api/student/tabswitch

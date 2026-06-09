@@ -222,7 +222,7 @@
                 if (lastBroadcast !== msg) {
                     localStorage.setItem('last_broadcast_msg', msg);
                     if (typeof showToast === 'function')
-                        showToast('📢 Broadcast from Coordinator', msg, 'info');
+                        showToast('Broadcast from Coordinator', msg, 'info');
                 }
             });
 

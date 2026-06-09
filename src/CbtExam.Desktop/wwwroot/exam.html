@@ -5,189 +5,582 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title id="page-title">Examination | CBT Portal</title>
 <script>try { const t = localStorage.getItem('selectedExamTitle'); if(t) document.title = t + ' | CBT Portal'; } catch(e){}</script>
-<link rel="stylesheet" href="/css/style.css"/>
-<link rel="stylesheet" href="/css/exam.css"/>
+<link rel="icon" type="image/png" href="/img/prep4jamb.png">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<!-- SignalR client for instant broadcast -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --green:#16a34a;--green-dark:#14532d;--green-mid:#15803d;
+  --green-light:#22c55e;--green-xlight:#bbf7d0;
+  --green-bg:#f0fdf4;--green-bg2:#dcfce7;
+  --white:#fff;
+  --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
+  --gray-300:#d1d5db;--gray-400:#9ca3af;--gray-500:#6b7280;
+  --gray-600:#4b5563;--gray-700:#374151;--gray-800:#1f2937;--gray-900:#111827;
+  --blue:#3b82f6;--red:#ef4444;--amber:#f59e0b;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:0 4px 12px rgba(0,0,0,.08);
+  --shadow-lg:0 10px 24px rgba(0,0,0,.1);
+  --shadow-xl:0 20px 40px rgba(0,0,0,.12);
+}
+body{font-family:'Outfit',sans-serif;background:var(--gray-100);color:var(--gray-900);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* ── Network bar ── */
+#network-status-bar{display:none;position:fixed;top:0;left:0;width:100%;text-align:center;padding:6px;font-size:13px;font-weight:700;color:#fff;z-index:9999;}
+#toastContainer{position:fixed;bottom:24px;right:24px;z-index:10000;display:flex;flex-direction:column;gap:10px;}
+
+/* ── Header ── */
+.exam-header{
+  background:linear-gradient(135deg,var(--green-dark) 0%,var(--green-mid) 60%,#059669 100%);
+  height:60px;min-height:60px;padding:0 20px;
+  display:flex;align-items:center;gap:14px;
+  box-shadow:0 2px 12px rgba(0,0,0,.25);
+  position:relative;z-index:100;
+}
+.hdr-brand{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.hdr-brand img{height:28px;width:auto;}
+.hdr-brand h1{font-size:14px;font-weight:800;color:#fff;white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis;}
+.pipe{width:1px;height:22px;background:rgba(255,255,255,.25);}
+
+/* Subject tabs in header */
+.hdr-subjects{display:flex;align-items:center;gap:5px;flex:1;overflow-x:auto;scrollbar-width:none;padding:0 4px;}
+.hdr-subjects::-webkit-scrollbar{display:none;}
+.subj-tab{
+  padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap;
+  background:rgba(255,255,255,.13);color:rgba(255,255,255,.85);
+  border:1.5px solid rgba(255,255,255,.2);cursor:pointer;transition:all .18s;
+}
+.subj-tab.active{background:#fff;color:var(--green-dark);border-color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+.subj-tab:hover:not(.active){background:rgba(255,255,255,.22);color:#fff;}
+
+/* Header right */
+.hdr-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.timer-box{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.2);
+  border-radius:10px;padding:5px 12px;
+  font-family:'Inter',monospace;font-size:16px;font-weight:800;color:#fff;
+  min-width:86px;justify-content:center;
+}
+.timer-box.warning{background:rgba(239,68,68,.35);border-color:rgba(239,68,68,.6);color:#fca5a5;animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.65;}}
+
+.prog-badge{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.15);
+  border-radius:10px;padding:5px 11px;font-size:12px;font-weight:700;color:rgba(255,255,255,.9);
+}
+.prog-ring{position:relative;width:30px;height:30px;flex-shrink:0;}
+.prog-ring svg{transform:rotate(-90deg);}
+.prog-ring span{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:7px;font-weight:900;color:#fff;}
+
+.hdr-user{display:flex;align-items:center;gap:8px;}
+.hdr-avatar{width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;}
+.hdr-uinfo{display:flex;flex-direction:column;line-height:1.2;}
+.hdr-uinfo .uname{font-size:12px;font-weight:700;color:#fff;}
+.hdr-uinfo .uid{font-size:10px;color:rgba(255,255,255,.6);}
+
+/* ── Main layout ── */
+.exam-body{flex:1;display:grid;grid-template-columns:260px 1fr;overflow:hidden;}
+
+/* ── Sidebar ── */
+.exam-sidebar{background:#fff;border-right:1px solid var(--gray-200);display:flex;flex-direction:column;overflow:hidden;}
+.sidebar-top{
+  background:linear-gradient(160deg,var(--green-dark),#065f46);
+  padding:14px 16px;color:#fff;flex-shrink:0;
+}
+.sidebar-top h3{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;opacity:.8;margin-bottom:10px;}
+.sidebar-stats{display:flex;gap:10px;}
+.stat-pill{background:rgba(255,255,255,.14);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;color:#fff;flex:1;text-align:center;}
+.stat-pill span{font-size:18px;font-weight:900;display:block;line-height:1.1;}
+
+.sidebar-scroll{flex:1;overflow-y:auto;padding:14px;}
+.sidebar-scroll::-webkit-scrollbar{width:3px;}
+.sidebar-scroll::-webkit-scrollbar-thumb{background:var(--gray-200);border-radius:3px;}
+
+/* Nav grid */
+.nav-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:14px;}
+.nav-btn{
+  aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+  border-radius:7px;border:1.5px solid var(--gray-200);background:var(--gray-50);
+  font-size:11px;font-weight:700;color:var(--gray-500);cursor:pointer;transition:all .15s;
+}
+.nav-btn:hover{border-color:var(--green);color:var(--green);background:var(--green-bg);}
+.nav-btn.current{background:var(--green);color:#fff;border-color:var(--green);box-shadow:0 2px 8px rgba(22,163,74,.35);}
+.nav-btn.answered{background:var(--blue);color:#fff;border-color:#2563eb;}
+.nav-btn.flagged{background:#fef2f2;color:var(--red);border-color:var(--red);}
+.nav-btn.answered.flagged{background:linear-gradient(135deg,#dbeafe,#fef2f2);border-color:var(--red);color:var(--red);}
+
+/* Legend */
+.nav-legend{border-top:1px solid var(--gray-100);padding:12px 0 0;display:flex;flex-direction:column;gap:6px;}
+.leg-item{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--gray-500);}
+.leg-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+.leg-dot.current{background:var(--green);}
+.leg-dot.answered{background:var(--blue);}
+.leg-dot.flagged{background:var(--red);}
+.leg-dot.unanswered{background:var(--gray-200);border:1px solid var(--gray-300);}
+
+/* ── Main area ── */
+.exam-main{display:flex;flex-direction:column;overflow:hidden;background:var(--gray-100);}
+
+/* Subject tab bar ABOVE question card */
+.subject-bar{
+  background:#fff;border-bottom:1px solid var(--gray-200);
+  padding:0 20px;display:flex;align-items:center;gap:6px;
+  overflow-x:auto;scrollbar-width:none;flex-shrink:0;
+}
+.subject-bar::-webkit-scrollbar{display:none;}
+.subj-bar-tab{
+  padding:10px 16px;font-size:12px;font-weight:700;
+  border:none;background:transparent;cursor:pointer;
+  color:var(--gray-500);border-bottom:2px solid transparent;
+  transition:all .15s;white-space:nowrap;
+}
+.subj-bar-tab.active{color:var(--green);border-bottom-color:var(--green);}
+.subj-bar-tab:hover:not(.active){color:var(--gray-700);}
+
+/* Question scroll area */
+.question-area{flex:1;overflow-y:auto;padding:18px 20px 0;}
+.question-area::-webkit-scrollbar{width:4px;}
+.question-area::-webkit-scrollbar-thumb{background:var(--gray-200);border-radius:4px;}
+
+/* Question card */
+.q-card{
+  background:#fff;border-radius:14px;
+  border:1px solid var(--gray-200);box-shadow:var(--shadow);
+  position:relative;overflow:hidden;margin-bottom:16px;
+}
+.q-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px;background:linear-gradient(90deg,var(--green-mid),var(--green-light));}
+
+/* Card top bar: badges left, tools right */
+.q-card-top{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px 12px;border-bottom:1px solid var(--gray-100);
+}
+.q-badges{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge-num{background:var(--green-bg2);color:var(--green-mid);}
+.badge-year{background:#fef9c3;color:#854d0e;border:1px solid #fde68a;}
+.badge-subj{background:var(--gray-100);color:var(--gray-600);}
+.q-tools{display:flex;align-items:center;gap:6px;}
+.tool-btn{
+  height:32px;padding:0 10px;border-radius:8px;border:1.5px solid var(--gray-200);
+  background:var(--gray-50);cursor:pointer;display:flex;align-items:center;gap:5px;
+  font-size:11px;font-weight:700;color:var(--gray-500);transition:all .15s;font-family:'Outfit',sans-serif;
+}
+.tool-btn:hover{border-color:var(--green);color:var(--green);background:var(--green-bg);}
+.tool-btn.flagged{background:#fef2f2;border-color:var(--red);color:var(--red);}
+.tool-btn svg{flex-shrink:0;}
+
+/* Question body */
+.q-body{padding:16px 20px 20px;}
+
+/* Section / passage */
+.q-section{
+  background:var(--green-bg);border:1px solid var(--green-xlight);border-radius:10px;
+  padding:12px 16px;margin-bottom:14px;font-size:13px;line-height:1.75;color:var(--gray-700);
+  border-left:3px solid var(--green);
+}
+.q-section-label{font-size:9px;font-weight:800;color:var(--green);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+
+/* Image */
+.q-img-wrap{margin-bottom:14px;text-align:center;}
+.q-img-wrap img{max-width:100%;max-height:240px;object-fit:contain;border-radius:10px;border:1px solid var(--gray-200);box-shadow:var(--shadow);}
+
+/* Question text — supports HTML formatting */
+.q-text{
+  font-size:16px;font-weight:600;line-height:1.7;color:var(--gray-900);margin-bottom:18px;
+}
+.q-text u{text-decoration:underline;}
+.q-text b, .q-text strong{font-weight:800;}
+.q-text i, .q-text em{font-style:italic;}
+.q-text sup{vertical-align:super;font-size:.75em;}
+.q-text sub{vertical-align:sub;font-size:.75em;}
+
+/* Options */
+.options-list{display:flex;flex-direction:column;gap:9px;}
+.opt{
+  display:flex;align-items:center;gap:11px;padding:12px 15px;
+  border-radius:10px;border:1.5px solid var(--gray-200);background:var(--gray-50);
+  cursor:pointer;transition:all .15s;
+}
+.opt:hover{border-color:var(--green);background:var(--green-bg);}
+.opt.selected{background:var(--green-bg2);border-color:var(--green);box-shadow:0 2px 8px rgba(22,163,74,.12);}
+.opt-letter{
+  width:28px;height:28px;border-radius:7px;border:1.5px solid var(--gray-300);
+  background:#fff;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:12px;color:var(--gray-500);flex-shrink:0;transition:all .15s;
+}
+.opt:hover .opt-letter{border-color:var(--green);color:var(--green);}
+.opt.selected .opt-letter{background:var(--green);border-color:var(--green);color:#fff;}
+/* Option text supports HTML formatting */
+.opt-text{font-size:14px;font-weight:500;color:var(--gray-800);line-height:1.5;}
+.opt-text u{text-decoration:underline;}
+.opt-text b,.opt-text strong{font-weight:800;}
+.opt-text i,.opt-text em{font-style:italic;}
+
+/* ── Bottom controls ── */
+.exam-controls{
+  background:#fff;border-top:1px solid var(--gray-200);
+  padding:11px 20px;display:flex;align-items:center;justify-content:space-between;
+  gap:10px;flex-shrink:0;
+}
+.ctrl-left,.ctrl-right{display:flex;align-items:center;gap:7px;}
+.ctrl-center{font-size:12px;font-weight:700;color:var(--gray-400);}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:8px 16px;border-radius:9px;font-size:13px;font-weight:700;
+  cursor:pointer;border:none;transition:all .18s;font-family:'Outfit',sans-serif;
+}
+.btn-green{background:var(--green);color:#fff;}
+.btn-green:hover{background:var(--green-mid);}
+.btn-outline{background:#fff;color:var(--gray-700);border:1.5px solid var(--gray-200);}
+.btn-outline:hover{border-color:var(--green);color:var(--green);}
+.btn-red{background:#fef2f2;color:var(--red);border:1.5px solid #fecaca;}
+.btn-red:hover{background:#fee2e2;}
+.btn-red-solid{background:var(--red);color:#fff;}
+.btn-red-solid:hover{background:#dc2626;}
+
+/* ── Modals ── */
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);
+  z-index:1000;display:flex;align-items:center;justify-content:center;
+}
+.overlay.hidden{display:none;}
+
+/* Calculator */
+.calc-modal{background:#fff;border-radius:16px;width:280px;padding:18px;box-shadow:var(--shadow-xl);}
+.calc-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.calc-hdr h4{font-size:14px;font-weight:800;color:var(--gray-800);}
+.calc-close{background:var(--gray-100);border:none;width:26px;height:26px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--gray-500);}
+.calc-close:hover{background:#fef2f2;color:var(--red);}
+.calc-display{
+  background:var(--gray-900);border-radius:10px;padding:10px 14px;
+  text-align:right;font-family:'Inter',monospace;font-size:22px;font-weight:700;
+  color:var(--green-light);min-height:50px;word-break:break-all;margin-bottom:10px;
+}
+.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.calc-btn{height:40px;border-radius:8px;border:none;font-size:15px;font-weight:700;cursor:pointer;transition:all .12s;font-family:'Outfit',sans-serif;}
+.cb-num{background:var(--gray-100);color:var(--gray-800);}
+.cb-num:hover{background:var(--gray-200);}
+.cb-op{background:#fef3c7;color:#92400e;}
+.cb-op:hover{background:#fde68a;}
+.cb-clr{background:#fef2f2;color:var(--red);}
+.cb-clr:hover{background:#fee2e2;}
+.cb-eq{background:var(--green);color:#fff;}
+.cb-eq:hover{background:var(--green-mid);}
+
+/* Confirm & Completion dialogs */
+.dialog{
+  background:#fff;border-radius:18px;width:360px;padding:28px;text-align:center;
+  box-shadow:var(--shadow-xl);display:flex;flex-direction:column;align-items:center;gap:14px;
+}
+.dialog-icon{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.dialog-icon.warning{background:#fffbeb;color:#d97706;}
+.dialog-icon.success{background:var(--green-bg);color:var(--green);}
+.dialog h2{font-size:19px;font-weight:800;color:var(--gray-900);}
+.dialog p{font-size:13px;color:var(--gray-500);line-height:1.6;}
+.dialog-btns{display:flex;gap:9px;width:100%;}
+.dialog-btns .btn{flex:1;height:40px;}
+.score-box{background:var(--green-bg);border:1px solid var(--green-xlight);border-radius:12px;padding:14px 28px;}
+.score-num{font-size:34px;font-weight:900;color:var(--green);}
+.score-lbl{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--gray-500);margin-top:2px;}
+
+/* Toast */
+.toast{
+  display:flex;align-items:flex-start;gap:10px;
+  background:#fff;border:1px solid var(--gray-200);border-radius:12px;
+  padding:11px 15px;min-width:250px;max-width:340px;box-shadow:var(--shadow-lg);
+  animation:toastIn .3s ease;
+}
+.toast.success{border-left:3px solid var(--green);}
+.toast.error{border-left:3px solid var(--red);}
+.toast.info{border-left:3px solid var(--blue);}
+.toast-icon{width:20px;height:20px;flex-shrink:0;}
+.toast.success .toast-icon{color:var(--green);}
+.toast.error .toast-icon{color:var(--red);}
+.toast.info .toast-icon{color:var(--blue);}
+.toast-title{font-size:13px;font-weight:700;color:var(--gray-900);}
+.toast-message{font-size:12px;color:var(--gray-500);margin-top:2px;}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+@keyframes toastFadeOut{to{opacity:0;transform:translateX(20px);}}
+
+/* Mobile */
+@media(max-width:860px){
+  .exam-body{grid-template-columns:1fr;}
+  .exam-sidebar{display:none;}
+  .hdr-brand h1{max-width:110px;}
+  .question-area{padding:12px;}
+  .exam-controls{padding:10px 12px;}
+}
+</style>
 </head>
-<body class="exam-layout">
+<body>
 <div id="toastContainer"></div>
-<div id="network-status-bar" style="display:none; position:fixed; top:0; left:0; width:100%; text-align:center; padding:6px; font-size:13px; font-weight:700; color:white; z-index:9999; transition:background 0.3s;"></div>
+<div id="network-status-bar"></div>
 
-<header class="exam-header-modern">
-  <div class="header-content">
-    <div class="brand-section">
-      <div class="logo-container-mini">
-        <img class="dynamic-logo-mini" src="/img/prep4jamb.png" alt="Logo"/>
-      </div>
-      <div class="divider"></div>
-      <h1 id="exam-title"></h1>
-    </div>
-    
-    <div class="stats-section">
-      <div class="stat-box timer">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span id="timer">00:00:00</span>
-      </div>
-      <div class="stat-box progress">
-        <div class="progress-ring-container">
-          <svg class="progress-ring" width="40" height="40">
-            <circle class="progress-ring__circle" stroke="var(--primary)" stroke-width="3.5" fill="transparent" r="16" cx="20" cy="20"/>
-          </svg>
-          <span id="progress-pct">0%</span>
-        </div>
-      </div>
-    </div>
+<!-- Header -->
+<header class="exam-header">
+  <div class="hdr-brand">
+    <img src="/img/prep4jamb.png" alt="Logo"/>
+    <div class="pipe"></div>
+    <h1 id="exam-title">Examination</h1>
+  </div>
 
-    <div class="user-section">
-      <div class="user-avatar" id="user-avatar-initial"></div>
-      <div class="user-info">
-        <span class="u-name" id="user-name"></span>
-        <span class="u-id" id="user-id"></span>
+  <!-- Subject tabs in header (mirror of content-area tabs) -->
+  <div class="hdr-subjects" id="subject-tabs-bar"></div>
+
+  <div class="hdr-right">
+    <div class="timer-box" id="timer-box">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span id="timer">00:00:00</span>
+    </div>
+    <div class="prog-badge">
+      <div class="prog-ring">
+        <svg width="30" height="30" viewBox="0 0 30 30">
+          <circle cx="15" cy="15" r="12" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="3"/>
+          <circle class="progress-ring__circle" cx="15" cy="15" r="12" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        <span id="progress-pct">0%</span>
+      </div>
+      <span id="answered-count">0</span>/<span id="total-count">0</span>
+    </div>
+    <div class="hdr-user">
+      <div class="hdr-avatar" id="user-avatar-initial"></div>
+      <div class="hdr-uinfo">
+        <span class="uname" id="user-name"></span>
+        <span class="uid" id="user-id"></span>
       </div>
     </div>
   </div>
 </header>
 
-<main class="exam-container">
-  <aside class="sidebar-nav">
-    <div class="nav-card">
-      <div class="nav-header">
-        <h3>Question Navigator</h3>
-        <p><span id="answered-count">0</span> of <span id="total-count">0</span> Answered</p>
+<!-- Body -->
+<div class="exam-body">
+
+  <!-- Sidebar -->
+  <aside class="exam-sidebar">
+    <div class="sidebar-top">
+      <h3>Question Navigator</h3>
+      <div class="sidebar-stats">
+        <div class="stat-pill"><span id="sb-answered">0</span>Answered</div>
+        <div class="stat-pill"><span id="sb-total">0</span>Total</div>
       </div>
-      <div class="nav-grid" id="question-nav">
-        <!-- Buttons injected here -->
-      </div>
+    </div>
+    <div class="sidebar-scroll">
+      <div class="nav-grid" id="question-nav"></div>
       <div class="nav-legend">
-        <div class="leg-item"><span class="dot current"></span> Current Question</div>
-        <div class="leg-item"><span class="dot answered"></span> Answered</div>
-        <div class="leg-item"><span class="dot flagged"></span> Flagged for Review</div>
+        <div class="leg-item"><span class="leg-dot current"></span>Current</div>
+        <div class="leg-item"><span class="leg-dot answered"></span>Answered</div>
+        <div class="leg-item"><span class="leg-dot unanswered"></span>Unanswered</div>
+        <div class="leg-item"><span class="leg-dot flagged"></span>Flagged</div>
       </div>
     </div>
   </aside>
 
-  <section class="question-workspace">
-    <!-- Subject Tabs Bar -->
-    <div class="subject-tabs-container" id="subject-tabs-bar" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;"></div>
-    
-    <div class="question-card-modern" id="question-card">
-      <div class="q-header">
-        <span class="q-num">Question <span id="current-q-num"></span></span>
-        <button class="btn-icon-flag" id="btn-flag" onclick="toggleFlagCurrent()" title="Flag for Review">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
-        </button>
-      </div>
-      
-      <div class="q-content">
-        <div class="q-section" id="question-section" style="display:none;"></div>
-        <img id="question-image" src="" alt="Question diagram" style="display:none; max-width:100%; border-radius:10px; margin-bottom:14px;"/>
-        <p class="q-text" id="question-text"></p>
-      </div>
+  <!-- Main -->
+  <div class="exam-main">
 
-      <div class="options-grid" id="options-list">
-        <!-- Options injected here -->
+    <!-- Subject tab bar above question card -->
+    <div class="subject-bar" id="subject-content-bar"></div>
+
+    <!-- Question scroll area -->
+    <div class="question-area">
+      <div class="q-card" id="question-card">
+
+        <!-- Card top: badges + tools -->
+        <div class="q-card-top">
+          <div class="q-badges">
+            <span class="badge badge-num" id="q-num-badge">Q 1</span>
+            <span class="badge badge-year" id="q-year-badge" style="display:none;"></span>
+            <span class="badge badge-subj" id="q-subj-badge"></span>
+          </div>
+          <div class="q-tools">
+            <button class="tool-btn" onclick="toggleCalculator()" title="Calculator">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="8" x2="8" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
+              Calc
+            </button>
+            <button class="tool-btn" onclick="clearCurrentAnswer()" title="Clear answer">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              Clear
+            </button>
+            <button class="tool-btn" id="btn-flag" onclick="toggleFlagCurrent()" title="Flag for review">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
+              Flag
+            </button>
+          </div>
+        </div>
+
+        <!-- Question body -->
+        <div class="q-body">
+          <!-- Section / Passage -->
+          <div id="question-section" style="display:none;" class="q-section">
+            <div class="q-section-label">Read the passage below</div>
+            <div id="question-section-content"></div>
+          </div>
+
+          <!-- Image -->
+          <div id="q-img-wrap" class="q-img-wrap" style="display:none;">
+            <img id="question-image" src="" alt="Question diagram"/>
+          </div>
+
+          <!-- Question text (innerHTML for HTML formatting) -->
+          <div class="q-text" id="question-text"></div>
+
+          <!-- Options -->
+          <div class="options-list" id="options-list"></div>
+        </div>
       </div>
     </div>
 
-    <footer class="exam-controls">
-      <button class="btn btn-outline" id="btn-prev" onclick="prevQuestion()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-        Previous
-      </button>
-      
-      <div class="central-controls">
-        <button class="btn btn-outline" onclick="toggleCalculator()" title="Calculator">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+    <!-- Bottom controls -->
+    <div class="exam-controls">
+      <div class="ctrl-left">
+        <button class="btn btn-outline" onclick="prevQuestion()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          Prev
         </button>
-        <button class="btn btn-outline" onclick="clearCurrentAnswer()">Clear Choice</button>
       </div>
 
-      <div class="navigation-group" style="display: flex; gap: 12px;">
-        <button class="btn btn-primary" id="btn-next" onclick="nextQuestion()">
+      <div class="ctrl-center" id="current-q-num"></div>
+
+      <div class="ctrl-right">
+        <button class="btn btn-green" onclick="nextQuestion()">
           Next
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </button>
-
-        <button class="btn btn-danger" id="btn-finish" onclick="confirmSubmit()">Finish Exam</button>
+        <button class="btn btn-red" onclick="confirmSubmit()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+          Submit Exam
+        </button>
       </div>
-    </footer>
-  </section>
-</main>
+    </div>
+  </div>
+</div>
 
-<div id="calculator-modal" class="modal-overlay hidden" onclick="closeModalOnOuterClick(event, 'calculator-modal')">
-  <div class="calculator-card">
-    <div class="calc-header">
-      <h4>Scientific Calculator</h4>
-      <button class="calc-close-btn" onclick="toggleCalculator()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+<!-- Calculator Modal -->
+<div id="calculator-modal" class="overlay hidden" onclick="if(event.target===this)toggleCalculator()">
+  <div class="calc-modal">
+    <div class="calc-hdr">
+      <h4>Calculator</h4>
+      <button class="calc-close" onclick="toggleCalculator()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
     <div class="calc-display" id="calc-display">0</div>
-    <div class="calc-buttons-grid">
-      <button class="calc-btn operator" onclick="pressCalc('sin')">sin</button>
-      <button class="calc-btn operator" onclick="pressCalc('cos')">cos</button>
-      <button class="calc-btn operator" onclick="pressCalc('tan')">tan</button>
-      <button class="calc-btn action" onclick="pressCalc('C')">C</button>
-      
-      <button class="calc-btn operator" onclick="pressCalc('log')">log</button>
-      <button class="calc-btn operator" onclick="pressCalc('ln')">ln</button>
-      <button class="calc-btn operator" onclick="pressCalc('sqrt')">√</button>
-      <button class="calc-btn operator" onclick="pressCalc('/')">/</button>
-      
-      <button class="calc-btn" onclick="pressCalc('7')">7</button>
-      <button class="calc-btn" onclick="pressCalc('8')">8</button>
-      <button class="calc-btn" onclick="pressCalc('9')">9</button>
-      <button class="calc-btn operator" onclick="pressCalc('*')">*</button>
-      
-      <button class="calc-btn" onclick="pressCalc('4')">4</button>
-      <button class="calc-btn" onclick="pressCalc('5')">5</button>
-      <button class="calc-btn" onclick="pressCalc('6')">6</button>
-      <button class="calc-btn operator" onclick="pressCalc('-')">-</button>
-      
-      <button class="calc-btn" onclick="pressCalc('1')">1</button>
-      <button class="calc-btn" onclick="pressCalc('2')">2</button>
-      <button class="calc-btn" onclick="pressCalc('3')">3</button>
-      <button class="calc-btn operator" onclick="pressCalc('+')">+</button>
-      
-      <button class="calc-btn" onclick="pressCalc('0')">0</button>
-      <button class="calc-btn" onclick="pressCalc('.')">.</button>
-      <button class="calc-btn equals" onclick="pressCalc('=')">=</button>
+    <div class="calc-grid">
+      <button class="calc-btn cb-clr" onclick="pressCalc('C')" style="grid-column:span 2">AC</button>
+      <button class="calc-btn cb-op" onclick="pressCalc('back')">⌫</button>
+      <button class="calc-btn cb-op" onclick="pressCalc('/')">÷</button>
+
+      <button class="calc-btn cb-num" onclick="pressCalc('7')">7</button>
+      <button class="calc-btn cb-num" onclick="pressCalc('8')">8</button>
+      <button class="calc-btn cb-num" onclick="pressCalc('9')">9</button>
+      <button class="calc-btn cb-op" onclick="pressCalc('*')">×</button>
+
+      <button class="calc-btn cb-num" onclick="pressCalc('4')">4</button>
+      <button class="calc-btn cb-num" onclick="pressCalc('5')">5</button>
+      <button class="calc-btn cb-num" onclick="pressCalc('6')">6</button>
+      <button class="calc-btn cb-op" onclick="pressCalc('-')">−</button>
+
+      <button class="calc-btn cb-num" onclick="pressCalc('1')">1</button>
+      <button class="calc-btn cb-num" onclick="pressCalc('2')">2</button>
+      <button class="calc-btn cb-num" onclick="pressCalc('3')">3</button>
+      <button class="calc-btn cb-op" onclick="pressCalc('+')">+</button>
+
+      <button class="calc-btn cb-num" onclick="pressCalc('0')" style="grid-column:span 2">0</button>
+      <button class="calc-btn cb-num" onclick="pressCalc('.')">.</button>
+      <button class="calc-btn cb-eq" onclick="pressCalc('=')">=</button>
     </div>
   </div>
 </div>
 
-<div id="submit-confirm-modal" class="modal-overlay hidden" onclick="closeModalOnOuterClick(event, 'submit-confirm-modal')">
-  <div class="confirm-dialog">
-    <div class="completion-icon" style="background: rgba(245, 158, 11, 0.15); color: #F59E0B;">
-      <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+<!-- Submit Confirm -->
+<div id="submit-confirm-modal" class="overlay hidden" onclick="if(event.target===this)closeSubmitConfirm()">
+  <div class="dialog">
+    <div class="dialog-icon warning">
+      <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
     </div>
-    <h2 style="font-size: 20px; font-weight: 800;">Submit Examination?</h2>
-    <p>Are you sure you want to finish the exam? You will not be able to change your answers after submission.</p>
-    <div class="confirm-buttons">
+    <h2>Submit Examination?</h2>
+    <p>You answered <strong id="confirm-answered">0</strong> of <strong id="confirm-total">0</strong> questions.<br>This action cannot be undone.</p>
+    <div class="dialog-btns">
       <button class="btn btn-outline" onclick="closeSubmitConfirm()">Cancel</button>
-      <button class="btn btn-danger" onclick="submitExam(true)">Yes, Submit</button>
+      <button class="btn btn-red-solid" onclick="submitExam(true)">Yes, Submit</button>
     </div>
   </div>
 </div>
 
-<div id="completion-modal" class="modal-overlay hidden">
-  <div class="completion-card">
-    <div class="completion-icon">
-      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+<!-- Completion -->
+<div id="completion-modal" class="overlay hidden">
+  <div class="dialog">
+    <div class="dialog-icon success">
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
     </div>
-    <h2>Congratulations!</h2>
+    <h2>Exam Submitted!</h2>
     <p id="completion-msg">Your examination has been submitted successfully.</p>
-    <p id="completion-exam-name" style="font-size:13px; color:#94a3b8; margin-top:-8px;"></p>
-    <div class="score-display-box">
-      <div class="score-num"><span id="score-text">0.0%</span></div>
-      <div class="score-label" id="score-label">Official Score</div>
+    <p id="completion-exam-name" style="font-size:11px;color:var(--gray-400);"></p>
+    <div class="score-box">
+      <div class="score-num" id="score-text">0%</div>
+      <div class="score-lbl" id="score-label">Official Score</div>
     </div>
-    <button class="btn btn-primary" onclick="exitExamPortal()" style="width: 100%; height: 48px; border-radius: 12px;">Close Portal</button>
+    <button class="btn btn-green" onclick="exitExamPortal()" style="width:100%;height:42px;">View Full Results</button>
   </div>
 </div>
 
 <script src="/js/app.js"></script>
+<script>
+// Render subject tabs in the content area bar (mirrors header tabs)
+function renderContentSubjectBar() {
+    const bar = document.getElementById('subject-content-bar');
+    if (!bar || typeof subjects === 'undefined') return;
+    bar.innerHTML = '';
+    subjects.forEach(sub => {
+        const btn = document.createElement('button');
+        btn.className = 'subj-bar-tab' + (sub === activeSubject ? ' active' : '');
+        btn.textContent = sub;
+        btn.onclick = () => switchSubject(sub);
+        bar.appendChild(btn);
+    });
+}
+
+// Hook into renderSubjectTabs to also update content bar
+const _origRenderSubjectTabs = typeof renderSubjectTabs === 'function' ? renderSubjectTabs : null;
+function renderSubjectTabs() {
+    // Update header tabs
+    const container = document.getElementById('subject-tabs-bar');
+    if (container && typeof subjects !== 'undefined') {
+        container.innerHTML = '';
+        subjects.forEach(sub => {
+            const btn = document.createElement('button');
+            btn.className = 'subj-tab' + (sub === activeSubject ? ' active' : '');
+            btn.textContent = sub;
+            btn.onclick = () => switchSubject(sub);
+            container.appendChild(btn);
+        });
+    }
+    // Update content bar tabs
+    renderContentSubjectBar();
+}
+
+// SignalR: ForceSubmit & SessionEnded
+try {
+    const _hubUrl = (typeof API_BASE !== 'undefined' ? API_BASE : '/api').replace('/api','') + '/hubs/exam';
+    const _conn = new signalR.HubConnectionBuilder().withUrl(_hubUrl).withAutomaticReconnect().build();
+    _conn.on('ForceSubmit', () => { if (typeof submitExam === 'function' && !examCompleted) submitExam(false); });
+    _conn.on('SessionEnded', () => {
+        if (typeof showToast === 'function') showToast('Session Ended', 'The exam session has been ended by the coordinator.', 'error');
+        setTimeout(() => { if (typeof submitExam === 'function' && !examCompleted) submitExam(false); }, 2000);
+    });
+    _conn.on('BroadcastMessage', (p) => {
+        const msg = p?.message || p;
+        if (msg && typeof showToast === 'function') showToast('Broadcast from Coordinator', msg, 'info');
+    });
+    _conn.start().then(() => {
+        const code = localStorage.getItem('cbt_session_code');
+        if (code) _conn.invoke('JoinStudentGroup', code).catch(() => {});
+    }).catch(() => {});
+} catch(e) {}
+</script>
 </body>
 </html>

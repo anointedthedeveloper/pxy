@@ -1,4 +1,4 @@
-// --- Dynamic API Base configuration ---
+﻿// --- Dynamic API Base configuration ---
 let API_BASE = '/api';
 
 // Auto-detect and fall back to saved Server IP if opened via file:// protocol
@@ -82,7 +82,7 @@ function runSmartSessionDetection() {
     const isLoginPage = currentPath.endsWith('index.html') || currentPath.endsWith('/') || currentPath === '';
     const hasActiveUser = localStorage.getItem('studentId');
 
-    // Always wipe session data when landing on login page — ensures fresh start on revisit
+    // Always wipe session data when landing on login page â€” ensures fresh start on revisit
     if (isLoginPage) {
         clearAllStudentData();
         return false;
@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        examHub.start().catch(() => { /* offline — heartbeat poll is fallback */ });
+        examHub.start().catch(() => { /* offline â€” heartbeat poll is fallback */ });
     } catch (e) { /* signalR not loaded (e.g. on non-exam pages) */ }
 });
 
@@ -330,7 +330,7 @@ function createExamCard(exam) {
     return div;
 }
 
-// ── Candidate Examination Runner Engine ──
+// â”€â”€ Candidate Examination Runner Engine â”€â”€
 
 let questions = [];
 let currentIndex = 0;
@@ -572,16 +572,16 @@ function startHeartbeat() {
 }
 
 function initSubjectTabs() {
-    const normalize = q => (q.subject && q.subject.trim()) ? q.subject.trim() : 'General';
-    subjects = [...new Set(questions.map(normalize))];
+    // Find all unique subjects in the questions
+    subjects = [...new Set(questions.map(q => q.subject || 'General'))];
+    
+    // Sort subjects so English is first, then Mathematics, then others
     subjects.sort((a, b) => {
-        const aL = a.toLowerCase(), bL = b.toLowerCase();
-        if (aL.includes('english')) return -1;
-        if (bL.includes('english')) return 1;
-        if (aL.includes('math')) return -1;
-        if (bL.includes('math')) return 1;
+        if (a.toLowerCase() === 'english') return -1;
+        if (b.toLowerCase() === 'english') return 1;
         return a.localeCompare(b);
     });
+
     activeSubject = subjects[0];
     renderSubjectTabs();
 }
@@ -619,7 +619,7 @@ function switchSubject(sub) {
 }
 
 function getFilteredQuestions() {
-    return questions.filter(q => ((q.subject && q.subject.trim()) ? q.subject.trim() : 'General') === activeSubject);
+    return questions.filter(q => (q.subject || 'General') === activeSubject);
 }
 
 function renderNavigator() {
@@ -647,7 +647,7 @@ function renderNavigator() {
         grid.appendChild(btn);
     });
 
-    // Update counts — support both old and new HTML IDs
+    // Update counts â€” support both old and new HTML IDs
     const totalCount = questions.length;
     const answeredCount = Object.keys(responses).length;
     ['total-count', 'sb-total'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = totalCount; });
@@ -693,9 +693,7 @@ function renderQuestion(index) {
         subjBadge.style.display = '';
     }
 
-    // Use innerHTML so HTML tags like <u>, <b>, <i>, <sup>, <sub> render
-    const qtEl = document.getElementById('question-text');
-    if (qtEl) qtEl.innerHTML = q.text;
+    document.getElementById('question-text').textContent = q.text;
 
     // Section / passage
     const sectionWrap = document.getElementById('question-section');
@@ -752,6 +750,7 @@ function renderOptions(question) {
             <div class="opt-letter option-letter">${letter}</div>
             <div class="opt-text option-text">${optText}</div>
         `;
+        list.appendChild(item);
     });
 }
 
@@ -780,7 +779,7 @@ async function selectOption(questionId, optionText) {
             body: JSON.stringify(progressPayload)
         });
     } catch (e) {
-        // Offline — queue for sync when reconnected
+        // Offline â€” queue for sync when reconnected
         _pendingProgressSync.push(progressPayload);
     }
 }
@@ -859,7 +858,7 @@ function updateProgressRing() {
     ring.style.strokeDashoffset = circumference - (pct / 100) * circumference;
 }
 
-// ── Simple Calculator ──
+// â”€â”€ Simple Calculator â”€â”€
 
 let calcExpression = "";
 function toggleCalculator() {
@@ -907,7 +906,7 @@ function pressCalc(val) {
     }
 }
 
-// ── Network Status Tracker ──
+// â”€â”€ Network Status Tracker â”€â”€
 let _isOnline = navigator.onLine;
 let _offlineSince = null;
 const _pendingProgressSync = []; // answers that failed to sync while offline
@@ -918,7 +917,7 @@ function setNetworkStatus(online) {
 
     const indicator = document.getElementById('network-status-bar');
     if (indicator) {
-        indicator.textContent = online ? '✓ Connection Restored' : '⚠ No Connection — Answers saving locally';
+        indicator.textContent = online ? 'âœ“ Connection Restored' : 'âš  No Connection â€” Answers saving locally';
         indicator.style.background = online ? '#065f46' : '#7f1d1d';
         indicator.style.display = 'block';
         if (online) setTimeout(() => { if (indicator) indicator.style.display = 'none'; }, 3000);
@@ -999,7 +998,7 @@ setInterval(flushSubmitQueue, 15000);
 // Also retry when connection comes back
 window.addEventListener('online', () => setTimeout(flushSubmitQueue, 1000));
 
-// ── Offline Score Calculator ──
+// â”€â”€ Offline Score Calculator â”€â”€
 // Uses the cached shuffled questions (which include correctIndex) to score locally.
 function computeScoreOffline(cachedQuestions, answers) {
     const ansMap = {};
@@ -1061,7 +1060,7 @@ function computeScoreOffline(cachedQuestions, answers) {
     };
 }
 
-// ── Submit Exam Logic ──
+// â”€â”€ Submit Exam Logic â”€â”€
 
 function confirmSubmit() {
     if (examCompleted) return;
@@ -1154,7 +1153,6 @@ async function submitExam(manual = true) {
         } else {
             const errText = await submitRes.text();
             console.error('[Submit] Server error:', submitRes.status, errText);
-            showToast('Submit Error', `Server error ${submitRes.status}: ${errText.substring(0,120)}`, 'error');
         }
     } catch (e) {
         console.warn('[Submit] Network error, queuing for retry:', e);
