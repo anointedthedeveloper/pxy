@@ -87,3 +87,4 @@ public record ExamGenerateDto(string Title, int DurationMinutes, bool ShuffleQue
 // --- Notifications ---
 public record NotificationDto(string Title, string Message, DateTime CreatedAt, string Level);
 public record BroadcastDto(string Message);
+public record ApproveJoinDto(int StudentExamId, bool Approved);

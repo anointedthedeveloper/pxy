@@ -312,15 +312,17 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
     [HttpPost("heartbeat")]
     public async Task<IActionResult> Heartbeat(DeviceHeartbeatDto dto)
     {
-        var se = await db.StudentExams.Include(x => x.Session).FirstOrDefaultAsync(x => x.Id == dto.StudentExamId);
+        var se = await db.StudentExams
+            .Include(x => x.Session)
+            .Include(x => x.Student)
+            .FirstOrDefaultAsync(x => x.Id == dto.StudentExamId);
         if (se is null) return NotFound();
 
         // Always upsert device so LastSeen stays fresh regardless of whether /device was called first
         if (!string.IsNullOrWhiteSpace(dto.DeviceId))
         {
             var device = await db.Devices.FirstOrDefaultAsync(d => d.DeviceId == dto.DeviceId);
-            var studentIdStr = se.Student != null ? se.Student.StudentId
-                : (await db.Students.FindAsync(se.StudentId))?.StudentId ?? "";
+            var studentIdStr = se.Student?.StudentId ?? "";
             if (device is null)
             {
                 device = new Device

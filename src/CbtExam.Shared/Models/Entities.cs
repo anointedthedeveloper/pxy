@@ -79,6 +79,8 @@ public class StudentExam
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
     public DateTime? SubmittedAt { get; set; }
     public bool IsSubmitted { get; set; }
+    public bool IsApproved { get; set; } = true;   // false = pending approval for late joiners
+    public bool IsRejected { get; set; } = false;
     public int Score { get; set; }
     public int TabSwitchCount { get; set; }
     public Student? Student { get; set; }

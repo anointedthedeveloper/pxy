@@ -135,8 +135,45 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
         return Ok();
     }
 
-    [HttpGet("{id}/students")]
-    public async Task<IActionResult> GetStudents(int id)
+    // GET /api/sessions/{id}/pending-joins — list students awaiting approval
+    [HttpGet("{id}/pending-joins")]
+    public async Task<IActionResult> GetPendingJoins(int id)
+    {
+        var pending = await db.StudentExams
+            .Include(se => se.Student)
+            .Where(se => se.SessionId == id && !se.IsApproved && !se.IsRejected)
+            .Select(se => new { se.Id, se.Student!.FullName, se.Student.StudentId, se.JoinedAt })
+            .ToListAsync();
+        return Ok(pending);
+    }
+
+    // POST /api/sessions/approve-join — approve or reject a pending joiner
+    [HttpPost("approve-join")]
+    public async Task<IActionResult> ApproveJoin([FromBody] ApproveJoinDto dto)
+    {
+        var se = await db.StudentExams
+            .Include(se => se.Session)
+            .FirstOrDefaultAsync(se => se.Id == dto.StudentExamId);
+        if (se is null) return NotFound();
+
+        if (dto.Approved)
+            se.IsApproved = true;
+        else
+            se.IsRejected = true;
+
+        await db.SaveChangesAsync();
+
+        // Notify the specific student via their pending group
+        await hub.Clients
+            .Group($"pending_{se.Session!.SessionCode}_{se.Id}")
+            .SendAsync("JoinApprovalResult", new { approved = dto.Approved });
+
+        // Refresh admin monitor
+        await ExamHub.NotifyStudentUpdate(hub, se.Session.SessionCode, se.Session.Id);
+        return Ok();
+    }
+
+    // GET /api/sessions/{id}/students
     {
         var cutoff = DateTime.UtcNow.AddSeconds(-30);
 
