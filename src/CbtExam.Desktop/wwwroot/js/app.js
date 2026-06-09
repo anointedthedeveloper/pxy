@@ -587,17 +587,19 @@ function initSubjectTabs() {
 }
 
 function renderSubjectTabs() {
-    const container = document.getElementById('subject-tabs-bar');
-    if (!container) return;
-    container.innerHTML = '';
+    const headerBar = document.getElementById('subject-tabs-bar');
+    const contentBar = document.getElementById('subject-content-bar');
 
-    subjects.forEach(sub => {
-        const btn = document.createElement('button');
-        // Support both old exam.css class and new exam.html class
-        btn.className = `subj-tab btn btn-tab ${sub === activeSubject ? 'active' : ''}`;
-        btn.textContent = sub;
-        btn.onclick = () => switchSubject(sub);
-        container.appendChild(btn);
+    [headerBar, contentBar].forEach((container, i) => {
+        if (!container) return;
+        container.innerHTML = '';
+        subjects.forEach(sub => {
+            const btn = document.createElement('button');
+            btn.className = (i === 0 ? 'subj-tab' : 'subj-bar-tab') + (sub === activeSubject ? ' active' : '');
+            btn.textContent = sub;
+            btn.onclick = () => switchSubject(sub);
+            container.appendChild(btn);
+        });
     });
 }
 
