@@ -588,16 +588,5 @@
             </StackPanel>
         </Border>
 
-        <!-- ── Floating Chat Bubble ─────────────────────────────────────────── -->
-        <!-- Spans both columns, pointer-transparent except for the bubble itself -->
-        <Grid Grid.ColumnSpan="2"
-              IsHitTestVisible="True"
-              Panel.ZIndex="100">
-            <views:ChatBubble DataContext="{Binding Chat}"
-                              HorizontalAlignment="Stretch"
-                              VerticalAlignment="Stretch"
-                              IsHitTestVisible="True"/>
-        </Grid>
-
     </Grid>
 </Window>
