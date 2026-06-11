@@ -43,6 +43,7 @@ if %errorlevel% neq 0 (
     echo   BUILD FAILED! 
     echo   Please check the error messages above.
     echo --------------------------------------------
+    powershell -Command "(New-Object Media.SoundPlayer 'C:\Windows\Media\Windows Critical Stop.wav').PlaySync()"
     pause
     exit /b 1
 )
@@ -56,4 +57,5 @@ echo.
 echo NOTE: On first run, the app will update your
 echo database schema automatically.
 echo.
-pause
+powershell -Command "(New-Object Media.SoundPlayer 'C:\Windows\Media\Windows Notify System Generic.wav').PlaySync()"
+timeout /t 3 /nobreak >nul
