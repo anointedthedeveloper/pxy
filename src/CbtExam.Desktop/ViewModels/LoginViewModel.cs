@@ -232,18 +232,23 @@ public class LoginViewModel : BaseViewModel
             {
                 Application.Current.MainWindow = mainWindow;
             }
+
+            // Force the native icon on MainWindow BEFORE Show() so the shell
+            // picks it up immediately when it creates the taskbar button.
+            // This prevents the blank-icon flash caused by the window transition.
+            App.ForceWindowIcon(mainWindow);
+
+            // Show MainWindow first — shell now has at least one visible window
             mainWindow.Show();
 
-            // Now close the login window(s)
-            if (Application.Current?.Windows != null)
+            // Close login window(s) only after MainWindow is visible so the
+            // shell never sees a zero-window state (which drops the taskbar button)
+            foreach (Window window in Application.Current?.Windows
+                                                          .OfType<Window>()
+                                                          .ToList() ?? [])
             {
-                foreach (Window window in Application.Current.Windows)
-                {
-                    if (window is LoginWindow)
-                    {
-                        window.Close();
-                    }
-                }
+                if (window is LoginWindow)
+                    window.Close();
             }
         }
         else

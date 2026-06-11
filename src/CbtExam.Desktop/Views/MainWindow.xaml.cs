@@ -19,6 +19,11 @@ public partial class MainWindow : Window
         App? app = App.Current as App;
         app?.ApplyTitleBarToWindow(this);
 
+        // Re-force the native icon now that the HWND is fully realised —
+        // this catches the case where the shell re-created the taskbar button
+        // during the LoginWindow → MainWindow transition.
+        App.ForceWindowIcon(this);
+
         try
         {
             if (DataContext is MainViewModel vm)

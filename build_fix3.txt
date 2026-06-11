@@ -1,0 +1,19 @@
+  Determining projects to restore...
+  Restored C:\Users\Admin\Desktop\Jamb-Mock\src\CbtExam.Shared\CbtExam.Shared.csproj (in 1.06 sec).
+  Restored C:\Users\Admin\Desktop\Jamb-Mock\src\CbtExam.Api\CbtExam.Api.csproj (in 1.35 sec).
+  Restored C:\Users\Admin\Desktop\Jamb-Mock\src\CbtExam.Data\CbtExam.Data.csproj (in 1.37 sec).
+  Restored C:\Users\Admin\Desktop\Jamb-Mock\src\CbtExam.Desktop\CbtExam.Desktop.csproj (in 1.45 sec).
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  CbtExam.Shared -> C:\Users\Admin\Desktop\Jamb-Mock\src\CbtExam.Shared\bin\Debug\net8.0\CbtExam.Shared.dll
+  CbtExam.Data -> C:\Users\Admin\Desktop\Jamb-Mock\src\CbtExam.Data\bin\Debug\net8.0\CbtExam.Data.dll
+  CbtExam.Api -> C:\Users\Admin\Desktop\Jamb-Mock\src\CbtExam.Api\bin\Debug\net8.0\CbtExam.Api.dll
+C:\Program Files\dotnet\sdk\10.0.301\Sdks\Microsoft.NET.Sdk\targets\Microsoft.PackageDependencyResolution.targets(266,5): error NETSDK1004: Assets file 'C:\Users\Admin\Desktop\Jamb-Mock\src\CbtExam.Desktop\obj\project.assets.json' not found. Run a NuGet package restore to generate this file. [C:\Users\Admin\Desktop\Jamb-Mock\src\CbtExam.Desktop\CbtExam.Desktop_kiduzuad_wpftmp.csproj]
+
+Build FAILED.
+
+C:\Program Files\dotnet\sdk\10.0.301\Sdks\Microsoft.NET.Sdk\targets\Microsoft.PackageDependencyResolution.targets(266,5): error NETSDK1004: Assets file 'C:\Users\Admin\Desktop\Jamb-Mock\src\CbtExam.Desktop\obj\project.assets.json' not found. Run a NuGet package restore to generate this file. [C:\Users\Admin\Desktop\Jamb-Mock\src\CbtExam.Desktop\CbtExam.Desktop_kiduzuad_wpftmp.csproj]
+    0 Warning(s)
+    1 Error(s)
+
+Time Elapsed 00:00:25.43
