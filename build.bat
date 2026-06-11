@@ -26,7 +26,7 @@ if not exist "%OUTPUT%" mkdir "%OUTPUT%"
 
 echo [3/4] Restoring NuGet packages...
 "C:\Program Files\dotnet\dotnet.exe" restore CbtExam.sln
-"C:\Program Files\dotnet\dotnet.exe" restore "%PROJECT%" --runtime win-x64
+"C:\Program Files\dotnet\dotnet.exe" restore "%PROJECT%" --runtime win-x64 --force
 
 echo [4/4] Building and Publishing (Release win-x64)...
 "C:\Program Files\dotnet\dotnet.exe" publish "%PROJECT%" ^

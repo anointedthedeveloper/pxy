@@ -53,6 +53,28 @@
                                FontSize="15" Foreground="{DynamicResource TextSecondaryBrush}" 
                                Margin="0,0,0,24" TextWrapping="Wrap"/>
 
+                    <!-- Website -->
+                    <Border Style="{StaticResource Card}" Padding="20" Margin="0,0,0,16" Cursor="Hand">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Width="48" Height="48" CornerRadius="14" Background="#7C3AED">
+                                <TextBlock Text="&#xE774;" FontFamily="Segoe MDL2 Assets" FontSize="22"
+                                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="Official Website" FontSize="15" FontWeight="Bold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,4"/>
+                                <TextBlock Text="anobyte.online" FontSize="13"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            </StackPanel>
+                            <Button Grid.Column="2" Style="{StaticResource PrimaryBtn}" Background="#7C3AED" Content="Visit" Padding="16,8" Click="Website_Click"/>
+                        </Grid>
+                    </Border>
+
                     <!-- WhatsApp 1 -->
                     <Border Style="{StaticResource Card}" Padding="20" Margin="0,0,0,16" Cursor="Hand" Background="{DynamicResource NavActiveBrush}" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1.5">
                         <Grid>
@@ -120,14 +142,15 @@
                     </Border>
 
                     <!-- Branding -->
-                    <StackPanel HorizontalAlignment="Center" Opacity="0.5">
-                        <TextBlock Text="Powered by Anobyte Technologies" 
-                                   FontSize="12" FontWeight="Bold" 
-                                   Foreground="{DynamicResource TextSecondaryBrush}" 
+                    <StackPanel HorizontalAlignment="Center" Opacity="0.6" Cursor="Hand"
+                                MouseLeftButtonDown="Website_Click">
+                        <TextBlock Text="Anobyte Technologies"
+                                   FontSize="12" FontWeight="Bold"
+                                   Foreground="{DynamicResource AccentBrush}"
                                    HorizontalAlignment="Center"/>
-                        <TextBlock Text="Excellence in Educational Technology" 
-                                   FontSize="10" 
-                                   Foreground="{DynamicResource TextSecondaryBrush}" 
+                        <TextBlock Text="anobyte.online · Excellence in Educational Technology"
+                                   FontSize="10"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
                                    HorizontalAlignment="Center" Margin="0,2,0,0"/>
                     </StackPanel>
                 </StackPanel>

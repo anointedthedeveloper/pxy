@@ -22,6 +22,29 @@ public partial class ContactDeveloperWindow : Window
         Close();
     }
 
+    private void Website_Click(object sender, RoutedEventArgs e)
+    {
+        OpenWebsite();
+    }
+
+    private void Website_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        OpenWebsite();
+    }
+
+    private static void OpenWebsite()
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://anobyte.online",
+                UseShellExecute = true
+            });
+        }
+        catch { }
+    }
+
     private void WhatsApp1_Click(object sender, RoutedEventArgs e)
     {
         try
