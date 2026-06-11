@@ -85,6 +85,7 @@ public class MainViewModel : BaseViewModel
     public ReportsViewModel    Reports      { get; }
     public NotificationsViewModel Notifications { get; }
     public SettingsViewModel   Settings     { get; }
+    public ChatViewModel       Chat         { get; }
 
     public MainViewModel()
     {
@@ -105,6 +106,7 @@ public class MainViewModel : BaseViewModel
         Reports    = new ReportsViewModel(Api);
         Notifications = new NotificationsViewModel();
         Settings   = new SettingsViewModel(Api, _server);
+        Chat       = new ChatViewModel();
 
         // When repo download completes, refresh the question bank so it shows immediately
         Settings.OnRepoDownloadComplete += () =>

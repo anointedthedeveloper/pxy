@@ -587,5 +587,17 @@
                 <TextBlock Text="Please wait while we prepare your workspace..." Foreground="{DynamicResource TextSecondaryBrush}" FontSize="14" Margin="0,8,0,0" HorizontalAlignment="Center"/>
             </StackPanel>
         </Border>
+
+        <!-- ── Floating Chat Bubble ─────────────────────────────────────────── -->
+        <!-- Spans both columns, pointer-transparent except for the bubble itself -->
+        <Grid Grid.ColumnSpan="2"
+              IsHitTestVisible="True"
+              Panel.ZIndex="100">
+            <views:ChatBubble DataContext="{Binding Chat}"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch"
+                              IsHitTestVisible="True"/>
+        </Grid>
+
     </Grid>
 </Window>
