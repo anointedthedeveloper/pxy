@@ -1,0 +1,189 @@
+<Window x:Class="CbtExam.Desktop.Views.RepoSyncDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Sync Question Repository" Height="620" Width="560"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        FontFamily="Segoe UI"
+        MinHeight="500">
+
+    <Border Background="{DynamicResource BgBrush}" CornerRadius="20" BorderThickness="1"
+            BorderBrush="{DynamicResource BorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="40" Color="Black" Opacity="0.15" ShadowDepth="10"/>
+        </Border.Effect>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Border Grid.Row="0" Background="{DynamicResource AccentBrush}" CornerRadius="20,20,0,0" Padding="28,20">
+                <Grid>
+                    <StackPanel>
+                        <TextBlock Text="Sync Question Repository" FontSize="20" FontWeight="Black" Foreground="White"/>
+                        <TextBlock Text="Choose which subjects to download and save offline." 
+                                   FontSize="13" Foreground="White" Opacity="0.8" Margin="0,4,0,0"/>
+                    </StackPanel>
+                    <Button Width="28" Height="28" Background="#33FFFFFF" BorderThickness="0"
+                            HorizontalAlignment="Right" VerticalAlignment="Top"
+                            Click="CancelButton_Click" Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" CornerRadius="14">
+                                    <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="10"
+                                               Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Content -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="28,20,28,0">
+
+                    <!-- Step 1: Phase indicator -->
+                    <Border x:Name="PhaseFetch" Visibility="Visible">
+                        <StackPanel>
+                            <TextBlock Text="STEP 1 — CONNECT" FontSize="10" FontWeight="Bold"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,12" Opacity="0.6"/>
+
+                            <TextBlock Text="Repository URL" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                            <TextBox x:Name="RepoUrlBox" Height="36" VerticalContentAlignment="Center"
+                                     Padding="10,0" FontSize="13"
+                                     ToolTip="e.g. https://raw.githubusercontent.com/owner/repo/branch"/>
+
+                            <TextBlock Text="Access Token (PAT)" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,14,0,6"/>
+                            <PasswordBox x:Name="TokenBox" Height="36" PasswordChar="●"
+                                         Padding="10,0" FontSize="13"
+                                         ToolTip="Fine-grained PAT with Contents → Read-only permission"/>
+                            <TextBlock FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"
+                                       Margin="0,4,0,0" Opacity="0.7">
+                                <Run Text="Fine-grained PAT:"/>
+                                <Run Text=" Contents → Read-only" FontWeight="Bold"/>
+                                <Run Text="  |  Classic PAT:"/>
+                                <Run Text=" repo" FontWeight="Bold"/>
+                                <Run Text=" scope"/>
+                            </TextBlock>
+
+                            <Button x:Name="FetchBtn" Content="  Fetch Available Subjects"
+                                    Margin="0,18,0,0" HorizontalAlignment="Left"
+                                    Style="{StaticResource PrimaryBtn}" Background="{DynamicResource AccentBrush}"
+                                    Foreground="White" Padding="20,10" Click="FetchBtn_Click">
+                                <Button.ContentTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE72D;" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                                       VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                            <TextBlock Text="Fetch Available Subjects" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </Button.ContentTemplate>
+                            </Button>
+
+                            <TextBlock x:Name="FetchStatusText" Text="" FontSize="12" Margin="0,10,0,0"
+                                       TextWrapping="Wrap" Foreground="#EF4444"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Step 2: Subject selection (hidden until fetch completes) -->
+                    <Border x:Name="PhaseSelect" Visibility="Collapsed" Margin="0,20,0,0">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="STEP 2 — SELECT SUBJECTS" FontSize="10" FontWeight="Bold"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" Opacity="0.6"
+                                           VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Content="All" Click="SelectAll_Click"
+                                        Style="{StaticResource CardBtn}" Padding="12,5" Margin="0,0,6,0"
+                                        FontSize="12"/>
+                                <Button Grid.Column="2" Content="None" Click="SelectNone_Click"
+                                        Style="{StaticResource CardBtn}" Padding="12,5" FontSize="12"/>
+                            </Grid>
+
+                            <Border Background="{DynamicResource FieldBg}" BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1" CornerRadius="12" Padding="8">
+                                <ItemsControl x:Name="SubjectList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Padding="10,8" Margin="2" CornerRadius="8">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="Background" Value="{DynamicResource NavHoverBrush}"/>
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <CheckBox IsChecked="{Binding IsSelected}" Content="{Binding DisplayName}"
+                                                          FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}"
+                                                          Cursor="Hand"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Border>
+
+                            <TextBlock x:Name="SelectionCountText" FontSize="12" Margin="0,8,0,0"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Progress (hidden until download starts) -->
+                    <Border x:Name="PhaseProgress" Visibility="Collapsed" Margin="0,20,0,0">
+                        <StackPanel>
+                            <TextBlock Text="DOWNLOADING" FontSize="10" FontWeight="Bold"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,12" Opacity="0.6"/>
+                            <ProgressBar x:Name="ProgressBar" Height="6" Minimum="0" Maximum="100"
+                                         Background="{DynamicResource BorderBrush}" BorderThickness="0"
+                                         Foreground="{DynamicResource AccentBrush}" Value="0" Margin="0,0,0,10"/>
+                            <TextBlock x:Name="ProgressText" FontSize="13" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock x:Name="ProgressDetail" FontSize="11" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Footer actions -->
+            <Border Grid.Row="2" Padding="28,16,28,24">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock x:Name="FooterStatus" Grid.Column="0" FontSize="12" VerticalAlignment="Center"
+                               TextWrapping="Wrap" Foreground="{DynamicResource AccentBrush}"/>
+
+                    <Button Grid.Column="1" Content="Cancel" Style="{StaticResource PrimaryBtn}"
+                            Background="Transparent" BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1" Foreground="{DynamicResource TextSecondaryBrush}"
+                            Padding="20,10" Margin="0,0,12,0" Click="CancelButton_Click"
+                            x:Name="CancelBtn"/>
+
+                    <Button Grid.Column="2" x:Name="DownloadBtn" Content="Download Selected"
+                            Style="{StaticResource PrimaryBtn}" Background="{DynamicResource AccentBrush}"
+                            Foreground="White" Padding="24,10" Click="DownloadBtn_Click"
+                            IsEnabled="False"/>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

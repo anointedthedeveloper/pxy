@@ -160,8 +160,8 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <Border DockPanel.Dock="Bottom" Margin="12,12,12,12" Padding="16" CornerRadius="16"
-                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                <Border DockPanel.Dock="Bottom" Margin="12,12,12,12" Padding="14" CornerRadius="14"
+                        BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" ClipToBounds="True">
                     <Border.Style>
                         <Style TargetType="Border">
                             <Setter Property="Background" Value="#F8FAFC"/>
@@ -176,20 +176,20 @@
                         </Style>
                     </Border.Style>
                     <StackPanel>
-                        <TextBlock Text="SERVER STATUS" FontSize="10" FontWeight="Black" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,10" Opacity="0.5"/>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                            <Border Width="10" Height="10" CornerRadius="5" VerticalAlignment="Center" Margin="0,0,10,0"
+                        <TextBlock Text="SERVER STATUS" FontSize="10" FontWeight="Black" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,8" Opacity="0.5"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Border Width="10" Height="10" CornerRadius="5" VerticalAlignment="Center" Margin="0,0,8,0"
                                      Background="{Binding ServerRunning, Converter={StaticResource BoolToColor}}">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="8" ShadowDepth="0" Color="{Binding ServerRunning, Converter={StaticResource BoolToColor}}" Opacity="0.6"/>
                                 </Border.Effect>
                             </Border>
-                            <TextBlock Text="{Binding ServerStatusText}" FontSize="13" FontWeight="Bold" VerticalAlignment="Center"
+                            <TextBlock Text="{Binding ServerStatusText}" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"
                                        Foreground="{Binding ServerRunning, Converter={StaticResource BoolToColor}}"/>
                         </StackPanel>
 
-                        <!-- Server URL Display -->
-                        <Border Background="{DynamicResource BgBrush}" CornerRadius="8" Margin="0,0,0,12" Padding="10,6"
+                        <!-- Server URL — trimmed to avoid overflow -->
+                        <Border Background="{DynamicResource BgBrush}" CornerRadius="8" Margin="0,0,0,10" Padding="8,5"
                                 Visibility="{Binding ServerRunning, Converter={StaticResource BoolToVis}}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -197,9 +197,9 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="{Binding ServerUrl}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" 
-                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontFamily="Consolas"/>
                                 <Button Grid.Column="1" Command="{Binding CopyServerUrlCommand}" Background="Transparent" BorderThickness="0"
-                                        Padding="4" Margin="6,0,0,0" ToolTip="Copy URL" Cursor="Hand">
+                                        Padding="4" Margin="4,0,0,0" ToolTip="Copy URL" Cursor="Hand">
                                     <Button.Template>
                                         <ControlTemplate TargetType="Button">
                                             <Border x:Name="bd" Background="Transparent" CornerRadius="4">
@@ -218,7 +218,7 @@
                         </Border>
                         
                         <Button Command="{Binding ToggleServerCommand}" HorizontalAlignment="Stretch"
-                                Padding="0,10" FontSize="13" FontWeight="Bold" BorderThickness="0" Cursor="Hand">
+                                Padding="0,9" FontSize="12" FontWeight="Bold" BorderThickness="0" Cursor="Hand">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource PrimaryBtn}">
                                     <Setter Property="Background" Value="#DC2626"/>

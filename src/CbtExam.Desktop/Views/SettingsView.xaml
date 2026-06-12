@@ -116,17 +116,23 @@
 
                     <Border Background="White" CornerRadius="14" BorderBrush="#E5E7EB" BorderThickness="1" Padding="18" Margin="0,0,0,18">
                         <StackPanel>
-                            <TextBlock Text="Question Repository" FontSize="18" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,16"/>
-                            <TextBlock Text="Download all JAMB questions (17 subjects) from the P4JQ repository and save them offline into the question bank." FontSize="12" Foreground="#64748B" TextWrapping="Wrap" Margin="0,0,0,16"/>
+                            <TextBlock Text="Question Repository" FontSize="18" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,4"/>
+                            <TextBlock Text="Download JAMB questions from your private repository. New subjects are picked up automatically — just sync when you add more." 
+                                       FontSize="12" Foreground="#64748B" TextWrapping="Wrap" Margin="0,0,0,16"/>
                             
                             <TextBlock Text="Repository Base URL" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,6"/>
-                            <TextBox Text="{Binding RepoUrl, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4" 
-                                     ToolTip="Base raw GitHub URL, e.g. https://raw.githubusercontent.com/anointedthedeveloper/P4JQ/main"/>
-                            <TextBlock Text="e.g. https://raw.githubusercontent.com/anointedthedeveloper/P4JQ/main" 
-                                       FontSize="11" Foreground="#94A3B8" Margin="0,0,0,12" TextWrapping="Wrap"/>
+                            <TextBox Text="{Binding RepoUrl, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4"
+                                     ToolTip="e.g. https://raw.githubusercontent.com/owner/repo/branch"/>
+                            <TextBlock Text="Format: https://raw.githubusercontent.com/owner/repo/branch" 
+                                       FontSize="11" Foreground="#94A3B8" Margin="0,2,0,16" TextWrapping="Wrap"/>
                             
-                            <Button Content="⬇ Sync &amp; Save Offline" Command="{Binding DownloadRepoCommand}" 
-                                    Style="{StaticResource PrimaryBtn}" Background="#2563EB" Padding="16,8" HorizontalAlignment="Left"/>
+                            <Button Command="{Binding DownloadRepoCommand}" 
+                                    Style="{StaticResource PrimaryBtn}" Background="#2563EB" Padding="16,10" HorizontalAlignment="Left">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE72D;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Choose Subjects &amp; Sync" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
                             
                             <TextBlock Text="{Binding CopyStatus}" Foreground="{DynamicResource AccentBrush}" FontSize="12" Margin="0,10,0,0" TextWrapping="Wrap"/>
                         </StackPanel>

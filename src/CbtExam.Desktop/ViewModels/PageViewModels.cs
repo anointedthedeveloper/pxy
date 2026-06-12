@@ -3057,6 +3057,11 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
     private string _repoUrl = string.Empty;
     public string RepoUrl { get => _repoUrl; set { Set(ref _repoUrl, value); SaveSettings(); } }
 
+    // GitHub Personal Access Token — required when the repo is private.
+    // Needs only the "Contents: Read" permission (fine-grained) or "repo" scope (classic).
+    private string _githubToken = string.Empty;
+    public string GithubToken { get => _githubToken; set { Set(ref _githubToken, value); SaveSettings(); } }
+
     public ObservableCollection<string> ThemeOptions { get; } = ["Light", "Dark"];
     public ObservableCollection<string> AccentOptions { get; } = ["Teal", "Blue", "Purple", "Emerald"];
 
@@ -3146,7 +3151,7 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
         }
     });
 
-    public RelayCommand DownloadRepoCommand => new(async () => await DownloadQuestionsAsync());
+    public RelayCommand DownloadRepoCommand => new(async () => await OpenRepoSyncDialogAsync());
 
     private static readonly Dictionary<string, string> KnownSubjectNames = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -3219,6 +3224,28 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
         return results;
     }
 
+    private async Task OpenRepoSyncDialogAsync()
+    {
+        var exeDir     = System.IO.Path.GetDirectoryName(Environment.ProcessPath)
+                         ?? AppDomain.CurrentDomain.BaseDirectory;
+        var imagesDir  = System.IO.Path.Combine(exeDir, "wwwroot", "images", "questions");
+
+        var dialog = new CbtExam.Desktop.Views.RepoSyncDialog(api, imagesDir, RepoUrl);
+        dialog.Owner = App.Current.MainWindow;
+
+        dialog.ShowDialog();
+
+        if (dialog.Completed)
+        {
+            CopyStatus = $"✓ Sync complete — {dialog.TotalImported} questions imported.";
+            _ = Task.Delay(6000).ContinueWith(_ =>
+                App.Current?.Dispatcher.Invoke(() => CopyStatus = string.Empty));
+            OnRepoDownloadComplete?.Invoke();
+        }
+
+        await Task.CompletedTask;
+    }
+
     private async Task DownloadQuestionsAsync()
     {
         var baseUrl = RepoUrl.TrimEnd('/');
@@ -3233,8 +3260,13 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
         int totalImported = 0, totalSkipped = 0;
 
         using var client = new HttpClient();
-        client.Timeout = TimeSpan.FromSeconds(60);
+        client.Timeout = TimeSpan.FromSeconds(90);
         client.DefaultRequestHeaders.Add("User-Agent", "CbtExam");
+
+        // Inject PAT if provided — required for private repos
+        var token = GithubToken.Trim();
+        if (!string.IsNullOrWhiteSpace(token))
+            client.DefaultRequestHeaders.Add("Authorization", $"token {token}");
 
         // Images folder next to the exe
         var exeDir = System.IO.Path.GetDirectoryName(Environment.ProcessPath)
@@ -3244,72 +3276,110 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
 
         try
         {
-            // Discover all JSON files dynamically via GitHub API
-            var parts = baseUrl.Replace("https://raw.githubusercontent.com/", "").Split('/');
-            if (parts.Length < 3)
+            // Parse owner/repo/branch from either raw URL or api URL
+            // Supports: https://raw.githubusercontent.com/owner/repo/branch
+            // or just:  https://github.com/owner/repo  (branch defaults to main)
+            string owner, repo, branch;
+            var normalised = baseUrl
+                .Replace("https://raw.githubusercontent.com/", "")
+                .Replace("https://github.com/", "")
+                .TrimEnd('/');
+            var parts = normalised.Split('/');
+            if (parts.Length < 2)
             {
-                CopyStatus = "Invalid repo URL. Expected format: https://raw.githubusercontent.com/owner/repo/branch";
+                CopyStatus = "Invalid repo URL. Expected: https://raw.githubusercontent.com/owner/repo/branch";
+                IsBusy = false;
                 return;
             }
-            string apiUrl = $"https://api.github.com/repos/{parts[0]}/{parts[1]}/git/trees/{parts[2]}?recursive=1";
+            owner  = parts[0];
+            repo   = parts[1];
+            branch = parts.Length >= 3 ? parts[2] : "main";
+
+            string apiUrl = $"https://api.github.com/repos/{owner}/{repo}/git/trees/{branch}?recursive=1";
 
             string treeJson;
             try { treeJson = await client.GetStringAsync(apiUrl); }
-            catch (Exception ex) { App.Log("Repo download failed", ex); CopyStatus = $"Error fetching repo list: {ex.Message}"; return; }
+            catch (Exception ex)
+            {
+                App.Log("Repo download failed", ex);
+                CopyStatus = $"Error fetching repo list: {ex.Message}";
+                IsBusy = false;
+                return;
+            }
 
             var tree = JsonSerializer.Deserialize<JsonElement>(treeJson);
+
+            // Check for GitHub API errors (e.g. 401 Unauthorized, 404 Not Found)
+            if (tree.TryGetProperty("message", out var msg))
+            {
+                var errMsg = msg.GetString() ?? "Unknown error";
+                CopyStatus = $"GitHub API error: {errMsg}. Check your repo URL and PAT token.";
+                IsBusy = false;
+                return;
+            }
+
             var files = tree.GetProperty("tree").EnumerateArray()
                 .Where(f => f.GetProperty("path").GetString()?.EndsWith(".json", StringComparison.OrdinalIgnoreCase) == true
                          && f.GetProperty("type").GetString() == "blob")
-                .Select(f => f.GetProperty("path").GetString()!)
+                .Select(f => new {
+                    path = f.GetProperty("path").GetString()!,
+                    sha  = f.TryGetProperty("sha", out var s) ? s.GetString() ?? "" : ""
+                })
                 .ToList();
 
-            if (files.Count == 0) { CopyStatus = "No JSON files found in repository."; return; }
+            if (files.Count == 0) { CopyStatus = "No JSON files found in repository."; IsBusy = false; return; }
 
             int idx = 0;
-            foreach (var filePath in files)
+            foreach (var file in files)
             {
                 idx++;
-                var fileName = System.IO.Path.GetFileNameWithoutExtension(filePath);
+                var fileName = System.IO.Path.GetFileNameWithoutExtension(file.path);
                 var subject = KnownSubjectNames.TryGetValue(fileName, out var known) ? known : ToTitleCase(fileName);
                 BusyMessage = $"Downloading {subject} ({idx}/{files.Count})...";
 
                 try
                 {
-                    var rawUrl = $"{baseUrl}/{filePath}";
                     string raw;
-                    try { raw = await client.GetStringAsync(rawUrl); }
-                    catch (Exception ex) { App.Log($"Error downloading {subject}", ex); continue; }
+                    if (!string.IsNullOrWhiteSpace(token))
+                    {
+                        // For private repos: use the Contents API which returns base64-encoded content
+                        var contentApiUrl = $"https://api.github.com/repos/{owner}/{repo}/contents/{file.path}?ref={branch}";
+                        var contentResp = await client.GetStringAsync(contentApiUrl);
+                        var contentJson = JsonSerializer.Deserialize<JsonElement>(contentResp);
+                        var encoded = contentJson.TryGetProperty("content", out var c) ? c.GetString() ?? "" : "";
+                        // GitHub wraps base64 with newlines — remove them before decoding
+                        encoded = encoded.Replace("\n", "").Replace("\r", "");
+                        raw = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(encoded));
+                    }
+                    else
+                    {
+                        // Public repo: use raw URL directly
+                        var rawUrl = $"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{file.path}";
+                        raw = await client.GetStringAsync(rawUrl);
+                    }
 
-                    // If the response looks like HTML (404 page etc.), skip it
                     var trimmed = raw.TrimStart();
-                    if (trimmed.StartsWith("<") || (trimmed.StartsWith("{") == false && trimmed.StartsWith("[") == false))
+                    if (trimmed.StartsWith("<") || (!trimmed.StartsWith("{") && !trimmed.StartsWith("[")))
                     {
                         App.Log($"Skipping {subject}: response is not valid JSON", new Exception(raw[..Math.Min(80, raw.Length)]));
                         continue;
                     }
 
-                    // Use object-by-object extraction to handle merge conflicts + duplicates
                     List<JsonElement> questions;
                     try { questions = ExtractJsonObjects(raw); }
                     catch (Exception ex) { App.Log($"Error parsing {subject}", ex); continue; }
 
                     if (questions.Count == 0) continue;
 
-                    // Download images locally for questions that have them
                     BusyMessage = $"Processing images for {subject} ({idx}/{files.Count})...";
                     var processed = new List<object>();
                     foreach (var q in questions)
                     {
-                        // Skip incomplete questions: must have question text + options (a+b) + answer
-                        // Repo uses lowercase property names: question, option, answer, examyear, section, image
                         if (!q.TryGetProperty("question", out var qText) || string.IsNullOrWhiteSpace(qText.GetString())) continue;
                         if (!q.TryGetProperty("option", out var optProp)) continue;
                         if (!q.TryGetProperty("answer", out var answerProp) || string.IsNullOrWhiteSpace(answerProp.GetString())) continue;
-                        // Validate answer is A/B/C/D
                         var ansLetter = answerProp.GetString()?.Trim().ToUpper() ?? "";
                         if (ansLetter != "A" && ansLetter != "B" && ansLetter != "C" && ansLetter != "D") continue;
-                        // Need at least options A and B
                         var optA = optProp.TryGetProperty("a", out var pa) ? pa.GetString() : null;
                         var optB = optProp.TryGetProperty("b", out var pb) ? pb.GetString() : null;
                         if (string.IsNullOrWhiteSpace(optA) || string.IsNullOrWhiteSpace(optB)) continue;
@@ -3333,7 +3403,7 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
                                     }
                                     imageUrl = $"/images/questions/{localName}";
                                 }
-                                catch { imageUrl = imgRaw; } // fallback to remote URL
+                                catch { imageUrl = imgRaw; }
                             }
                         }
 
@@ -3370,11 +3440,10 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
             }
 
             CopyStatus = totalSkipped > 0
-                ? $"Done! {totalImported} imported, {totalSkipped} skipped (already exist). Go to Questions Bank to view."
-                : $"Done! {totalImported} questions saved offline. Go to Questions Bank to view.";
+                ? $"Done! {totalImported} imported, {totalSkipped} skipped (already exist)."
+                : $"Done! {totalImported} questions saved offline.";
 
-            // Fix-up pass: any question already in DB whose ImageUrl still points to a remote
-            // URL (http) means the image was never downloaded locally. Fetch and save them now.
+            // Fix-up pass: re-download any images still pointing to remote URLs
             BusyMessage = "Checking for missing local images...";
             try
             {
@@ -3408,9 +3477,9 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
                     catch { }
                 }
                 if (fixedCount > 0)
-                    CopyStatus = $"Done! {totalImported} imported. Fixed {fixedCount} missing local images.";
+                    CopyStatus = $"Done! {totalImported} imported. Also fixed {fixedCount} missing images.";
             }
-            catch { /* ignore fix-up errors */ }
+            catch { }
 
             OnRepoDownloadComplete?.Invoke();
         }
@@ -3577,6 +3646,7 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
                         SelectedAccent = data.Accent ?? "Teal";
                         SchoolLogoPath = data.SchoolLogoPath;
                         RepoUrl = data.RepoUrl ?? string.Empty;
+                        GithubToken = data.GithubToken ?? string.Empty;
                         _adminPassword = data.AdminPassword ?? "ADMIN123";
                     }
                 }
@@ -3620,6 +3690,7 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
                 Accent = SelectedAccent,
                 SchoolLogoPath = SchoolLogoPath,
                 RepoUrl = RepoUrl,
+                GithubToken = GithubToken,
                 AdminPassword = AdminPassword
             };
 
@@ -3642,6 +3713,7 @@ public class SettingsData
     public string Accent { get; set; } = "Teal";
     public string? SchoolLogoPath { get; set; }
     public string? RepoUrl { get; set; }
+    public string? GithubToken { get; set; }
     public string AdminPassword { get; set; } = "ADMIN123";
 }
 
