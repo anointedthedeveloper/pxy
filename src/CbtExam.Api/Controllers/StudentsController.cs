@@ -83,4 +83,20 @@ public class StudentsController(AppDbContext db) : ControllerBase
         await db.SaveChangesAsync();
         return NoContent();
     }
+
+    // POST /api/students/{id}/logout — force-clears the active session lock for one student
+    [HttpPost("{id}/logout")]
+    public IActionResult ForceLogout(int id)
+    {
+        StudentController._activeSessions.TryRemove(id, out _);
+        return Ok(new { message = "Session cleared." });
+    }
+
+    // POST /api/students/logout-all — force-clears all active session locks
+    [HttpPost("logout-all")]
+    public IActionResult ForceLogoutAll()
+    {
+        StudentController._activeSessions.Clear();
+        return Ok(new { message = "All sessions cleared." });
+    }
 }

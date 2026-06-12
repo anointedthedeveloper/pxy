@@ -1,4 +1,5 @@
 using CbtExam.Desktop.Services;
+using CbtExam.Desktop.ViewModels;
 using System.Net.Http;
 using System.Text.Json;
 using System.Windows;
@@ -29,7 +30,13 @@ public partial class RepoSyncDialog : Window
         SavedApiKey   = savedApiKey;
         ProxyUrlBox.Text   = savedProxyUrl;
         ApiKeyBox.Password = savedApiKey;
-        Loaded += (_, _) => (Application.Current as App)?.ApplyTitleBarToWindow(this);
+        Loaded += async (_, _) =>
+        {
+            (Application.Current as App)?.ApplyTitleBarToWindow(this);
+            // Auto-fetch if we already have saved credentials
+            if (!string.IsNullOrWhiteSpace(savedProxyUrl) && !string.IsNullOrWhiteSpace(savedApiKey))
+                await DoFetchAsync(savedProxyUrl, savedApiKey);
+        };
     }
 
     protected override void OnMouseDown(MouseButtonEventArgs e)
@@ -41,12 +48,16 @@ public partial class RepoSyncDialog : Window
     // ── Step 1: Fetch subject list from proxy ─────────────────────────
     private async void FetchBtn_Click(object sender, RoutedEventArgs e)
     {
+        var proxyUrl = ProxyUrlBox.Text.Trim().TrimEnd('/');
+        var apiKey   = ApiKeyBox.Password.Trim();
+        await DoFetchAsync(proxyUrl, apiKey);
+    }
+
+    private async Task DoFetchAsync(string proxyUrl, string apiKey)
+    {
         FetchStatusText.Text       = "";
         FetchStatusText.Foreground = System.Windows.Media.Brushes.Red;
         SetFetchBtnBusy();
-
-        var proxyUrl = ProxyUrlBox.Text.Trim().TrimEnd('/');
-        var apiKey   = ApiKeyBox.Password.Trim();
 
         if (string.IsNullOrWhiteSpace(proxyUrl)) { ShowFetchError("Please enter the proxy server URL."); ResetFetchBtn(); return; }
         if (string.IsNullOrWhiteSpace(apiKey))   { ShowFetchError("Please enter the API key.");           ResetFetchBtn(); return; }
@@ -58,6 +69,9 @@ public partial class RepoSyncDialog : Window
         using var client = BuildClient(apiKey);
         try
         {
+            FetchStatusText.Text       = "Connecting to proxy…";
+            FetchStatusText.Foreground = System.Windows.Media.Brushes.Gray;
+
             var resp = await client.GetAsync($"{proxyUrl}/subjects");
             var body = await resp.Content.ReadAsStringAsync();
 
@@ -100,6 +114,14 @@ public partial class RepoSyncDialog : Window
         SubjectList.Items.Refresh();
         UpdateSelectionCount();
     }
+
+    // Command used by MouseBinding in the subject row DataTemplate
+    public System.Windows.Input.ICommand ToggleSubjectCommand => new RelayCommand<SubjectItem>(s =>
+    {
+        if (s is null) return;
+        s.IsSelected = !s.IsSelected;
+        UpdateSelectionCount();
+    });
 
     private void UpdateSelectionCount()
     {
@@ -177,6 +199,10 @@ public partial class RepoSyncDialog : Window
 
         CancelBtn.Content   = "Close";
         CancelBtn.IsEnabled = true;
+
+        // Auto-close after 2 seconds
+        await Task.Delay(2000);
+        Close();
     }
 
     // ── Helpers ──────────────────────────────────────────────────────

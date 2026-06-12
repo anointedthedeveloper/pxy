@@ -361,7 +361,57 @@
 
                     // Download Secure Encrypted Questions
                     const qRes = await fetch(`${API_BASE}/Student/${studentExamId}/questions/secure`);
-                    if (!qRes.ok) throw new Error('Failed to fetch secure questions');
+
+                    // 409 = already submitted — student re-joined after finishing exam
+                    if (qRes.status === 409) {
+                        statusText.textContent = 'You have already submitted this exam.';
+                        statusText.style.color = '#f59e0b';
+                        btn.innerHTML = '<span>Already Submitted — Redirecting to Results...</span>';
+                        btn.disabled = true;
+                        setTimeout(() => { window.location.href = 'results.html'; }, 2000);
+                        return;
+                    }
+
+                    if (!qRes.ok) {
+                        // Track repeated failures and offer a leave button after 2 minutes
+                        const firstFail = parseInt(localStorage.getItem('_waitFailedAt') || '0');
+                        if (!firstFail) localStorage.setItem('_waitFailedAt', Date.now().toString());
+                        const elapsed = Date.now() - (firstFail || Date.now());
+                        const remaining = Math.max(0, 120 - Math.floor(elapsed / 1000));
+
+                        statusText.textContent = `Failed to load exam questions. Retrying... (auto-leave in ${remaining}s)`;
+                        statusText.style.color = '#ef4444';
+
+                        // Show leave button
+                        let leaveBtn = document.getElementById('btn-leave-room');
+                        if (!leaveBtn) {
+                            leaveBtn = document.createElement('button');
+                            leaveBtn.id = 'btn-leave-room';
+                            leaveBtn.className = 'submit-btn';
+                            leaveBtn.style.cssText = 'margin-top:12px;background:#ef4444;';
+                            leaveBtn.textContent = 'Leave Waiting Room';
+                            leaveBtn.onclick = () => {
+                                localStorage.removeItem('_waitFailedAt');
+                                window.location.href = 'selection.html';
+                            };
+                            btn.parentNode.insertBefore(leaveBtn, btn.nextSibling);
+                        }
+
+                        if (elapsed >= 120000) {
+                            localStorage.removeItem('_waitFailedAt');
+                            showToast('Redirecting', 'Could not join exam. Returning to exam list.', 'error');
+                            setTimeout(() => { window.location.href = 'selection.html'; }, 1500);
+                            return;
+                        }
+
+                        throw new Error('Failed to fetch secure questions');
+                    }
+
+                    // Success — clear any failure tracking
+                    localStorage.removeItem('_waitFailedAt');
+                    const leaveBtn2 = document.getElementById('btn-leave-room');
+                    if (leaveBtn2) leaveBtn2.remove();
+
                     const qData = await qRes.json();
 
                     // Cache encrypted string to local storage

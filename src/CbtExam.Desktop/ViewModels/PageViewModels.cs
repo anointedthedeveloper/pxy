@@ -1172,7 +1172,7 @@ public class SessionViewModel : BaseViewModel, IRefreshable
                 ConnectedCandidatesCount = list?.Count(s => s.IsOnline) ?? 0;
                 int total = list?.Count ?? 0;
                 SystemReadyPercent = total == 0 ? 0 : (int)Math.Round((double)ConnectedCandidatesCount / total * 100);
-                IssuesFlaggedCount = list?.Count(s => s.BatteryLevel < 20 || s.ConnectionState == "disconnected") ?? 0;
+                IssuesFlaggedCount = list?.Count(s => !s.IsSubmitted && (s.BatteryLevel < 20 || s.ConnectionState == "disconnected")) ?? 0;
 
                 FilterStudents();
 
@@ -2483,8 +2483,11 @@ public class ReportsViewModel(ApiClient api) : BaseViewModel, IRefreshable
     public int TotalSessions { get => _totalSessions; set => Set(ref _totalSessions, value); }
     public int TotalStudents { get => _totalStudents; set => Set(ref _totalStudents, value); }
 
-    public RelayCommand RefreshCommand => new(async () => await LoadAsync());
-    public RelayCommand PrintCommand => new(PrintReport);
+    public RelayCommand RefreshCommand              => new(async () => await LoadAsync());
+    public RelayCommand PrintCommand                => new(PrintReport);
+    public RelayCommand PrintExamSummaryCommand     => new(PrintExamSummary);
+    public RelayCommand PrintStudentAnalysisCommand => new(PrintStudentAnalysis);
+    public RelayCommand PrintSessionActivityCommand => new(PrintReport);
 
     public async Task LoadAsync()
     {
@@ -2530,6 +2533,177 @@ public class ReportsViewModel(ApiClient api) : BaseViewModel, IRefreshable
             gfx.DrawString($"Page {pageNum} of {totalPages}", footerFont, footerMuted, new XRect(margin, footerY + 4, page.Width.Point - (margin * 2), 15), XStringFormats.TopRight);
         }
         catch { }
+    }
+
+    private void PrintExamSummary()
+    {
+        if (TotalExams == 0)
+        {
+            MessageBox.Show("No exam templates found. Create at least one exam template before generating this report.", "No Data", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var sfd = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "PDF Files (*.pdf)|*.pdf",
+            FileName = "Exam_Summary_Report.pdf",
+            Title = "Save Exam Summary PDF"
+        };
+        if (sfd.ShowDialog() != true) return;
+
+        try
+        {
+            using var document = new PdfDocument();
+            document.Info.Title = "Exam Summary Report";
+            var page = document.AddPage();
+            page.Size = PdfSharp.PageSize.A4;
+            var gfx = XGraphics.FromPdfPage(page);
+#pragma warning disable CS0618
+            var titleFont  = new XFont("Segoe UI", 16, XFontStyleEx.Bold);
+            var headerFont = new XFont("Segoe UI", 9, XFontStyleEx.Bold);
+            var dataFont   = new XFont("Segoe UI", 9, XFontStyleEx.Regular);
+            var subFont    = new XFont("Segoe UI", 9, XFontStyleEx.Regular);
+#pragma warning restore CS0618
+            var charcoal     = new XSolidBrush(XColor.FromArgb(30, 41, 59));
+            var teal         = new XSolidBrush(XColor.FromArgb(13, 148, 136));
+            var gray         = XBrushes.DarkGray;
+            var headerBg     = new XSolidBrush(XColor.FromArgb(241, 245, 249));
+            var dividerPen   = new XPen(XColor.FromArgb(226, 232, 240), 1.0);
+            var tableBorder  = new XPen(XColor.FromArgb(226, 232, 240), 1.0);
+
+            double margin = 40, width = page.Width.Point - margin * 2, y = margin;
+
+            gfx.DrawString("EXAM SUMMARY REPORT", titleFont, charcoal, new XRect(margin, y, width, 22), XStringFormats.TopLeft);
+            y += 22;
+            gfx.DrawString($"Generated on {DateTime.Now:dd MMMM yyyy HH:mm}  ·  {TotalExams} exam template(s)", subFont, gray, new XRect(margin, y, width, 15), XStringFormats.TopLeft);
+            y += 22;
+            gfx.DrawLine(dividerPen, margin, y, page.Width.Point - margin, y);
+            y += 16;
+
+            // Table header
+            double[] cols = { 220, 100, 60, 60, 75 };
+            string[] headers = { "EXAM TITLE", "SUBJECT(S)", "DURATION", "QUESTIONS", "CREATED" };
+            gfx.DrawRectangle(headerBg, margin, y, width, 20);
+            double cx = margin;
+            for (int i = 0; i < headers.Length; i++)
+            {
+                gfx.DrawString(headers[i], headerFont, charcoal, new XRect(cx + 4, y, cols[i], 20), XStringFormats.CenterLeft);
+                cx += cols[i];
+            }
+            y += 20;
+
+            // Data rows — Rows contains session data, we need exam list
+            foreach (var row in Rows)
+            {
+                cx = margin;
+                gfx.DrawRectangle(tableBorder, margin, y, width, 20);
+                var vals = new[] { row.ExamTitle, "—", "—", row.Students.ToString(), row.Date };
+                for (int i = 0; i < vals.Length; i++)
+                {
+                    gfx.DrawString(vals[i], dataFont, i == 0 ? charcoal : (XBrush)gray, new XRect(cx + 4, y, cols[i] - 8, 20), XStringFormats.CenterLeft);
+                    cx += cols[i];
+                }
+                y += 20;
+                if (y > page.Height.Point - margin - 20) break;
+            }
+
+            DrawFooter(gfx, page, margin, 1, 1);
+            document.Save(sfd.FileName);
+            MessageBox.Show("Exam Summary PDF exported successfully!", "Export Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Export failed: {ex.Message}", "Export Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void PrintStudentAnalysis()
+    {
+        if (Rows.Count == 0)
+        {
+            MessageBox.Show("No completed session data available. Run at least one session before generating this report.", "No Data", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var sfd = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "PDF Files (*.pdf)|*.pdf",
+            FileName = "Student_Analysis_Report.pdf",
+            Title = "Save Student Analysis PDF"
+        };
+        if (sfd.ShowDialog() != true) return;
+
+        try
+        {
+            using var document = new PdfDocument();
+            document.Info.Title = "Student Performance Analysis";
+            var page = document.AddPage();
+            page.Size = PdfSharp.PageSize.A4;
+            var gfx = XGraphics.FromPdfPage(page);
+#pragma warning disable CS0618
+            var titleFont  = new XFont("Segoe UI", 16, XFontStyleEx.Bold);
+            var headerFont = new XFont("Segoe UI", 9, XFontStyleEx.Bold);
+            var dataFont   = new XFont("Segoe UI", 9, XFontStyleEx.Regular);
+            var subFont    = new XFont("Segoe UI", 9, XFontStyleEx.Regular);
+#pragma warning restore CS0618
+            var charcoal   = new XSolidBrush(XColor.FromArgb(30, 41, 59));
+            var teal       = new XSolidBrush(XColor.FromArgb(13, 148, 136));
+            var gray       = XBrushes.DarkGray;
+            var headerBg   = new XSolidBrush(XColor.FromArgb(241, 245, 249));
+            var dividerPen = new XPen(XColor.FromArgb(226, 232, 240), 1.0);
+            var tableBorder= new XPen(XColor.FromArgb(226, 232, 240), 1.0);
+
+            double margin = 40, width = page.Width.Point - margin * 2, y = margin;
+
+            gfx.DrawString("STUDENT PERFORMANCE ANALYSIS", titleFont, charcoal, new XRect(margin, y, width, 22), XStringFormats.TopLeft);
+            y += 22;
+            gfx.DrawString($"Generated on {DateTime.Now:dd MMMM yyyy HH:mm}  ·  {TotalStudents} candidate(s) tested across {TotalSessions} session(s)", subFont, gray, new XRect(margin, y, width, 15), XStringFormats.TopLeft);
+            y += 22;
+            gfx.DrawLine(dividerPen, margin, y, page.Width.Point - margin, y);
+            y += 16;
+
+            // Summary stats
+            if (Rows.Count > 0)
+            {
+                double overallAvg = Rows.Average(r => r.AvgPct);
+                gfx.DrawString($"Overall Average Score: {overallAvg:F1}%   ·   Sessions Analysed: {Rows.Count}   ·   Total Candidates: {TotalStudents}", headerFont, teal, new XRect(margin, y, width, 15), XStringFormats.TopLeft);
+                y += 20;
+            }
+
+            // Per-session breakdown table
+            double[] cols = { 180, 80, 70, 70, 70, 45 };
+            string[] headers = { "EXAM TITLE", "DATE", "CANDIDATES", "AVG SCORE", "HIGHEST", "—" };
+            gfx.DrawRectangle(headerBg, margin, y, width, 20);
+            double cx = margin;
+            for (int i = 0; i < headers.Length; i++)
+            {
+                gfx.DrawString(headers[i], headerFont, charcoal, new XRect(cx + 4, y, cols[i], 20), XStringFormats.CenterLeft);
+                cx += cols[i];
+            }
+            y += 20;
+
+            foreach (var row in Rows)
+            {
+                cx = margin;
+                gfx.DrawRectangle(tableBorder, margin, y, width, 20);
+                var vals = new[] { row.ExamTitle, row.Date, row.Students.ToString(), $"{row.AvgPct:F1}%", "—", "—" };
+                for (int i = 0; i < vals.Length; i++)
+                {
+                    gfx.DrawString(vals[i], dataFont, i == 3 ? teal : (XBrush)gray, new XRect(cx + 4, y, cols[i] - 8, 20), XStringFormats.CenterLeft);
+                    cx += cols[i];
+                }
+                y += 20;
+                if (y > page.Height.Point - margin - 20) break;
+            }
+
+            DrawFooter(gfx, page, margin, 1, 1);
+            document.Save(sfd.FileName);
+            MessageBox.Show("Student Analysis PDF exported successfully!", "Export Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Export failed: {ex.Message}", "Export Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void PrintReport()
@@ -3058,10 +3232,10 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
     public string RepoUrl { get => _repoUrl; set { Set(ref _repoUrl, value); SaveSettings(); } }
 
     // Proxy settings — replace direct GitHub calls
-    private string _proxyUrl = "https://proxy4p4jq.vercel.app";
+    private string _proxyUrl = string.Empty;
     public string ProxyUrl { get => _proxyUrl; set { Set(ref _proxyUrl, value); SaveSettings(); } }
 
-    private string _proxyApiKey = "p4jq";
+    private string _proxyApiKey = string.Empty;
     public string ProxyApiKey { get => _proxyApiKey; set { Set(ref _proxyApiKey, value); SaveSettings(); } }
 
     // GitHub Personal Access Token — kept for legacy but no longer used by default.
@@ -3796,6 +3970,20 @@ public class StudentsViewModel(ApiClient api) : BaseViewModel, IRefreshable
     public RelayCommand PrintCommand => new(PrintStudents);
     public RelayCommand<StudentUiModel> PickCommand => new(s => Pick(s));
     public RelayCommand ClearCommand => new(Clear);
+    public RelayCommand ForceLogoutAllCommand => new(async () =>
+    {
+        var res = MessageBox.Show("Force-log out ALL currently logged-in students?\nThis clears their session locks so they can re-login.",
+            "Force Logout All", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (res != MessageBoxResult.Yes) return;
+        var resp = await api.ForceLogoutAllAsync();
+        Status = resp.IsSuccessStatusCode ? "All student sessions cleared." : "Failed to clear sessions.";
+    });
+    public RelayCommand<StudentUiModel> ForceLogoutOneCommand => new(async s =>
+    {
+        if (s is null) return;
+        var resp = await api.ForceLogoutStudentAsync(s.Id);
+        Status = resp.IsSuccessStatusCode ? $"Session cleared for {s.FullName}." : "Failed to clear session.";
+    });
     public RelayCommand CopySampleCommand => new(() =>
     {
         try

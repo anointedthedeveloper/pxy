@@ -231,7 +231,11 @@ public class QuestionBankController(AppDbContext db) : ControllerBase
                     QuestionNumber = qNum++,
                     Text = bq.Text,
                     OptionsJson = bq.OptionsJson,
-                    CorrectAnswer = bq.CorrectAnswer
+                    CorrectAnswer = bq.CorrectAnswer,
+                    Subject = bq.Subject,       // ← was missing
+                    Year = bq.Year,             // ← was missing
+                    Section = bq.Section ?? string.Empty,   // ← was missing
+                    ImageUrl = bq.ImageUrl ?? string.Empty  // ← was missing
                 });
             }
         }

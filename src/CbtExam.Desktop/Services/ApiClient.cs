@@ -72,6 +72,10 @@ public class ApiClient
     public Task<HttpResponseMessage> GenerateExamFromBankAsync(ExamGenerateDto dto) => IsReady ? _http.PostAsJsonAsync("api/questionbank/generate-exam", dto) : OfflineResponse();
     public Task<HttpResponseMessage> ImportRepoQuestionsAsync(string subject, object questions) => IsReady ? _http.PostAsJsonAsync($"api/questionbank/import-repo?subject={Uri.EscapeDataString(subject)}", questions) : OfflineResponse();
 
+    // Student session controls
+    public Task<HttpResponseMessage> ForceLogoutStudentAsync(int studentDbId) => IsReady ? _http.PostAsync($"api/students/{studentDbId}/logout", null) : OfflineResponse();
+    public Task<HttpResponseMessage> ForceLogoutAllAsync() => IsReady ? _http.PostAsync("api/students/logout-all", null) : OfflineResponse();
+
     private static Task<HttpResponseMessage> OfflineResponse() =>
         Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
         {

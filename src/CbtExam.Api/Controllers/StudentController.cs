@@ -16,7 +16,7 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, string> _decryptionKeys = new();
 
     // studentDbId -> deviceId currently holding the session lock
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, string> _activeSessions = new();
+    internal static readonly System.Collections.Concurrent.ConcurrentDictionary<int, string> _activeSessions = new();
 
     public static string GetDecryptionKey(int sessionId)
     {
@@ -154,7 +154,8 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
             .FirstOrDefaultAsync(x => x.Id == studentExamId);
 
         if (se is null) return NotFound();
-        if (se.IsSubmitted) return BadRequest("Exam already submitted.");
+        // If already submitted, return a specific status so the client can redirect gracefully
+        if (se.IsSubmitted) return Conflict(new { error = "already_submitted" });
 
         var exam = se.Session!.Exam!;
         var shuffled = QuestionShuffler.ShuffleAll(exam.Questions, exam.ShuffleQuestions, exam.ShuffleOptions, se.Id);

@@ -49,7 +49,7 @@
                     <TextBlock Text="Session:" FontSize="13" FontWeight="SemiBold"
                                Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,12,0"/>
                     <ComboBox ItemsSource="{Binding Sessions}" SelectedItem="{Binding SelectedSession}"
-                               DisplayMemberPath="SessionCode" Width="220" Margin="0,0,20,0" Height="40"/>
+                               DisplayMemberPath="ExamTitle" Width="280" Margin="0,0,20,0" Height="40"/>
                                
                     <Border Background="{DynamicResource BgBrush}" CornerRadius="8" Padding="12,6" VerticalAlignment="Center">
                         <TextBlock Text="{Binding SelectedSession.ExamTitle}" FontSize="13" FontWeight="SemiBold"
@@ -63,7 +63,7 @@
                          Visibility="{Binding Results.Count, Converter={StaticResource IntToVis}}">
                 <Border Style="{StaticResource Card}" Padding="24" Margin="0,0,16,0">
                     <StackPanel>
-                        <TextBlock Text="AVERAGE PERFORMANCE" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock Text="AVERAGE SCORE" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
                         <TextBlock FontSize="36" FontWeight="Black" Foreground="{DynamicResource AccentBrush}" Margin="0,8,0,0">
                             <Run Text="{Binding AvgScore}"/><Run Text="%" FontSize="20"/>
                         </TextBlock>
@@ -71,14 +71,14 @@
                 </Border>
                 <Border Style="{StaticResource Card}" Padding="24" Margin="0,0,16,0">
                     <StackPanel>
-                        <TextBlock Text="TOTAL PASSED" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                        <TextBlock Text="{Binding PassCount}" FontSize="36" FontWeight="Black" Foreground="#16A34A" Margin="0,8,0,0"/>
+                        <TextBlock Text="TOTAL CANDIDATES" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock Text="{Binding Results.Count}" FontSize="36" FontWeight="Black" Foreground="#16A34A" Margin="0,8,0,0"/>
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource Card}" Padding="24">
                     <StackPanel>
-                        <TextBlock Text="TOTAL FAILED" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
-                        <TextBlock Text="{Binding FailCount}" FontSize="36" FontWeight="Black" Foreground="#DC2626" Margin="0,8,0,0"/>
+                        <TextBlock Text="QUESTIONS POOL" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <TextBlock Text="{Binding Results[0].Total}" FontSize="36" FontWeight="Black" Foreground="{DynamicResource AccentBrush}" Margin="0,8,0,0"/>
                     </StackPanel>
                 </Border>
             </UniformGrid>
@@ -161,7 +161,7 @@
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
                             
-                            <DataGridTextColumn Header="SUBJECT BREAKDOWN" Binding="{Binding SubjectBreakdown}" Width="250">
+                            <DataGridTextColumn Header="SUBJECT BREAKDOWN" Binding="{Binding SubjectBreakdown}" Width="*">
                                 <DataGridTextColumn.ElementStyle>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="VerticalAlignment" Value="Center"/>
@@ -170,41 +170,6 @@
                                     </Style>
                                 </DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            
-                            <DataGridTemplateColumn Header="OUTCOME" Width="120">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Border CornerRadius="8" Padding="12,6" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                            <Border.Style>
-                                                <Style TargetType="Border">
-                                                    <Setter Property="Background" Value="#10DC2626"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Passed}" Value="True">
-                                                            <Setter Property="Background" Value="#1016A34A"/>
-                                                            <Setter Property="BorderBrush" Value="#3016A34A"/>
-                                                            <Setter Property="BorderThickness" Value="1"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                            <TextBlock FontSize="11" FontWeight="Bold">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="Text" Value="REJECTED"/>
-                                                        <Setter Property="Foreground" Value="#DC2626"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Passed}" Value="True">
-                                                                <Setter Property="Text" Value="PASSED"/>
-                                                                <Setter Property="Foreground" Value="#16A34A"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </Border>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
                             
                             <DataGridTextColumn Header="SUBMITTED" Binding="{Binding SubmittedAt, StringFormat='HH:mm:ss'}" Width="120">
                                 <DataGridTextColumn.ElementStyle>

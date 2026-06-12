@@ -68,7 +68,7 @@
                         </Border>
                         <TextBlock Text="Exam Summary" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,16,0,6"/>
                         <TextBlock Text="Complete overview of all exam templates and configurations." Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" TextWrapping="Wrap"/>
-                        <Button Content="Generate Report" Command="{Binding PrintCommand}" Style="{StaticResource PrimaryBtn}" Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextPrimaryBrush}" Padding="16,8" HorizontalAlignment="Left" Margin="0,20,0,0"/>
+                        <Button Content="Generate Report" Command="{Binding PrintExamSummaryCommand}" Style="{StaticResource PrimaryBtn}" Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextPrimaryBrush}" Padding="16,8" HorizontalAlignment="Left" Margin="0,20,0,0"/>
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource Card}" Padding="24" Margin="0,0,16,0">
@@ -78,7 +78,7 @@
                         </Border>
                         <TextBlock Text="Student Analysis" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,16,0,6"/>
                         <TextBlock Text="Detailed performance metrics and competency analysis per student." Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" TextWrapping="Wrap"/>
-                        <Button Content="Generate Report" Command="{Binding PrintCommand}" Style="{StaticResource PrimaryBtn}" Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextPrimaryBrush}" Padding="16,8" HorizontalAlignment="Left" Margin="0,20,0,0"/>
+                        <Button Content="Generate Report" Command="{Binding PrintStudentAnalysisCommand}" Style="{StaticResource PrimaryBtn}" Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextPrimaryBrush}" Padding="16,8" HorizontalAlignment="Left" Margin="0,20,0,0"/>
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource Card}" Padding="24">
@@ -88,7 +88,7 @@
                         </Border>
                         <TextBlock Text="Session Activity" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,16,0,6"/>
                         <TextBlock Text="Audit log of session times, proctor actions, and connectivity events." Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" TextWrapping="Wrap"/>
-                        <Button Content="Generate Report" Command="{Binding PrintCommand}" Style="{StaticResource PrimaryBtn}" Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextPrimaryBrush}" Padding="16,8" HorizontalAlignment="Left" Margin="0,20,0,0"/>
+                        <Button Content="Generate Report" Command="{Binding PrintSessionActivityCommand}" Style="{StaticResource PrimaryBtn}" Background="{DynamicResource CardBrush}" Foreground="{DynamicResource TextPrimaryBrush}" Padding="16,8" HorizontalAlignment="Left" Margin="0,20,0,0"/>
                     </StackPanel>
                 </Border>
             </UniformGrid>

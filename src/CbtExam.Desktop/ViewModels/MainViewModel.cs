@@ -205,11 +205,22 @@ public class MainViewModel : BaseViewModel
             }
             lastStudentStatuses = payload.ToList();
 
-            var newlySubmitted = payload.LastOrDefault(s => s.IsSubmitted);
-            if (newlySubmitted != null)
+            // Update dashboard counts immediately on any student status change
+            var submitted = payload.Count(s => s.IsSubmitted);
+            var active    = payload.Count(s => !s.IsSubmitted);
+            App.Current.Dispatcher.Invoke(() =>
             {
-                _lastSubmittedStudent = newlySubmitted.FullName;
-            }
+                Dashboard.SubmittedCount = submitted;
+                Dashboard.ActiveCount    = active;
+            });
+
+            // Track most recently submitted student for ticker
+            var justSubmitted = payload
+                .Where(s => s.IsSubmitted)
+                .OrderByDescending(s => s.StudentExamId)
+                .FirstOrDefault(s => lastStudentStatuses?.Any(p => p.StudentId == s.StudentId && !p.IsSubmitted) == true);
+            if (justSubmitted != null)
+                _lastSubmittedStudent = justSubmitted.FullName;
         };
 
         _monitorRealtime.SessionStarted += () =>

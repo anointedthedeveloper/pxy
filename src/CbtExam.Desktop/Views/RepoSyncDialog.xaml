@@ -116,42 +116,74 @@
                             </Grid>
 
                             <Border Background="{DynamicResource FieldBg}" BorderBrush="{DynamicResource BorderBrush}"
-                                    BorderThickness="1" CornerRadius="12" Padding="8">
-                                <ItemsControl x:Name="SubjectList">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Padding="10,8" Margin="2" CornerRadius="8">
-                                                <Border.Style>
-                                                    <Style TargetType="Border">
-                                                        <Style.Triggers>
-                                                            <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter Property="Background" Value="{DynamicResource NavHoverBrush}"/>
-                                                            </Trigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Border.Style>
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}"
-                                                              VerticalAlignment="Center" Cursor="Hand" Margin="0,0,10,0"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayName}"
-                                                               FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               VerticalAlignment="Center"/>
-                                                    <Border Grid.Column="2" Background="{DynamicResource NavActiveBrush}"
-                                                            CornerRadius="10" Padding="8,3">
-                                                        <TextBlock Text="{Binding CountLabel}"
-                                                                   FontSize="11" FontWeight="Bold"
-                                                                   Foreground="{DynamicResource NavActiveFgBrush}"/>
-                                                    </Border>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                    BorderThickness="1" CornerRadius="12" Padding="4" MaxHeight="320">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl x:Name="SubjectList">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Padding="12,9" Margin="2,1" CornerRadius="8" Cursor="Hand">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Style.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter Property="Background" Value="{DynamicResource NavHoverBrush}"/>
+                                                                </Trigger>
+                                                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                    <Setter Property="Background" Value="{DynamicResource NavActiveBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <!-- Custom checkbox look -->
+                                                        <Border Width="18" Height="18" CornerRadius="5" Margin="0,0,10,0"
+                                                                VerticalAlignment="Center">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="Background" Value="Transparent"/>
+                                                                    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                                                                    <Setter Property="BorderThickness" Value="1.5"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                            <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Border.Style>
+                                                            <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="10"
+                                                                       Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                       Visibility="{Binding IsSelected, Converter={StaticResource BoolToVis}}"/>
+                                                        </Border>
+                                                        <!-- Subject name — clicking toggles selection -->
+                                                        <TextBlock Grid.Column="1" Text="{Binding DisplayName}"
+                                                                   FontSize="13" VerticalAlignment="Center"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                        <!-- Question count badge -->
+                                                        <Border Grid.Column="2" CornerRadius="10" Padding="8,3"
+                                                                Background="{DynamicResource NavActiveBrush}">
+                                                            <TextBlock Text="{Binding CountLabel}"
+                                                                       FontSize="11" FontWeight="Bold"
+                                                                       Foreground="{DynamicResource AccentBrush}"/>
+                                                        </Border>
+                                                    </Grid>
+                                                    <Border.InputBindings>
+                                                        <MouseBinding MouseAction="LeftClick"
+                                                                      Command="{Binding DataContext.ToggleSubjectCommand,
+                                                                          RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                      CommandParameter="{Binding}"/>
+                                                    </Border.InputBindings>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
                             </Border>
 
                             <TextBlock x:Name="SelectionCountText" FontSize="12" Margin="0,8,0,0"
