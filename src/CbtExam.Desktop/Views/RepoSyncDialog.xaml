@@ -51,34 +51,34 @@
                     <!-- Step 1: Phase indicator -->
                     <Border x:Name="PhaseFetch" Visibility="Visible">
                         <StackPanel>
-                            <TextBlock Text="STEP 1 — CONNECT" FontSize="10" FontWeight="Bold"
+                            <TextBlock Text="STEP 1 — CONNECT TO PROXY" FontSize="10" FontWeight="Bold"
                                        Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,12" Opacity="0.6"/>
 
-                            <TextBlock Text="Repository URL" FontSize="12" FontWeight="SemiBold"
+                            <TextBlock Text="Proxy Server URL" FontSize="12" FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6"/>
                             <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                     CornerRadius="6" Background="{DynamicResource InputBgBrush}">
-                                <TextBox x:Name="RepoUrlBox" Height="36" VerticalContentAlignment="Center"
+                                <TextBox x:Name="ProxyUrlBox" Height="36" VerticalContentAlignment="Center"
                                          Padding="10,0" FontSize="13" BorderThickness="0" Background="Transparent"
-                                         ToolTip="e.g. https://raw.githubusercontent.com/owner/repo/branch"/>
+                                         ToolTip="e.g. https://your-proxy.up.railway.app"/>
                             </Border>
+                            <TextBlock Text="The URL of your deployed P4JQ proxy server."
+                                       FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"
+                                       Margin="0,3,0,0" Opacity="0.7"/>
 
-                            <TextBlock Text="Access Token (PAT)" FontSize="12" FontWeight="SemiBold"
+                            <TextBlock Text="API Key" FontSize="12" FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,14,0,6"/>
-                            <!-- Wrap PasswordBox in a matching border so it aligns with TextBox above -->
                             <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                     CornerRadius="6" Background="{DynamicResource InputBgBrush}" Height="36">
-                                <PasswordBox x:Name="TokenBox" PasswordChar="●"
+                                <PasswordBox x:Name="ApiKeyBox" PasswordChar="●"
                                              Padding="10,0" FontSize="13"
                                              VerticalContentAlignment="Center"
                                              BorderThickness="0" Background="Transparent"
-                                             ToolTip="Fine-grained PAT: Contents → Read-only  |  Bundled by default"/>
+                                             ToolTip="The API_KEY you set in your proxy's environment variables"/>
                             </Border>
-                            <TextBlock FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"
-                                       Margin="0,4,0,0" Opacity="0.7">
-                                <Run Text="Leave blank to use the bundled token. Fine-grained PAT:"/>
-                                <Run Text=" Contents → Read-only" FontWeight="SemiBold"/>
-                            </TextBlock>
+                            <TextBlock Text="Must match the API_KEY set on the proxy server."
+                                       FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"
+                                       Margin="0,3,0,0" Opacity="0.7"/>
 
                             <Button x:Name="FetchBtn" Margin="0,18,0,0" HorizontalAlignment="Left"
                                     Style="{StaticResource PrimaryBtn}" Background="{DynamicResource AccentBrush}"
@@ -130,9 +130,24 @@
                                                         </Style.Triggers>
                                                     </Style>
                                                 </Border.Style>
-                                                <CheckBox IsChecked="{Binding IsSelected}" Content="{Binding DisplayName}"
-                                                          FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}"
-                                                          Cursor="Hand"/>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}"
+                                                              VerticalAlignment="Center" Cursor="Hand" Margin="0,0,10,0"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayName}"
+                                                               FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               VerticalAlignment="Center"/>
+                                                    <Border Grid.Column="2" Background="{DynamicResource NavActiveBrush}"
+                                                            CornerRadius="10" Padding="8,3">
+                                                        <TextBlock Text="{Binding CountLabel}"
+                                                                   FontSize="11" FontWeight="Bold"
+                                                                   Foreground="{DynamicResource NavActiveFgBrush}"/>
+                                                    </Border>
+                                                </Grid>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>

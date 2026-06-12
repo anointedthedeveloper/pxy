@@ -120,11 +120,9 @@
                             <TextBlock Text="Download JAMB questions from your private repository. New subjects are picked up automatically — just sync when you add more." 
                                        FontSize="12" Foreground="#64748B" TextWrapping="Wrap" Margin="0,0,0,16"/>
                             
-                            <TextBlock Text="Repository Base URL" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,6"/>
-                            <TextBox Text="{Binding RepoUrl, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,4"
-                                     ToolTip="e.g. https://raw.githubusercontent.com/owner/repo/branch"/>
-                            <TextBlock Text="Format: https://raw.githubusercontent.com/owner/repo/branch" 
-                                       FontSize="11" Foreground="#94A3B8" Margin="0,2,0,16" TextWrapping="Wrap"/>
+                            <TextBlock Text="Proxy Server URL" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" Margin="0,0,0,6"/>
+                            <TextBox Text="{Binding ProxyUrl, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,16"
+                                     ToolTip="Your deployed Vercel proxy URL, e.g. https://p4jq-proxy.vercel.app"/>
                             
                             <Button Command="{Binding DownloadRepoCommand}" 
                                     Style="{StaticResource PrimaryBtn}" Background="#2563EB" Padding="16,10" HorizontalAlignment="Left">

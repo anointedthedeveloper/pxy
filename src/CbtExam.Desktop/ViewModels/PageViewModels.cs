@@ -3057,8 +3057,14 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
     private string _repoUrl = string.Empty;
     public string RepoUrl { get => _repoUrl; set { Set(ref _repoUrl, value); SaveSettings(); } }
 
-    // GitHub Personal Access Token — required when the repo is private.
-    // Needs only the "Contents: Read" permission (fine-grained) or "repo" scope (classic).
+    // Proxy settings — replace direct GitHub calls
+    private string _proxyUrl = "https://proxy4p4jq.vercel.app";
+    public string ProxyUrl { get => _proxyUrl; set { Set(ref _proxyUrl, value); SaveSettings(); } }
+
+    private string _proxyApiKey = "p4jq";
+    public string ProxyApiKey { get => _proxyApiKey; set { Set(ref _proxyApiKey, value); SaveSettings(); } }
+
+    // GitHub Personal Access Token — kept for legacy but no longer used by default.
     private string _githubToken = string.Empty;
     public string GithubToken { get => _githubToken; set { Set(ref _githubToken, value); SaveSettings(); } }
 
@@ -3226,14 +3232,17 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
 
     private async Task OpenRepoSyncDialogAsync()
     {
-        var exeDir     = System.IO.Path.GetDirectoryName(Environment.ProcessPath)
-                         ?? AppDomain.CurrentDomain.BaseDirectory;
-        var imagesDir  = System.IO.Path.Combine(exeDir, "wwwroot", "images", "questions");
+        var exeDir    = System.IO.Path.GetDirectoryName(Environment.ProcessPath)
+                        ?? AppDomain.CurrentDomain.BaseDirectory;
+        var imagesDir = System.IO.Path.Combine(exeDir, "wwwroot", "images", "questions");
 
-        var dialog = new CbtExam.Desktop.Views.RepoSyncDialog(api, imagesDir, RepoUrl);
+        var dialog = new CbtExam.Desktop.Views.RepoSyncDialog(api, imagesDir, ProxyUrl, ProxyApiKey);
         dialog.Owner = App.Current.MainWindow;
-
         dialog.ShowDialog();
+
+        // Persist whatever the user typed in the dialog
+        ProxyUrl    = dialog.SavedProxyUrl;
+        ProxyApiKey = dialog.SavedApiKey;
 
         if (dialog.Completed)
         {
@@ -3647,6 +3656,8 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
                         SchoolLogoPath = data.SchoolLogoPath;
                         RepoUrl = data.RepoUrl ?? string.Empty;
                         GithubToken = data.GithubToken ?? string.Empty;
+                        ProxyUrl = data.ProxyUrl ?? "https://proxy4p4jq.vercel.app";
+                        ProxyApiKey = data.ProxyApiKey ?? "p4jq";
                         _adminPassword = data.AdminPassword ?? "ADMIN123";
                     }
                 }
@@ -3691,6 +3702,8 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
                 SchoolLogoPath = SchoolLogoPath,
                 RepoUrl = RepoUrl,
                 GithubToken = GithubToken,
+                ProxyUrl = ProxyUrl,
+                ProxyApiKey = ProxyApiKey,
                 AdminPassword = AdminPassword
             };
 
@@ -3714,6 +3727,8 @@ public class SettingsData
     public string? SchoolLogoPath { get; set; }
     public string? RepoUrl { get; set; }
     public string? GithubToken { get; set; }
+    public string? ProxyUrl { get; set; }
+    public string? ProxyApiKey { get; set; }
     public string AdminPassword { get; set; } = "ADMIN123";
 }
 
