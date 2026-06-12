@@ -66,8 +66,8 @@ public partial class RepoSyncDialog : Window
     private async void FetchBtn_Click(object sender, RoutedEventArgs e)
     {
         FetchStatusText.Text = "";
-        FetchBtn.IsEnabled   = false;
-        FetchBtn.Content     = "Fetching...";
+        FetchStatusText.Foreground = System.Windows.Media.Brushes.Red;
+        SetFetchBtnBusy();
 
         var url = RepoUrlBox.Text.Trim().TrimEnd('/');
         if (string.IsNullOrWhiteSpace(url))
@@ -353,8 +353,17 @@ public partial class RepoSyncDialog : Window
 
     private void ResetFetchBtn()
     {
-        FetchBtn.IsEnabled = true;
-        FetchBtn.Content   = "  Fetch Available Subjects";
+        FetchBtn.IsEnabled  = true;
+        FetchBtnIcon.Text   = "&#xE72D;";
+        FetchBtnText.Text   = "Fetch Available Subjects";
+    }
+
+    // Called from FetchBtn_Click before awaiting to give visual feedback
+    private void SetFetchBtnBusy()
+    {
+        FetchBtn.IsEnabled  = false;
+        FetchBtnIcon.Text   = "&#xE712;"; // spinning / loading icon
+        FetchBtnText.Text   = "Fetching…";
     }
 
     private static string ToTitleCase(string s) =>

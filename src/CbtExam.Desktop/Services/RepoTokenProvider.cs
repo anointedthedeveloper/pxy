@@ -21,7 +21,11 @@ internal static class RepoTokenProvider
 
     private static byte[] GenerateObfuscated()
     {
-        const string raw = "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";
+        // ── REPLACE THIS TOKEN after revoking the old one on GitHub ──
+        // Go to: https://github.com/settings/tokens/new (Fine-grained)
+        // Repo: P4JQ  |  Permission: Contents → Read-only
+        // Paste the new token here and rebuild.
+        const string raw = "PASTE_NEW_TOKEN_HERE";
         var bytes = System.Text.Encoding.ASCII.GetBytes(raw);
         for (int i = 0; i < bytes.Length; i++)
             bytes[i] ^= _key[i % _key.Length];
