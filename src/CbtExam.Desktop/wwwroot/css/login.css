@@ -8,7 +8,7 @@
     --text-muted: #64748b;
     --input-border: #cbd5e1;
     --input-bg: #ffffff;
-    --font-family: 'Outfit', 'Inter', sans-serif;
+    --font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
 * {

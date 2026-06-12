@@ -514,7 +514,8 @@ function startTimer() {
             
         // Alert visually in final 5 minutes
         if (timeRemaining < 300) {
-            document.getElementById('timer').parentElement.classList.add('warning');
+            const timerBox = document.getElementById('timer-box');
+            if (timerBox) timerBox.classList.add('warning');
         }
     };
     
@@ -587,20 +588,51 @@ function initSubjectTabs() {
 }
 
 function renderSubjectTabs() {
-    const headerBar = document.getElementById('subject-tabs-bar');
-    const contentBar = document.getElementById('subject-content-bar');
+    const headerBar     = document.getElementById('subject-tabs-bar');
+    const contentBar    = document.getElementById('subject-content-bar');
+    const sidebarTabs   = document.getElementById('sidebar-subject-tabs');
 
-    [headerBar, contentBar].forEach((container, i) => {
-        if (!container) return;
-        container.innerHTML = '';
+    // Count questions per subject for the badges
+    const subjectCounts = {};
+    subjects.forEach(sub => {
+        subjectCounts[sub] = questions.filter(q => ((q.subject && q.subject.trim()) ? q.subject.trim() : 'General') === sub).length;
+    });
+
+    // Header pills
+    if (headerBar) {
+        headerBar.innerHTML = '';
         subjects.forEach(sub => {
             const btn = document.createElement('button');
-            btn.className = (i === 0 ? 'subj-tab' : 'subj-bar-tab') + (sub === activeSubject ? ' active' : '');
+            btn.className = 'subj-tab' + (sub === activeSubject ? ' active' : '');
+            btn.innerHTML = sub + '<span class="subj-tab-count">' + subjectCounts[sub] + '</span>';
+            btn.onclick = () => switchSubject(sub);
+            headerBar.appendChild(btn);
+        });
+    }
+
+    // Content-area underline tabs
+    if (contentBar) {
+        contentBar.innerHTML = '';
+        subjects.forEach(sub => {
+            const btn = document.createElement('button');
+            btn.className = 'strip-tab' + (sub === activeSubject ? ' active' : '');
+            btn.innerHTML = sub + '<span class="strip-tab-pill">' + subjectCounts[sub] + '</span>';
+            btn.onclick = () => switchSubject(sub);
+            contentBar.appendChild(btn);
+        });
+    }
+
+    // Sidebar mini tabs
+    if (sidebarTabs) {
+        sidebarTabs.innerHTML = '';
+        subjects.forEach(sub => {
+            const btn = document.createElement('button');
+            btn.className = 'sb-subj-btn' + (sub === activeSubject ? ' active' : '');
             btn.textContent = sub;
             btn.onclick = () => switchSubject(sub);
-            container.appendChild(btn);
+            sidebarTabs.appendChild(btn);
         });
-    });
+    }
 }
 
 function switchSubject(sub) {
@@ -746,14 +778,19 @@ function renderOptions(question) {
         const isSelected = selectedAnswer === optText;
         
         const item = document.createElement('div');
-        // Support both old class (option-item) and new class (opt)
-        item.className = `opt option-item ${isSelected ? 'selected' : ''}`;
+        item.className = `opt option-item${isSelected ? ' selected' : ''}`;
         item.onclick = () => selectOption(question.questionId, optText);
         
         item.innerHTML = `
             <div class="opt-letter option-letter">${letter}</div>
             <div class="opt-text option-text">${optText}</div>
+            <div class="opt-check">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
         `;
+
+        // CRITICAL: actually append to the list
+        list.appendChild(item);
     });
 }
 
