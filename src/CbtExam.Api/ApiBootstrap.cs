@@ -60,6 +60,38 @@ public static class ApiBootstrap
                 // Enable Write-Ahead Logging for high concurrency (500+ users)
                 db.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
                 
+                // Add CustomSessionName column if it doesn't exist
+                try
+                {
+                    var connection = db.Database.GetDbConnection();
+                    await connection.OpenAsync();
+                    using var command = connection.CreateCommand();
+                    command.CommandText = "PRAGMA table_info(ExamSessions)";
+                    using var reader = await command.ExecuteReaderAsync();
+                    var hasCustomSessionName = false;
+                    while (await reader.ReadAsync())
+                    {
+                        var columnName = reader.GetString(1);
+                        if (columnName == "CustomSessionName")
+                        {
+                            hasCustomSessionName = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!hasCustomSessionName)
+                    {
+                        using var addColumnCommand = connection.CreateCommand();
+                        addColumnCommand.CommandText = "ALTER TABLE ExamSessions ADD COLUMN CustomSessionName TEXT DEFAULT ''";
+                        await addColumnCommand.ExecuteNonQueryAsync();
+                    }
+                    await connection.CloseAsync();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error adding CustomSessionName column: {ex.Message}");
+                }
+                
                 // Verify schema is usable by probing known tables
                 _ = db.Students.Count();
                 _ = db.Exams.Count();
