@@ -25,6 +25,11 @@ public static class ApiBootstrap
         builder.WebHost.UseKestrel(k =>
         {
             k.ListenAnyIP(port);
+            // Configure Kestrel to limit request size to prevent large payload attacks
+            k.Limits.MaxRequestBodySize = 10 * 1024 * 1024; // 10MB max
+            // Configure timeouts to prevent slowloris attacks
+            k.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(5);
+            k.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(30);
         });
 
         var dbDirectory = Path.GetDirectoryName(dbPath);

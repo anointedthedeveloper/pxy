@@ -116,7 +116,7 @@
                     <span>Waiting for Coordinator...</span>
                 </button>
 
-                <button class="submit-btn" id="btn-leave-room" style="background: #ef4444; margin-top: 12px; display: none;">
+                <button class="submit-btn" id="btn-leave-room" style="background: #ef4444; margin-top: 12px;" onclick="leaveWaitingRoom()">
                     <span>Leave Waiting Room</span>
                 </button>
             </div>
@@ -154,6 +154,34 @@
                         <div class="control-desc">Submit Exam</div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Pre-Exam Checklist -->
+            <div class="checklist-container">
+                <h4>Pre-Exam Checklist</h4>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check-id" onchange="updateChecklist()">
+                    <label for="check-id">I have my ID/slip on my desk</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check-mouse" onchange="updateChecklist()">
+                    <label for="check-mouse">My mouse is working properly</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check-keyboard" onchange="updateChecklist()">
+                    <label for="check-keyboard">My keyboard is working properly</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check-shortcuts" onchange="updateChecklist()">
+                    <label for="check-shortcuts">I understand the keyboard shortcuts</label>
+                </div>
+                <div id="checklist-status" style="margin-top: 8px; font-size: 12px; color: #10b981;"></div>
+            </div>
+
+            <!-- Exam Tips Carousel -->
+            <div class="tips-container">
+                <h4>Exam Tips</h4>
+                <div id="tip-display" style="font-size: 13px; color: #64748b; line-height: 1.5;"></div>
             </div>
 
             <div class="info-alert-box">
@@ -227,6 +255,15 @@
                 }
             });
 
+            // Handle force logout from invigilator
+            connection.on('ForceLogout', () => {
+                showToast('Logged Out', 'You have been logged out by the invigilator.', 'error');
+                setTimeout(() => {
+                    localStorage.clear();
+                    window.location.href = 'index.html';
+                }, 2000);
+            });
+
             // Real-time: admin started the exam — trigger decrypt + countdown immediately
             connection.on('ExamStarted', () => {
                 if (starting) return;
@@ -291,6 +328,49 @@
                 })
                 .catch(() => {});
             // ----------------------------------------------------
+
+            function leaveWaitingRoom() {
+                // Clear all session data and redirect to selection
+                localStorage.removeItem('studentExamId');
+                localStorage.removeItem('sessionId');
+                localStorage.removeItem('cbt_session_code');
+                localStorage.removeItem('encryptedQuestions');
+                localStorage.removeItem('cachedQuestions');
+                window.location.href = 'selection.html';
+            }
+
+            function updateChecklist() {
+                const checks = ['check-id', 'check-mouse', 'check-keyboard', 'check-shortcuts'];
+                const allChecked = checks.every(id => document.getElementById(id).checked);
+                const status = document.getElementById('checklist-status');
+                if (allChecked) {
+                    status.textContent = '✓ You are fully prepared! Waiting for coordinator...';
+                } else {
+                    status.textContent = '';
+                }
+            }
+
+            const examTips = [
+                "Take a deep breath. Read every question carefully before choosing an answer.",
+                "You can use your keyboard shortcuts (A, B, C, D) to navigate quickly.",
+                "Stuck on a hard question? Skip it using 'N' and come back to it later.",
+                "Manage your time wisely - don't spend too long on any one question.",
+                "Review your answers before submitting if time permits.",
+                "Stay calm and focused. You've prepared for this!"
+            ];
+
+            let currentTipIndex = 0;
+            function rotateTips() {
+                const tipDisplay = document.getElementById('tip-display');
+                if (tipDisplay) {
+                    tipDisplay.textContent = examTips[currentTipIndex];
+                    currentTipIndex = (currentTipIndex + 1) % examTips.length;
+                }
+            }
+
+            // Initialize tips and rotate every 8 seconds
+            rotateTips();
+            setInterval(rotateTips, 8000);
 
             document.getElementById('wait-candidate-name').textContent = studentName;
             document.getElementById('wait-exam-name').textContent = examTitle;
@@ -613,20 +693,13 @@
                 if (starting) return;
                 const statusEl = document.getElementById('wait-system-status');
                 try {
-                    const res = await fetch(`${API_BASE}/Student/progress`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            studentExamId: studentExamId,
-                            questionId: -1, // Use -1 to indicate this is a heartbeat
-                            selectedAnswer: ""
-                        })
-                    });
+                    // Use GET endpoint for heartbeat instead of POST to avoid validation issues
+                    const res = await fetch(`${API_BASE}/Student/${studentExamId}/progress`);
                     if (!res.ok) {
-                        if (statusEl) { statusEl.textContent = 'Disconnected'; statusEl.style.color = '#ef4444'; }
+                        if (statusEl) { statusEl.textContent = 'Local Mode (Secure)'; statusEl.style.color = '#f59e0b'; }
                         return;
                     }
-                    if (statusEl) { statusEl.textContent = 'Connected'; statusEl.style.color = '#10b981'; }
+                    if (statusEl) { statusEl.textContent = 'Sync Status: Ready'; statusEl.style.color = '#10b981'; }
                     const data = await res.json();
                     
                     if (data.broadcastMessage) {

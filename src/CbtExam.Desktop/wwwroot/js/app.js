@@ -40,30 +40,12 @@ function getBrowserAndOS() {
 }
 
 async function runDeviceHeartbeat() {
-    const browserOS = getBrowserAndOS();
-    const studentId = localStorage.getItem('studentId') || "Awaiting Login";
-    
-    let batteryLevel = 100;
-    try {
-        if (navigator.getBattery) {
-            const battery = await navigator.getBattery();
-            batteryLevel = Math.round(battery.level * 100);
-        }
-    } catch (e) { }
-
     // Device heartbeat is optional - don't fail if endpoint doesn't exist
     try {
         const studentExamId = localStorage.getItem('studentExamId');
         if (studentExamId) {
-            await fetch(`${API_BASE}/Student/progress`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    studentExamId: parseInt(studentExamId),
-                    questionId: -1, // Use -1 to indicate this is a heartbeat, not an answer
-                    selectedAnswer: ""
-                })
-            });
+            // Use GET endpoint for heartbeat instead of POST to avoid validation issues
+            await fetch(`${API_BASE}/Student/${studentExamId}/progress`);
         }
     } catch (e) {
         console.warn("Device heartbeat failed", e);
