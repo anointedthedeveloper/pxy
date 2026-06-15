@@ -3372,6 +3372,30 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
     {
         var results = new List<JsonElement>();
         var seen = new HashSet<string>(); // deduplicate by id+examyear
+
+        // First try to parse as a proper JSON array (fast and reliable)
+        try
+        {
+            var array = JsonSerializer.Deserialize<JsonElement[]>(raw);
+            if (array != null && array.Length > 0)
+            {
+                foreach (var el in array)
+                {
+                    var idKey = el.TryGetProperty("id", out var idProp) ? idProp.GetInt32().ToString() : "";
+                    var yrKey = el.TryGetProperty("examyear", out var yrProp) ? yrProp.GetString() ?? "" : "";
+                    var key = $"{idKey}|{yrKey}";
+                    if (!string.IsNullOrEmpty(idKey) && !seen.Contains(key))
+                    {
+                        seen.Add(key);
+                        results.Add(el);
+                    }
+                }
+                return results;
+            }
+        }
+        catch { /* Fall back to manual parser if array parsing fails */ }
+
+        // Fallback: manual brace-counting parser for malformed JSON
         int depth = 0;
         int start = -1;
         for (int i = 0; i < raw.Length; i++)
