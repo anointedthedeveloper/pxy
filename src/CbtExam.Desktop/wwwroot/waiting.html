@@ -613,17 +613,12 @@
                 if (starting) return;
                 const statusEl = document.getElementById('wait-system-status');
                 try {
-                    const res = await fetch(`${API_BASE}/Student/heartbeat`, {
+                    const res = await fetch(`${API_BASE}/Student/${studentExamId}/progress`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            studentExamId: studentExamId,
-                            currentQuestion: 0,
-                            batteryLevel: 100,
-                            isOnline: true,
-                            connectionState: 'online',
-                            deviceName: activeDeviceName,
-                            deviceId: activeDeviceId
+                            questionId: -1, // Use -1 to indicate this is a heartbeat
+                            selectedAnswer: ""
                         })
                     });
                     if (!res.ok) {

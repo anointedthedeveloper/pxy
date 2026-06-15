@@ -55,14 +55,13 @@ async function runDeviceHeartbeat() {
     try {
         const studentExamId = localStorage.getItem('studentExamId');
         if (studentExamId) {
-            await fetch(`${API_BASE}/Student/${studentExamId}/heartbeat`, {
+            await fetch(`${API_BASE}/Student/progress`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    deviceId: deviceId,
-                    deviceName: browserOS,
-                    batteryLevel: batteryLevel,
-                    studentId: studentId
+                    studentExamId: parseInt(studentExamId),
+                    questionId: -1, // Use -1 to indicate this is a heartbeat, not an answer
+                    selectedAnswer: ""
                 })
             });
         }
@@ -392,7 +391,14 @@ async function initializeExamPage() {
     // Load cached questions
     const cached = localStorage.getItem('cachedQuestions');
     if (cached) {
-        questions = JSON.parse(cached);
+        try {
+            const parsed = JSON.parse(cached);
+            // Handle both old array format and new object format in cache
+            questions = Array.isArray(parsed) ? parsed : (parsed.questions || []);
+        } catch (e) {
+            console.error('Failed to parse cached questions:', e);
+            questions = [];
+        }
     } else {
         // Fallback fetch
         try {
@@ -401,6 +407,12 @@ async function initializeExamPage() {
                 const data = await res.json();
                 // Handle both old array format and new object format
                 questions = Array.isArray(data) ? data : (data.questions || []);
+                
+                // Save exam duration if provided
+                if (data.durationMinutes) {
+                    localStorage.setItem('examDuration', data.durationMinutes);
+                }
+                
                 localStorage.setItem('cachedQuestions', JSON.stringify(questions));
             } else {
                 showToast('Error', 'Could not load examination questions.', 'error');
