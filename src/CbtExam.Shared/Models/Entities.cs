@@ -40,6 +40,8 @@ public class ExamSession
     public bool IsActive { get; set; }
     public bool IsStarted { get; set; } = false;
     public bool AutoApprove { get; set; } = true;  // auto-approve late joiners
+    public bool AllowRetakes { get; set; } = false;  // allow students to retake exam
+    public string CustomSessionName { get; set; } = string.Empty;  // custom name for the session
     public Exam? Exam { get; set; }
     public ICollection<StudentExam> StudentExams { get; set; } = new List<StudentExam>();
 }

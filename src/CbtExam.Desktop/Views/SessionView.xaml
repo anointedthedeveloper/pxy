@@ -126,6 +126,13 @@
                         <TextBlock Text="CHOOSE EXAM TEMPLATE" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="2,0,0,8"/>
                         <ComboBox ItemsSource="{Binding Exams}" SelectedItem="{Binding SelectedExam}"
                                   DisplayMemberPath="Title" Width="380" HorizontalAlignment="Left" Height="46"/>
+                        
+                        <TextBlock Text="CUSTOM SESSION NAME (OPTIONAL)" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="2,16,0,8"/>
+                        <TextBox Text="{Binding CustomSessionName, UpdateSourceTrigger=PropertyChanged}" Width="380" HorizontalAlignment="Left" Height="38" 
+                                 VerticalContentAlignment="Center" Padding="10,0" FontSize="13"
+                                 Style="{StaticResource ModernTextBox}"/>
+                        <TextBlock Text="Leave blank for auto-increment (e.g., Exam Name, Exam Name 2, Exam Name 3)" 
+                                   FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
                     </StackPanel>
                     <Button Grid.Column="1" Command="{Binding StartCommand}" Style="{StaticResource PrimaryBtn}"
                             Background="{DynamicResource AccentBrush}" Padding="32,14" VerticalAlignment="Center">
@@ -199,8 +206,12 @@
                                                             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                                                    <Setter Property="Text" Value="ACTIVE"/>
+                                                                    <Setter Property="Text" Value="ONGOING"/>
                                                                     <Setter Property="Foreground" Value="#16A34A"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                                    <Setter Property="Text" Value="TAKEN"/>
+                                                                    <Setter Property="Foreground" Value="#64748B"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -377,6 +388,13 @@
                                      <StackPanel Orientation="Horizontal">
                                          <TextBlock Text="Auto-Approve" FontSize="13" FontWeight="SemiBold" Foreground="#475569" VerticalAlignment="Center" Margin="0,0,10,0"/>
                                          <CheckBox IsChecked="{Binding CurrentRoomAutoApprove}" Command="{Binding ToggleAutoApproveCommand}" VerticalAlignment="Center" ToolTip="Automatically approve students who join an ongoing exam"/>
+                                     </StackPanel>
+                                 </Border>
+                                 <!-- Allow Retakes Toggle -->
+                                 <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="12,8" Margin="0,0,10,0">
+                                     <StackPanel Orientation="Horizontal">
+                                         <TextBlock Text="Allow Retakes" FontSize="13" FontWeight="SemiBold" Foreground="#475569" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                         <CheckBox IsChecked="{Binding CurrentRoomAllowRetakes}" Command="{Binding ToggleAllowRetakesCommand}" VerticalAlignment="Center" ToolTip="Allow students to retake the exam if they have already submitted"/>
                                      </StackPanel>
                                  </Border>
                                  <Button Command="{Binding BroadcastCommand}" Background="Transparent" BorderBrush="#E2E8F0" BorderThickness="1" Foreground="#475569" Padding="14,8" Margin="0,0,10,0">

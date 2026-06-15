@@ -15,8 +15,8 @@ public record QuestionCreateDto(int QuestionNumber, string Text, List<string> Op
 public record QuestionDto(int Id, int ExamId, int QuestionNumber, string Text, string OptionsJson, string CorrectAnswer, string Subject = "", int Year = 0);
 
 // --- Session DTOs ---
-public record SessionStartDto(int ExamId, bool AutoApprove = true);
-public record SessionDto(int Id, int ExamId, string ExamTitle, string SessionCode, DateTime StartedAt, bool IsActive, int StudentCount, bool IsStarted = false, string BroadcastMessage = "", bool AutoApprove = true);
+public record SessionStartDto(int ExamId, bool AutoApprove = true, string CustomSessionName = "");
+public record SessionDto(int Id, int ExamId, string ExamTitle, string SessionCode, DateTime StartedAt, bool IsActive, int StudentCount, bool IsStarted = false, string BroadcastMessage = "", bool AutoApprove = true, bool AllowRetakes = false, string CustomSessionName = "");
 
 // --- Student DTOs ---
 public record JoinExamDto(string SessionCode, string FullName, string StudentId, string DeviceId = "", string DeviceName = "");

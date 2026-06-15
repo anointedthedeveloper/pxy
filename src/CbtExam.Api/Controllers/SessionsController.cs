@@ -28,7 +28,8 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
 
         var result = sessions.Select(s => {
             _broadcasts.TryGetValue(s.Id, out var msg);
-            return new SessionDto(s.Id, s.ExamId, s.Exam!.Title, s.SessionCode, s.StartedAt, s.IsActive, s.StudentExams.Count, s.IsStarted, msg ?? "", s.AutoApprove);
+            var displayName = string.IsNullOrWhiteSpace(s.CustomSessionName) ? s.Exam!.Title : s.CustomSessionName;
+            return new SessionDto(s.Id, s.ExamId, s.Exam!.Title, s.SessionCode, s.StartedAt, s.IsActive, s.StudentExams.Count, s.IsStarted, msg ?? "", s.AutoApprove, s.AllowRetakes, displayName);
         }).ToList();
 
         return Ok(result);
@@ -40,17 +41,45 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
         var exam = await db.Exams.FindAsync(dto.ExamId);
         if (exam is null) return NotFound("Exam not found");
 
+        // Determine session name
+        string sessionName;
+        if (!string.IsNullOrWhiteSpace(dto.CustomSessionName))
+        {
+            sessionName = dto.CustomSessionName.Trim();
+        }
+        else
+        {
+            // Auto-increment: check existing sessions for this exam
+            var existingSessions = await db.ExamSessions
+                .Where(s => s.ExamId == dto.ExamId)
+                .OrderByDescending(s => s.StartedAt)
+                .ToListAsync();
+            
+            if (existingSessions.Count == 0)
+            {
+                sessionName = exam.Title;
+            }
+            else
+            {
+                // Count how many sessions with this base name exist
+                var count = existingSessions.Count;
+                sessionName = $"{exam.Title} {count + 1}";
+            }
+        }
+
         var session = new ExamSession
         {
             ExamId = dto.ExamId,
             SessionCode = GenerateCode(),
             StartedAt = DateTime.UtcNow,
             IsActive = true,
-            AutoApprove = dto.AutoApprove
+            AutoApprove = dto.AutoApprove,
+            AllowRetakes = false,  // default to false for security
+            CustomSessionName = sessionName
         };
         db.ExamSessions.Add(session);
         await db.SaveChangesAsync();
-        return Ok(new SessionDto(session.Id, session.ExamId, exam.Title, session.SessionCode, session.StartedAt, true, 0, false, "", session.AutoApprove));
+        return Ok(new SessionDto(session.Id, session.ExamId, exam.Title, session.SessionCode, session.StartedAt, true, 0, false, "", session.AutoApprove, session.AllowRetakes, session.CustomSessionName));
     }
 
     [HttpPost("{id}/begin")]
@@ -131,6 +160,17 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
         var session = await db.ExamSessions.FindAsync(id);
         if (session is null) return NotFound();
         session.AutoApprove = autoApprove;
+        await db.SaveChangesAsync();
+        return Ok();
+    }
+
+    // PATCH /api/sessions/{id}/allow-retakes — toggle allow retakes
+    [HttpPatch("{id}/allow-retakes")]
+    public async Task<IActionResult> SetAllowRetakes(int id, [FromBody] bool allowRetakes)
+    {
+        var session = await db.ExamSessions.FindAsync(id);
+        if (session is null) return NotFound();
+        session.AllowRetakes = allowRetakes;
         await db.SaveChangesAsync();
         return Ok();
     }

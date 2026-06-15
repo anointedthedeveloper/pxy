@@ -7,6 +7,15 @@ if (window.location.protocol === 'file:') {
     API_BASE = `http://${savedServerIp}:5000/api`;
 }
 
+// Request fullscreen on exam page load for JAMB-like experience
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(err => {
+            console.log('Fullscreen request failed:', err);
+        });
+    }
+});
+
 // --- Device fingerprinting and heartbeat locking (wrapped in try-catch to prevent crashes in private modes) ---
 let deviceId = 'NODE-UNKNOWN';
 try {
@@ -588,9 +597,7 @@ function initSubjectTabs() {
 }
 
 function renderSubjectTabs() {
-    const headerBar     = document.getElementById('subject-tabs-bar');
     const contentBar    = document.getElementById('subject-content-bar');
-    const sidebarTabs   = document.getElementById('sidebar-subject-tabs');
 
     // Count questions per subject for the badges
     const subjectCounts = {};
@@ -598,19 +605,7 @@ function renderSubjectTabs() {
         subjectCounts[sub] = questions.filter(q => ((q.subject && q.subject.trim()) ? q.subject.trim() : 'General') === sub).length;
     });
 
-    // Header pills
-    if (headerBar) {
-        headerBar.innerHTML = '';
-        subjects.forEach(sub => {
-            const btn = document.createElement('button');
-            btn.className = 'subj-tab' + (sub === activeSubject ? ' active' : '');
-            btn.innerHTML = sub + '<span class="subj-tab-count">' + subjectCounts[sub] + '</span>';
-            btn.onclick = () => switchSubject(sub);
-            headerBar.appendChild(btn);
-        });
-    }
-
-    // Content-area underline tabs
+    // Content-area underline tabs (only one subject navigator)
     if (contentBar) {
         contentBar.innerHTML = '';
         subjects.forEach(sub => {
@@ -619,18 +614,6 @@ function renderSubjectTabs() {
             btn.innerHTML = sub + '<span class="strip-tab-pill">' + subjectCounts[sub] + '</span>';
             btn.onclick = () => switchSubject(sub);
             contentBar.appendChild(btn);
-        });
-    }
-
-    // Sidebar mini tabs
-    if (sidebarTabs) {
-        sidebarTabs.innerHTML = '';
-        subjects.forEach(sub => {
-            const btn = document.createElement('button');
-            btn.className = 'sb-subj-btn' + (sub === activeSubject ? ' active' : '');
-            btn.textContent = sub;
-            btn.onclick = () => switchSubject(sub);
-            sidebarTabs.appendChild(btn);
         });
     }
 }
@@ -736,8 +719,16 @@ function renderQuestion(index) {
     const sectionContent = document.getElementById('question-section-content');
     if (sectionWrap && sectionContent) {
         if (q.section && q.section.trim()) {
-            sectionContent.innerHTML = q.section;
-            sectionWrap.style.display = 'block';
+            // Hide sections containing "solution" during exam mode (only show in results)
+            const sectionText = q.section.toLowerCase();
+            const isSolution = sectionText.includes('solution');
+            
+            if (isSolution && !examCompleted) {
+                sectionWrap.style.display = 'none';
+            } else {
+                sectionContent.innerHTML = q.section;
+                sectionWrap.style.display = 'block';
+            }
         } else {
             sectionWrap.style.display = 'none';
         }
@@ -869,14 +860,46 @@ function jumpToQuestion(index) {
 }
 
 function nextQuestion() {
-    if (currentIndex < questions.length - 1) {
-        jumpToQuestion(currentIndex + 1);
+    const subQuestions = getFilteredQuestions();
+    const currentQ = questions[currentIndex];
+    const subIndex = subQuestions.findIndex(x => x.questionId === currentQ.questionId);
+    
+    // If current question is not in filtered list (shouldn't happen), fall back to global navigation
+    if (subIndex === -1) {
+        if (currentIndex < questions.length - 1) {
+            jumpToQuestion(currentIndex + 1);
+        }
+        return;
+    }
+    
+    if (subIndex < subQuestions.length - 1) {
+        const nextQ = subQuestions[subIndex + 1];
+        const globalIndex = questions.findIndex(x => x.questionId === nextQ.questionId);
+        if (globalIndex !== -1) {
+            jumpToQuestion(globalIndex);
+        }
     }
 }
 
 function prevQuestion() {
-    if (currentIndex > 0) {
-        jumpToQuestion(currentIndex - 1);
+    const subQuestions = getFilteredQuestions();
+    const currentQ = questions[currentIndex];
+    const subIndex = subQuestions.findIndex(x => x.questionId === currentQ.questionId);
+    
+    // If current question is not in filtered list (shouldn't happen), fall back to global navigation
+    if (subIndex === -1) {
+        if (currentIndex > 0) {
+            jumpToQuestion(currentIndex - 1);
+        }
+        return;
+    }
+    
+    if (subIndex > 0) {
+        const prevQ = subQuestions[subIndex - 1];
+        const globalIndex = questions.findIndex(x => x.questionId === prevQ.questionId);
+        if (globalIndex !== -1) {
+            jumpToQuestion(globalIndex);
+        }
     }
 }
 

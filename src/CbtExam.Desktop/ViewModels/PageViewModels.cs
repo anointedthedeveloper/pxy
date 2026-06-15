@@ -974,6 +974,9 @@ public class SessionViewModel : BaseViewModel, IRefreshable
     private ExamDto? _selectedExam;
     public ExamDto? SelectedExam { get => _selectedExam; set => Set(ref _selectedExam, value); }
 
+    private string _customSessionName = string.Empty;
+    public string CustomSessionName { get => _customSessionName; set => Set(ref _customSessionName, value); }
+
     public bool HasActiveSessions => ActiveSessions.Count > 0;
 
     private SessionDto? _currentRoom;
@@ -990,6 +993,12 @@ public class SessionViewModel : BaseViewModel, IRefreshable
     public bool CurrentRoomAutoApprove
     {
         get => _currentRoom?.AutoApprove ?? true;
+        set { /* toggled via command */ }
+    }
+
+    public bool CurrentRoomAllowRetakes
+    {
+        get => _currentRoom?.AllowRetakes ?? false;
         set { /* toggled via command */ }
     }
     
@@ -1045,6 +1054,16 @@ public class SessionViewModel : BaseViewModel, IRefreshable
         await LoadAsync();
         var updated = ActiveSessions.FirstOrDefault(x => x.Id == CurrentRoom.Id);
         if (updated != null) { CurrentRoom = updated; OnPropertyChanged(nameof(CurrentRoomAutoApprove)); }
+    });
+    public RelayCommand ToggleAllowRetakesCommand => new(async () =>
+    {
+        if (CurrentRoom is null) return;
+        var newVal = !CurrentRoom.AllowRetakes;
+        await api.SetAllowRetakesAsync(CurrentRoom.Id, newVal);
+        // Reload to get updated session state
+        await LoadAsync();
+        var updated = ActiveSessions.FirstOrDefault(x => x.Id == CurrentRoom.Id);
+        if (updated != null) { CurrentRoom = updated; OnPropertyChanged(nameof(CurrentRoomAllowRetakes)); }
     });
     public RelayCommand BroadcastCommand => new(async () => {
         if (CurrentRoom is null) return;
@@ -1213,7 +1232,8 @@ public class SessionViewModel : BaseViewModel, IRefreshable
     private async Task StartAsync()
     {
         if (SelectedExam is null) return;
-        await api.StartSessionAsync(SelectedExam.Id);
+        await api.StartSessionAsync(SelectedExam.Id, CustomSessionName);
+        CustomSessionName = string.Empty; // Reset after starting
         await LoadAsync();
         
         NotificationsViewModel.Instance?.Add(new NotificationItem(
@@ -2205,7 +2225,7 @@ public class ResultsViewModel(ApiClient api) : BaseViewModel, IRefreshable
         set { Set(ref _statusFilter, value); FilterResults(); }
     }
 
-    public ObservableCollection<string> StatusFilters { get; } = ["All Candidates", "Passed", "Failed"];
+    public ObservableCollection<string> StatusFilters { get; } = ["All Candidates"];
 
     private double _avgScore;
     private int _passCount, _failCount;

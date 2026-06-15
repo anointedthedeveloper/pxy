@@ -268,6 +268,9 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
     <h3>Question Review</h3>
   </div>
 
+  <!-- Subject navigation for results -->
+  <div class="review-subject-tabs" id="review-subject-tabs" style="display:none; margin-bottom:16px; display:flex; gap:8px; flex-wrap:wrap;"></div>
+
   <div class="review-filters">
     <button class="filter-btn active" onclick="filterReview('all', this)">All</button>
     <button class="filter-btn" onclick="filterReview('correct', this)">✓ Correct</button>
@@ -351,6 +354,20 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    // Extract unique subjects and build subject tabs
+    const subjects = [...new Set(result.questions.map(q => q.subject || 'General'))].sort();
+    const subjectTabsEl = document.getElementById('review-subject-tabs');
+    if (subjects.length > 1) {
+        subjectTabsEl.style.display = 'flex';
+        subjects.forEach(sub => {
+            const btn = document.createElement('button');
+            btn.className = 'filter-btn';
+            btn.textContent = sub;
+            btn.onclick = () => filterBySubject(sub, btn);
+            subjectTabsEl.appendChild(btn);
+        });
+    }
+
     result.questions.forEach((q, i) => {
         const answerRecord = result.answers?.find(a => a.questionId === q.questionId);
         const selected = answerRecord?.selectedAnswer ?? null;
@@ -419,6 +436,15 @@ function filterReview(state, btn) {
     btn.classList.add('active');
     _allCards.forEach(card => {
         card.style.display = (state === 'all' || card.dataset.state === state) ? '' : 'none';
+    });
+}
+
+function filterBySubject(subject, btn) {
+    document.querySelectorAll('#review-subject-tabs .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    _allCards.forEach(card => {
+        const cardSubject = card.querySelector('.rc-subj')?.textContent || 'General';
+        card.style.display = (cardSubject === subject) ? '' : 'none';
     });
 }
 

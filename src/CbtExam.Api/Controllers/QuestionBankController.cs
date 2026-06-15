@@ -63,8 +63,9 @@ public class QuestionBankController(AppDbContext db) : ControllerBase
     {
         if (questions == null || questions.Count == 0) return BadRequest("No questions provided.");
 
+        // Convert underscores to spaces and clean subject name
         var subjectClean = System.Globalization.CultureInfo.CurrentCulture.TextInfo
-            .ToTitleCase(subject.Trim().ToLower());
+            .ToTitleCase(subject.Replace('_', ' ').Trim().ToLower());
 
         static string CapFirst(string s) =>
             string.IsNullOrWhiteSpace(s) ? s : char.ToUpper(s[0]) + s[1..];

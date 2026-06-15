@@ -121,14 +121,43 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         // Check if already joined
         var existing = await db.StudentExams.FirstOrDefaultAsync(se => se.StudentId == student.Id && se.SessionId == session.Id);
         if (existing is not null)
+        {
+            // If retakes are not allowed and student already submitted, reject
+            if (!session.AllowRetakes && existing.IsSubmitted)
+            {
+                return BadRequest("You have already taken this exam and retakes are not allowed.");
+            }
+            // If retakes are allowed or not submitted, allow rejoining
             return Ok(new JoinResultDto(existing.Id, session.Id, session.ExamId, session.Exam!.Title, session.Exam.DurationMinutes));
+        }
 
         var se = new StudentExam { StudentId = student.Id, SessionId = session.Id, DeviceId = dto.DeviceId, DeviceName = dto.DeviceName };
+        
+        // Auto-approve if session has auto-approve enabled (even during ongoing exam)
+        if (session.AutoApprove)
+        {
+            se.IsApproved = true;
+        }
+        
         db.StudentExams.Add(se);
         await db.SaveChangesAsync();
 
-        await NotifyAdmin(session.SessionCode, session.Id);
+        // Only notify admin if not auto-approved (for manual approval)
+        if (!session.AutoApprove)
+        {
+            await NotifyAdmin(session.SessionCode, session.Id);
+        }
+        
         return Ok(new JoinResultDto(se.Id, session.Id, session.ExamId, session.Exam!.Title, session.Exam.DurationMinutes));
+    }
+
+    // GET /api/student/{studentExamId}/status — check approval status
+    [HttpGet("{studentExamId}/status")]
+    public async Task<IActionResult> GetStatus(int studentExamId)
+    {
+        var se = await db.StudentExams.FindAsync(studentExamId);
+        if (se is null) return NotFound();
+        return Ok(new { isApproved = se.IsApproved });
     }
 
     // GET /api/student/{studentExamId}/questions
@@ -143,7 +172,9 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
 
         var exam = se.Session!.Exam!;
         var shuffled = QuestionShuffler.ShuffleAll(exam.Questions, exam.ShuffleQuestions, exam.ShuffleOptions, se.Id);
-        return Ok(shuffled);
+        
+        // Return with exam duration included
+        return Ok(new { questions = shuffled, durationMinutes = exam.DurationMinutes, examTitle = exam.Title });
     }
 
     // GET /api/student/{studentExamId}/questions/secure
@@ -164,7 +195,7 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         var key = GetDecryptionKey(se.SessionId);
         var encrypted = EncryptAes(json, key);
         
-        return Ok(new { encryptedQuestions = encrypted });
+        return Ok(new { encryptedQuestions = encrypted, isApproved = se.IsApproved });
     }
 
     // GET /api/student/{studentExamId}/progress
@@ -293,7 +324,8 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
             int correct = correctBySubject.GetValueOrDefault(sub, 0);
             double scaled = pool > 0 ? Math.Round((double)correct / pool * 100) : 0;
             jambTotal += scaled;
-            breakdown.Add($"{sub}: {correct}/{pool} ({(int)scaled}/100)");
+            var abbreviated = AbbreviateSubject(sub);
+            breakdown.Add($"{abbreviated}: {correct}/{pool} ({(int)scaled}/100)");
         }
 
         double maxScore = subjectGroups.Count * 100.0;
@@ -584,5 +616,36 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         }).ToList();
 
         await ExamHub.NotifyStudentUpdate(hub, sessionCode, students);
+    }
+
+    private static string AbbreviateSubject(string subject)
+    {
+        if (string.IsNullOrWhiteSpace(subject)) return "GEN";
+        
+        var s = subject.ToLower().Trim();
+        
+        // Common abbreviations
+        if (s.Contains("english")) return "ENG";
+        if (s.Contains("mathematics") || s.Contains("math")) return "MATHS";
+        if (s.Contains("physics")) return "PHYS";
+        if (s.Contains("chemistry") || s.Contains("chem")) return "CHEM";
+        if (s.Contains("biology") || s.Contains("bio")) return "BIO";
+        if (s.Contains("islamic") || s.Contains("irk")) return "IRK";
+        if (s.Contains("christian") || s.Contains("crk")) return "CRK";
+        if (s.Contains("geography") || s.Contains("geog")) return "GEOG";
+        if (s.Contains("economics") || s.Contains("econ")) return "ECON";
+        if (s.Contains("government") || s.Contains("govt")) return "GOVT";
+        if (s.Contains("literature") || s.Contains("lit")) return "LIT";
+        if (s.Contains("civic") || s.Contains("civ")) return "CIV";
+        if (s.Contains("agriculture") || s.Contains("agric")) return "AGRIC";
+        if (s.Contains("commerce") || s.Contains("comm")) return "COMM";
+        if (s.Contains("account") || s.Contains("acct")) return "ACCT";
+        if (s.Contains("french")) return "FREN";
+        if (s.Contains("history") || s.Contains("hist")) return "HIST";
+        if (s.Contains("geography")) return "GEOG";
+        if (s.Contains("general")) return "GEN";
+        
+        // Default: take first 4 letters uppercase
+        return s.Length >= 4 ? s.Substring(0, 4).ToUpper() : s.ToUpper();
     }
 }

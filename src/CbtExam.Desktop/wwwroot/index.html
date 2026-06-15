@@ -145,5 +145,15 @@
     </div>
 
     <script src="/js/app.js"></script>
+    <script>
+        // Request fullscreen on login page load for JAMB-like experience
+        document.addEventListener('DOMContentLoaded', () => {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log('Fullscreen request failed:', err);
+                });
+            }
+        });
+    </script>
 </body>
 </html>

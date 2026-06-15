@@ -115,6 +115,10 @@
                 <button class="submit-btn disabled" id="btn-start-exam" disabled>
                     <span>Waiting for Coordinator...</span>
                 </button>
+
+                <button class="submit-btn" id="btn-leave-room" style="background: #ef4444; margin-top: 12px;" onclick="leaveWaitingRoom()">
+                    <span>Leave Waiting Room</span>
+                </button>
             </div>
 
             <!-- Keyboard Controls Guide -->
@@ -231,9 +235,38 @@
             });
 
             // Real-time: session ended by admin
-            connection.on('SessionEnded', () => {
+            connection.on('SessionEnded', async () => {
                 if (typeof showToast === 'function')
-                    showToast('Session Ended', 'This session has been ended by the coordinator.', 'error');
+                    showToast('Session Ended', 'This session has been ended by the coordinator. Auto-submitting...', 'error');
+                
+                // Auto-submit before redirecting
+                try {
+                    const studentExamId = parseInt(localStorage.getItem('studentExamId'));
+                    if (studentExamId) {
+                        const responses = {};
+                        const encrypted = localStorage.getItem('encryptedQuestions');
+                        if (encrypted) {
+                            const key = localStorage.getItem('sessionId') || 'default';
+                            const decrypted = await decryptAes(encrypted, key);
+                            const questions = JSON.parse(decrypted);
+                            questions.forEach(q => {
+                                const saved = localStorage.getItem(`q_${q.questionId}`);
+                                if (saved) responses[q.questionId] = saved;
+                            });
+                        }
+                        
+                        if (Object.keys(responses).length > 0) {
+                            await fetch(`${API_BASE}/Student/${studentExamId}/submit`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ answers: responses })
+                            });
+                        }
+                    }
+                } catch (e) {
+                    console.error('Auto-submit failed:', e);
+                }
+                
                 setTimeout(() => { window.location.href = 'selection.html'; }, 3000);
             });
 
@@ -414,6 +447,79 @@
 
                     const qData = await qRes.json();
 
+                    // Download images as backup - fetch unencrypted questions to get image URLs
+                    try {
+                        const studentExamId = localStorage.getItem('studentExamId');
+                        const plainRes = await fetch(`${API_BASE}/Student/${studentExamId}/questions`);
+                        if (plainRes.ok) {
+                            const plainData = await plainRes.json();
+                            const questions = plainData.questions || plainData; // Handle both old and new format
+                            const imageUrls = new Set();
+                            questions?.forEach(q => {
+                                if (q.imageUrl && q.imageUrl.trim()) {
+                                    imageUrls.add(q.imageUrl.trim());
+                                }
+                            });
+                            
+                            // Also save exam duration if provided
+                            if (plainData.durationMinutes) {
+                                localStorage.setItem('examDuration', plainData.durationMinutes);
+                            }
+                            
+                            if (imageUrls.size > 0) {
+                                statusText.textContent = 'Downloading question images as backup...';
+                                const downloadPromises = Array.from(imageUrls).map(url => {
+                                    return fetch(url).then(res => {
+                                        if (res.ok) return res.blob();
+                                        return null;
+                                    }).catch(() => null);
+                                });
+                                await Promise.all(downloadPromises);
+                            }
+                        }
+                    } catch (e) {
+                        console.log('Image download backup skipped:', e);
+                    }
+
+                    // Check if auto-approved or waiting for admin approval
+                    if (qData.isApproved === false) {
+                        statusText.textContent = 'Waiting for admin to accept you to exam...';
+                        statusText.style.color = '#f59e0b';
+                        btn.innerHTML = '<span>Pending Approval</span>';
+                        btn.disabled = true;
+                        
+                        // Poll for approval status
+                        const approvalInterval = setInterval(async () => {
+                            try {
+                                const checkRes = await fetch(`${API_BASE}/Student/${studentExamId}/status`);
+                                if (checkRes.ok) {
+                                    const checkData = await checkRes.json();
+                                    if (checkData.isApproved) {
+                                        clearInterval(approvalInterval);
+                                        // Continue with normal flow
+                                        localStorage.setItem('encryptedQuestions', qData.encryptedQuestions);
+                                        progressBar.style.width = '100%';
+                                        percentText.textContent = '100%';
+                                        statusText.textContent = 'Securely Hydrated – Awaiting Activation Lock Signal...';
+                                        statusText.style.color = '#10b981';
+                                        btn.innerHTML = '<span>Connected to Room (Offline-Hydrated)</span><div class="spinner"></div>';
+                                        
+                                        const checkIcon = document.getElementById('wait-joined-check');
+                                        if (checkIcon) checkIcon.style.display = 'inline-block';
+                                        
+                                        heartbeatInterval = setInterval(() => {
+                                            pollHeartbeatSignal(studentExamId, activeDeviceId, activeDeviceName);
+                                        }, 3000);
+                                        pollHeartbeatSignal(studentExamId, activeDeviceId, activeDeviceName);
+                                    }
+                                }
+                            } catch (e) {
+                                console.error('Approval check failed:', e);
+                            }
+                        }, 3000);
+                        return;
+                    }
+
                     // Cache encrypted string to local storage
                     localStorage.setItem('encryptedQuestions', qData.encryptedQuestions);
                     progressBar.style.width = '100%';
@@ -591,6 +697,17 @@
                 if(percent === 100) {
                     progressBar.style.background = '#10b981';
                     progressBar.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.4)';
+                }
+            }
+
+            function leaveWaitingRoom() {
+                if (confirm('Are you sure you want to leave the waiting room? You will need to rejoin the exam later.')) {
+                    localStorage.removeItem('_waitFailedAt');
+                    localStorage.removeItem('encryptedQuestions');
+                    localStorage.removeItem('studentExamId');
+                    localStorage.removeItem('sessionId');
+                    localStorage.removeItem('cbt_session_code');
+                    window.location.href = 'selection.html';
                 }
             }
         });

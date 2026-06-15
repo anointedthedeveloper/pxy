@@ -35,7 +35,7 @@ public class ApiClient
 
     // Sessions
     public Task<List<SessionDto>?> GetSessionsAsync() => IsReady ? _http.GetFromJsonAsync<List<SessionDto>>("api/sessions") : Task.FromResult<List<SessionDto>?>([]);
-    public Task<HttpResponseMessage> StartSessionAsync(int examId) => IsReady ? _http.PostAsJsonAsync("api/sessions/start", new SessionStartDto(examId)) : OfflineResponse();
+    public Task<HttpResponseMessage> StartSessionAsync(int examId, string customSessionName = "") => IsReady ? _http.PostAsJsonAsync("api/sessions/start", new SessionStartDto(examId, true, customSessionName)) : OfflineResponse();
     public Task<HttpResponseMessage> BeginSessionAsync(int sessionId) => IsReady ? _http.PostAsync($"api/sessions/{sessionId}/begin", content: null) : OfflineResponse();
     public Task<HttpResponseMessage> StopSessionAsync(int sessionId) => IsReady ? _http.PostAsync($"api/sessions/{sessionId}/stop", content: null) : OfflineResponse();
     public Task<HttpResponseMessage> EndAllSessionsAsync() => IsReady ? _http.PostAsync("api/sessions/end-all", content: null) : OfflineResponse();
@@ -44,6 +44,7 @@ public class ApiClient
     public Task<List<ResultDto>?> GetResultsAsync(int sessionId) => IsReady ? _http.GetFromJsonAsync<List<ResultDto>>($"api/sessions/{sessionId}/results") : Task.FromResult<List<ResultDto>?>([]);
     public Task<HttpResponseMessage> BroadcastMessageAsync(int sessionId, string message) => IsReady ? _http.PostAsJsonAsync($"api/sessions/{sessionId}/broadcast", new BroadcastDto(message)) : OfflineResponse();
     public Task<HttpResponseMessage> SetAutoApproveAsync(int sessionId, bool autoApprove) => IsReady ? _http.PatchAsJsonAsync($"api/sessions/{sessionId}/auto-approve", autoApprove) : OfflineResponse();
+    public Task<HttpResponseMessage> SetAllowRetakesAsync(int sessionId, bool allowRetakes) => IsReady ? _http.PatchAsJsonAsync($"api/sessions/{sessionId}/allow-retakes", allowRetakes) : OfflineResponse();
 
     // Students admin
     public Task<List<StudentAdminDto>?> GetStudentRosterAsync() => IsReady ? _http.GetFromJsonAsync<List<StudentAdminDto>>("api/students") : Task.FromResult<List<StudentAdminDto>?>([]);

@@ -26,6 +26,7 @@ public class ExamsController(AppDbContext db) : ControllerBase
         }
 
         return Ok(await query
+            .Include(e => e.Questions)
             .Select(e => new ExamDto(e.Id, e.Title, e.Subject, e.DurationMinutes, e.ShuffleQuestions, e.ShuffleOptions, e.AccessPassword, e.CreatedAt, e.Questions.Count))
             .ToListAsync());
     }
