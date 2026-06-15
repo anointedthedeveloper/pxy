@@ -8,12 +8,10 @@ if (window.location.protocol === 'file:') {
 }
 
 // Request fullscreen on exam page load for JAMB-like experience
+// Note: Fullscreen requires user gesture, so this will fail silently
+// Fullscreen will be triggered when user clicks "Start Exam" button
 document.addEventListener('DOMContentLoaded', () => {
-    if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen().catch(err => {
-            console.log('Fullscreen request failed:', err);
-        });
-    }
+    // Removed auto-fullscreen on load - requires user gesture
 });
 
 // --- Device fingerprinting and heartbeat locking (wrapped in try-catch to prevent crashes in private modes) ---
@@ -53,19 +51,23 @@ async function runDeviceHeartbeat() {
         }
     } catch (e) { }
 
+    // Device heartbeat is optional - don't fail if endpoint doesn't exist
     try {
-        await fetch(`${API_BASE}/Student/device`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                deviceId: deviceId,
-                deviceName: browserOS,
-                batteryLevel: batteryLevel,
-                studentId: studentId
-            })
-        });
+        const studentExamId = localStorage.getItem('studentExamId');
+        if (studentExamId) {
+            await fetch(`${API_BASE}/Student/${studentExamId}/heartbeat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    deviceId: deviceId,
+                    deviceName: browserOS,
+                    batteryLevel: batteryLevel,
+                    studentId: studentId
+                })
+            });
+        }
     } catch (e) {
-        console.warn("LAN device heartbeat failed", e);
+        console.warn("Device heartbeat failed", e);
     }
 }
 
@@ -396,7 +398,9 @@ async function initializeExamPage() {
         try {
             const res = await fetch(`${API_BASE}/Student/${studentExamId}/questions`);
             if (res.ok) {
-                questions = await res.json();
+                const data = await res.json();
+                // Handle both old array format and new object format
+                questions = Array.isArray(data) ? data : (data.questions || []);
                 localStorage.setItem('cachedQuestions', JSON.stringify(questions));
             } else {
                 showToast('Error', 'Could not load examination questions.', 'error');

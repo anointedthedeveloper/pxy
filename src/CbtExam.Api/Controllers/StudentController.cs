@@ -246,11 +246,11 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         return Ok();
     }
 
-    // POST /api/student/submit
-    [HttpPost("submit")]
-    public async Task<IActionResult> Submit([FromBody] ExamSubmitDto dto)
+    // POST /api/student/{studentExamId}/submit
+    [HttpPost("{studentExamId}/submit")]
+    public async Task<IActionResult> Submit(int studentExamId, [FromBody] ExamSubmitDto dto)
     {
-        if (dto is null || dto.StudentExamId <= 0)
+        if (dto is null)
             return BadRequest(new { error = "Invalid submission payload." });
 
         try
@@ -258,7 +258,7 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         var se = await db.StudentExams
             .Include(x => x.Session).ThenInclude(s => s!.Exam).ThenInclude(e => e!.Questions)
             .Include(x => x.Answers)
-            .FirstOrDefaultAsync(x => x.Id == dto.StudentExamId);
+            .FirstOrDefaultAsync(x => x.Id == studentExamId);
 
         if (se is null) return NotFound(new { error = "Student exam not found." });
         if (se.IsSubmitted)

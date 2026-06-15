@@ -805,6 +805,7 @@ document.addEventListener('keydown', function(e) {
 });
 
 // ── SignalR: ForceSubmit & SessionEnded ──
+let _signalRConnectionStarted = false;
 try {
   const _hubUrl = (typeof API_BASE !== 'undefined' ? API_BASE : '/api').replace('/api','') + '/hubs/exam';
   const _conn = new signalR.HubConnectionBuilder().withUrl(_hubUrl).withAutomaticReconnect().build();
@@ -817,10 +818,13 @@ try {
     const msg = p?.message || p;
     if (msg && typeof showToast === 'function') showToast('Broadcast', msg, 'info');
   });
-  _conn.start().then(() => {
-    const code = localStorage.getItem('cbt_session_code');
-    if (code) _conn.invoke('JoinStudentGroup', code).catch(() => {});
-  }).catch(() => {});
+  if (!_signalRConnectionStarted) {
+    _conn.start().then(() => {
+      _signalRConnectionStarted = true;
+      const code = localStorage.getItem('cbt_session_code');
+      if (code) _conn.invoke('JoinStudentGroup', code).catch(() => {});
+    }).catch(() => {});
+  }
 } catch(e) {}
 </script>
 </body>

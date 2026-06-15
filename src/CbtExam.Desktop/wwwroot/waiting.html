@@ -116,7 +116,7 @@
                     <span>Waiting for Coordinator...</span>
                 </button>
 
-                <button class="submit-btn" id="btn-leave-room" style="background: #ef4444; margin-top: 12px;" onclick="leaveWaitingRoom()">
+                <button class="submit-btn" id="btn-leave-room" style="background: #ef4444; margin-top: 12px; display: none;">
                     <span>Leave Waiting Room</span>
                 </button>
             </div>
@@ -214,6 +214,8 @@
                 .withAutomaticReconnect()
                 .build();
 
+            let signalRStarted = false;
+
             connection.on('BroadcastMessage', (payload) => {
                 const msg = payload?.message || payload;
                 if (!msg) return;
@@ -282,6 +284,7 @@
 
             connection.start()
                 .then(() => {
+                    signalRStarted = true;
                     // Join student group for any already-known session code
                     const code = localStorage.getItem('cbt_session_code');
                     if (code) connection.invoke('JoinStudentGroup', code).catch(() => {});
@@ -329,7 +332,27 @@
                             isActive: data.isActive,
                             isStarted: data.isStarted
                         };
-                        startExamProcess(currentSession);
+                        // Check if already joined to avoid duplicate join
+                        const existingStudentExamId = localStorage.getItem('studentExamId');
+                        if (existingStudentExamId) {
+                            // Already joined, just wait for exam to start
+                            statusText.textContent = 'Reconnected to session. Waiting for exam to start...';
+                            progressBar.style.width = '100%';
+                            percentText.textContent = '100%';
+                            btn.innerHTML = '<span>Connected to Room</span>';
+                            btn.disabled = true;
+                            
+                            // Set up heartbeat and wait for exam start
+                            const seid = parseInt(existingStudentExamId);
+                            const did = localStorage.getItem('cbt_device_id') || 'NODE-UNKNOWN';
+                            const dn = typeof getBrowserAndOS === 'function' ? getBrowserAndOS() : 'Browser';
+                            heartbeatInterval = setInterval(() => {
+                                pollHeartbeatSignal(seid, did, dn);
+                            }, 3000);
+                            pollHeartbeatSignal(seid, did, dn);
+                        } else {
+                            startExamProcess(currentSession);
+                        }
                     }
                 } catch (err) {
                     // Silent — network may not be ready yet
