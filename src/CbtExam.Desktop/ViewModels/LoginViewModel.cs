@@ -265,10 +265,33 @@ public class LoginViewModel : BaseViewModel
     {
         try
         {
+            // Add rate limiting to prevent brute force attacks
+            var attemptsFile = Path.Combine(
+                Path.GetDirectoryName(Environment.ProcessPath) ?? AppDomain.CurrentDomain.BaseDirectory,
+                "login_attempts.json");
+            
+            // Check for too many failed attempts
+            if (File.Exists(attemptsFile))
+            {
+                try
+                {
+                    var attemptsJson = File.ReadAllText(attemptsFile);
+                    var attemptsData = System.Text.Json.JsonSerializer.Deserialize<LoginAttemptsData>(attemptsJson);
+                    if (attemptsData != null && attemptsData.FailedAttempts >= 5 && 
+                        (DateTime.UtcNow - attemptsData.LastAttemptTime).TotalMinutes < 15)
+                    {
+                        ErrorMessage = "Too many failed attempts. Please wait 15 minutes before trying again.";
+                        return false;
+                    }
+                }
+                catch { /* Ignore file read errors */ }
+            }
+
             var settingsFile = Path.Combine(
                 Path.GetDirectoryName(Environment.ProcessPath) ?? AppDomain.CurrentDomain.BaseDirectory,
                 "settings.json");
 
+            bool isValid = false;
             if (File.Exists(settingsFile))
             {
                 var json = File.ReadAllText(settingsFile);
@@ -280,13 +303,65 @@ public class LoginViewModel : BaseViewModel
                         var pwd = passProp.GetString();
                         if (!string.IsNullOrEmpty(pwd))
                         {
-                            return code == pwd;
+                            isValid = code == pwd;
                         }
                     }
                 }
             }
 
-            return code == "ADMIN123";
+            if (!isValid)
+            {
+                isValid = code == "ADMIN123";
+            }
+
+            // Track failed attempts
+            if (!isValid)
+            {
+                try
+                {
+                    var attemptsData = new LoginAttemptsData
+                    {
+                        FailedAttempts = 1,
+                        LastAttemptTime = DateTime.UtcNow
+                    };
+                    
+                    if (File.Exists(attemptsFile))
+                    {
+                        var attemptsJson = File.ReadAllText(attemptsFile);
+                        var existingData = System.Text.Json.JsonSerializer.Deserialize<LoginAttemptsData>(attemptsJson);
+                        if (existingData != null)
+                        {
+                            // Reset if 15 minutes have passed
+                            if ((DateTime.UtcNow - existingData.LastAttemptTime).TotalMinutes >= 15)
+                            {
+                                attemptsData.FailedAttempts = 1;
+                            }
+                            else
+                            {
+                                attemptsData.FailedAttempts = existingData.FailedAttempts + 1;
+                            }
+                        }
+                    }
+                    
+                    var serializedAttempts = System.Text.Json.JsonSerializer.Serialize(attemptsData);
+                    File.WriteAllText(attemptsFile, serializedAttempts);
+                }
+                catch { /* Ignore file write errors */ }
+            }
+            else
+            {
+                // Clear failed attempts on successful login
+                try
+                {
+                    if (File.Exists(attemptsFile))
+                    {
+                        File.Delete(attemptsFile);
+                    }
+                }
+                catch { /* Ignore file deletion errors */ }
+            }
+
+            return isValid;
         }
         catch (Exception ex)
         {
@@ -344,4 +419,10 @@ public class LoginData
     public string Username { get; set; } = string.Empty;
     public string? Password { get; set; }
     public bool RememberMe { get; set; }
+}
+
+public class LoginAttemptsData
+{
+    public int FailedAttempts { get; set; }
+    public DateTime LastAttemptTime { get; set; }
 }

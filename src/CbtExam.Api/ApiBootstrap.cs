@@ -40,13 +40,18 @@ public static class ApiBootstrap
             o.UseSqlite($"Data Source={dbPath};Cache=Shared;Pooling=True"));
 
         builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
-            p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+            p.WithOrigins("http://localhost:*", "http://127.0.0.1:*", "http://192.168.*:*")
+             .AllowAnyMethod()
+             .AllowAnyHeader()
+             .AllowCredentials()));
 
         builder.Services.AddControllers()
             .AddApplicationPart(typeof(ApiBootstrap).Assembly);
         builder.Services.AddSignalR(options => {
             options.MaximumReceiveMessageSize = 32768;
             options.EnableDetailedErrors = true;
+        }).AddHubOptions<ExamHub>(options => {
+            options.EnableDetailedErrors = false; // Disable detailed errors in production for security
         });
         builder.Services.AddScoped<SnapshotExportService>();
 

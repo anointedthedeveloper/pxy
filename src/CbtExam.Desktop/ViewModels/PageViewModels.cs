@@ -1018,12 +1018,34 @@ public class SessionViewModel : BaseViewModel, IRefreshable
 
     public ObservableCollection<StudentStatusDto> RoomStudents { get; } = [];
     public ObservableCollection<StudentStatusDto> FilteredRoomStudents { get; } = [];
+    
+    // Retake management
+    public ObservableCollection<SubmittedStudentDto> SubmittedStudents { get; } = [];
+    public ObservableCollection<SubmittedStudentDto> FilteredSubmittedStudents { get; } = [];
+    private HashSet<int> _selectedSubmittedStudentIds = new();
+    
+    // Wrapper class for tracking selection state
+    public class SelectableSubmittedStudent
+    {
+        public SubmittedStudentDto Student { get; set; }
+        public bool IsSelected { get; set; }
+    }
+    
+    public ObservableCollection<SelectableSubmittedStudent> SelectableSubmittedStudents { get; } = [];
+    public ObservableCollection<SelectableSubmittedStudent> FilteredSelectableSubmittedStudents { get; } = [];
 
     private string _searchQuery = string.Empty;
     public string SearchQuery
     {
         get => _searchQuery;
-        set { Set(ref _searchQuery, value); FilterStudents(); }
+        set { Set(ref _searchQuery, value); FilterStudents(); FilterSubmittedStudents(); }
+    }
+    
+    private string _retakeSearchQuery = string.Empty;
+    public string RetakeSearchQuery
+    {
+        get => _retakeSearchQuery;
+        set { Set(ref _retakeSearchQuery, value); FilterSubmittedStudents(); }
     }
 
     private int _connectedCandidatesCount;
@@ -1107,6 +1129,17 @@ public class SessionViewModel : BaseViewModel, IRefreshable
             
         foreach(var s in filtered) FilteredRoomStudents.Add(s);
     }
+    
+    private void FilterSubmittedStudents()
+    {
+        FilteredSelectableSubmittedStudents.Clear();
+        var query = RetakeSearchQuery?.Trim() ?? string.Empty;
+        var filtered = string.IsNullOrEmpty(query) 
+            ? SelectableSubmittedStudents 
+            : SelectableSubmittedStudents.Where(s => s.Student.FullName.Contains(query, StringComparison.OrdinalIgnoreCase) || s.Student.StudentId.Contains(query, StringComparison.OrdinalIgnoreCase));
+            
+        foreach(var s in filtered) FilteredSelectableSubmittedStudents.Add(s);
+    }
 
     // Auto-polling timer for waiting room student list
     private System.Timers.Timer? _roomPollTimer;
@@ -1144,8 +1177,97 @@ public class SessionViewModel : BaseViewModel, IRefreshable
         if (s is null) return;
         CurrentRoom = s;
         RoomStudents.Clear();
+        SubmittedStudents.Clear();
         IsManagingRoom = true;  // this triggers StartRoomPolling
         await RefreshRoomStudents();
+        await RefreshSubmittedStudents();
+    });
+    
+    public RelayCommand<SelectableSubmittedStudent> ToggleRetakeSelectionCommand => new(s => {
+        if (s is null) return;
+        s.IsSelected = !s.IsSelected;
+        OnPropertyChanged(nameof(HasSelectedSubmittedStudents));
+    });
+    
+    public bool HasSelectedSubmittedStudents => SelectableSubmittedStudents.Any(s => s.IsSelected);
+    
+    public RelayCommand AllowSelectedRetakesCommand => new(async () => {
+        if (CurrentRoom is null) return;
+        
+        var selectedIds = SelectableSubmittedStudents.Where(s => s.IsSelected).Select(s => s.Student.Id).ToList();
+        if (selectedIds.Count == 0) return;
+        
+        var result = System.Windows.MessageBox.Show(
+            $"Allow {selectedIds.Count} student(s) to retake the exam? This will reset their submitted answers.",
+            "Confirm Bulk Retake",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Question);
+        
+        if (result == System.Windows.MessageBoxResult.Yes)
+        {
+            try
+            {
+                var response = await api.AllowRetakeBulkAsync(CurrentRoom.Id, selectedIds);
+                if (response.IsSuccessStatusCode)
+                {
+                    foreach(var s in SelectableSubmittedStudents) s.IsSelected = false;
+                    OnPropertyChanged(nameof(HasSelectedSubmittedStudents));
+                    await RefreshSubmittedStudents();
+                    await RefreshRoomStudents();
+                    NotificationsViewModel.Instance?.Add(new NotificationItem(
+                        "Retake Allowed",
+                        $"{selectedIds.Count} student(s) can now retake the exam.",
+                        DateTime.Now,
+                        "success"
+                    ));
+                }
+                else
+                {
+                    System.Windows.MessageBox.Show("Failed to allow retakes.", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Error allowing retakes: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+    });
+    
+    public RelayCommand<SelectableSubmittedStudent> AllowSingleRetakeCommand => new(async s => {
+        if (CurrentRoom is null || s is null) return;
+        
+        var result = System.Windows.MessageBox.Show(
+            $"Allow {s.Student.FullName} ({s.Student.StudentId}) to retake the exam? This will reset their submitted answers.",
+            "Confirm Retake",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Question);
+        
+        if (result == System.Windows.MessageBoxResult.Yes)
+        {
+            try
+            {
+                var response = await api.AllowRetakeAsync(CurrentRoom.Id, s.Student.Id);
+                if (response.IsSuccessStatusCode)
+                {
+                    await RefreshSubmittedStudents();
+                    await RefreshRoomStudents();
+                    NotificationsViewModel.Instance?.Add(new NotificationItem(
+                        "Retake Allowed",
+                        $"{s.Student.FullName} can now retake the exam.",
+                        DateTime.Now,
+                        "success"
+                    ));
+                }
+                else
+                {
+                    System.Windows.MessageBox.Show("Failed to allow retake.", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Error allowing retake: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
     });
     
     public RelayCommand CloseRoomCommand => new(() => {
@@ -1198,6 +1320,24 @@ public class SessionViewModel : BaseViewModel, IRefreshable
                 // Sync room metadata (IsStarted flag etc.)
                 var updated = ActiveSessions.FirstOrDefault(x => x.Id == CurrentRoom.Id);
                 if (updated != null) CurrentRoom = updated;
+            });
+        }
+        catch { /* silently ignore poll errors */ }
+    }
+
+    public async Task RefreshSubmittedStudents()
+    {
+        if (CurrentRoom is null) return;
+        try
+        {
+            var list = await api.GetSubmittedStudentsAsync(CurrentRoom.Id);
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                SubmittedStudents.Clear();
+                SelectableSubmittedStudents.Clear();
+                list?.ForEach(SubmittedStudents.Add);
+                list?.ForEach(s => SelectableSubmittedStudents.Add(new SelectableSubmittedStudent { Student = s, IsSelected = false }));
+                FilterSubmittedStudents();
             });
         }
         catch { /* silently ignore poll errors */ }

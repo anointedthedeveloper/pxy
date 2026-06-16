@@ -322,6 +322,71 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
         return Ok(new { exportedAt = DateTime.UtcNow });
     }
 
+    // GET /api/sessions/{id}/submitted-students — list students who have submitted the exam (for retake management)
+    [HttpGet("{id}/submitted-students")]
+    public async Task<IActionResult> GetSubmittedStudents(int id)
+    {
+        var submittedStudents = await db.StudentExams
+            .Include(se => se.Student)
+            .Where(se => se.SessionId == id && se.IsSubmitted)
+            .Select(se => new { 
+                se.Id, 
+                se.Student!.FullName, 
+                se.Student.StudentId,
+                se.SubmittedAt,
+                se.Score
+            })
+            .OrderByDescending(se => se.SubmittedAt)
+            .ToListAsync();
+        return Ok(submittedStudents);
+    }
+
+    // POST /api/sessions/{id}/allow-retake/{studentExamId} — allow retake for a specific student
+    [HttpPost("{id}/allow-retake/{studentExamId}")]
+    public async Task<IActionResult> AllowRetake(int id, int studentExamId)
+    {
+        var se = await db.StudentExams
+            .Include(se => se.Session)
+            .FirstOrDefaultAsync(se => se.Id == studentExamId && se.SessionId == id);
+        if (se is null) return NotFound();
+        
+        if (!se.IsSubmitted)
+            return BadRequest("Student has not submitted the exam yet.");
+        
+        // Reset the student exam for retake
+        se.IsSubmitted = false;
+        se.SubmittedAt = null;
+        se.Score = 0;
+        se.Answers.Clear();
+        
+        await db.SaveChangesAsync();
+        return Ok();
+    }
+
+    // POST /api/sessions/{id}/allow-retake-bulk — allow retake for multiple students
+    [HttpPost("{id}/allow-retake-bulk")]
+    public async Task<IActionResult> AllowRetakeBulk(int id, [FromBody] List<int> studentExamIds)
+    {
+        if (studentExamIds == null || studentExamIds.Count == 0)
+            return BadRequest("No student exam IDs provided.");
+        
+        var studentExams = await db.StudentExams
+            .Include(se => se.Session)
+            .Where(se => se.SessionId == id && studentExamIds.Contains(se.Id) && se.IsSubmitted)
+            .ToListAsync();
+        
+        foreach (var se in studentExams)
+        {
+            se.IsSubmitted = false;
+            se.SubmittedAt = null;
+            se.Score = 0;
+            se.Answers.Clear();
+        }
+        
+        await db.SaveChangesAsync();
+        return Ok(new { count = studentExams.Count });
+    }
+
     private static string GenerateCode() =>
         Guid.NewGuid().ToString("N").Substring(0, 6).ToUpper();
 

@@ -45,6 +45,11 @@ public class ApiClient
     public Task<HttpResponseMessage> BroadcastMessageAsync(int sessionId, string message) => IsReady ? _http.PostAsJsonAsync($"api/sessions/{sessionId}/broadcast", new BroadcastDto(message)) : OfflineResponse();
     public Task<HttpResponseMessage> SetAutoApproveAsync(int sessionId, bool autoApprove) => IsReady ? _http.PatchAsJsonAsync($"api/sessions/{sessionId}/auto-approve", autoApprove) : OfflineResponse();
     public Task<HttpResponseMessage> SetAllowRetakesAsync(int sessionId, bool allowRetakes) => IsReady ? _http.PatchAsJsonAsync($"api/sessions/{sessionId}/allow-retakes", allowRetakes) : OfflineResponse();
+    
+    // Retake management
+    public Task<List<SubmittedStudentDto>?> GetSubmittedStudentsAsync(int sessionId) => IsReady ? _http.GetFromJsonAsync<List<SubmittedStudentDto>>($"api/sessions/{sessionId}/submitted-students") : Task.FromResult<List<SubmittedStudentDto>?>([]);
+    public Task<HttpResponseMessage> AllowRetakeAsync(int sessionId, int studentExamId) => IsReady ? _http.PostAsync($"api/sessions/{sessionId}/allow-retake/{studentExamId}", content: null) : OfflineResponse();
+    public Task<HttpResponseMessage> AllowRetakeBulkAsync(int sessionId, List<int> studentExamIds) => IsReady ? _http.PostAsJsonAsync($"api/sessions/{sessionId}/allow-retake-bulk", studentExamIds) : OfflineResponse();
 
     // Students admin
     public Task<List<StudentAdminDto>?> GetStudentRosterAsync() => IsReady ? _http.GetFromJsonAsync<List<StudentAdminDto>>("api/students") : Task.FromResult<List<StudentAdminDto>?>([]);

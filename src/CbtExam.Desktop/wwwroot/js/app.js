@@ -7,6 +7,18 @@ if (window.location.protocol === 'file:') {
     API_BASE = `http://${savedServerIp}:5000/api`;
 }
 
+// --- Utility Functions ---
+
+function escapeHtml(unsafe) {
+    if (typeof unsafe !== 'string') return unsafe;
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 // Request fullscreen on exam page load for JAMB-like experience
 // Note: Fullscreen requires user gesture, so this will fail silently
 // Fullscreen will be triggered when user clicks "Start Exam" button
@@ -194,8 +206,8 @@ function showToast(title, message, type = 'info') {
     toast.innerHTML = `
         <div class="toast-icon">${iconHtml}</div>
         <div class="toast-content">
-            <div class="toast-title">${title}</div>
-            <div class="toast-message">${message}</div>
+            <div class="toast-title">${escapeHtml(title)}</div>
+            <div class="toast-message">${escapeHtml(message)}</div>
         </div>
     `;
 
@@ -311,7 +323,7 @@ function createExamCard(exam) {
 
     div.innerHTML = `
         <div class="exam-type-badge">ACTIVE</div>
-        <h3>${exam.title}</h3>
+        <h3>${escapeHtml(exam.title)}</h3>
         <div class="exam-meta-pills">
             <span class="meta-pill">${exam.questionCount || 0} Questions</span>
             <span class="meta-pill">${exam.durationMinutes} Minutes</span>
@@ -772,7 +784,7 @@ function renderOptions(question) {
         
         item.innerHTML = `
             <div class="opt-letter option-letter">${letter}</div>
-            <div class="opt-text option-text">${optText}</div>
+            <div class="opt-text option-text">${escapeHtml(optText)}</div>
             <div class="opt-check">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
