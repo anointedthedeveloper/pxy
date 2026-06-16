@@ -719,8 +719,28 @@
                 if (starting) return;
                 const statusEl = document.getElementById('wait-system-status');
                 try {
-                    // Use GET endpoint for heartbeat instead of POST to avoid validation issues
-                    const res = await fetch(`${API_BASE}/Student/${studentExamId}/progress`);
+                    // Use POST /heartbeat endpoint to get isStarted and decryptionKey
+                    let batteryLevel = 100;
+                    try {
+                        if (navigator.getBattery) {
+                            const battery = await navigator.getBattery();
+                            batteryLevel = Math.round(battery.level * 100);
+                        }
+                    } catch (e) { }
+
+                    const res = await fetch(`${API_BASE}/Student/heartbeat`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            studentExamId: parseInt(studentExamId),
+                            currentQuestion: 0,
+                            batteryLevel: batteryLevel,
+                            isOnline: true,
+                            connectionState: 'online',
+                            deviceName: activeDeviceName,
+                            deviceId: activeDeviceId
+                        })
+                    });
                     if (!res.ok) {
                         if (statusEl) { statusEl.textContent = 'Local Mode (Secure)'; statusEl.style.color = '#f59e0b'; }
                         return;
