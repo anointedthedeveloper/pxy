@@ -821,7 +821,7 @@ try {
   if (!_signalRConnectionStarted) {
     _conn.start().then(() => {
       _signalRConnectionStarted = true;
-      const code = localStorage.getItem('cbt_session_code');
+      const code = localStorage.getItem('selectedSessionCode') || localStorage.getItem('cbt_session_code');
       if (code) _conn.invoke('JoinStudentGroup', code).catch(() => {});
     }).catch(() => {});
   }

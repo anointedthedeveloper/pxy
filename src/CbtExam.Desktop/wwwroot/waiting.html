@@ -233,6 +233,8 @@
             const studentId = localStorage.getItem('studentId') || '';
             const examTitle = localStorage.getItem('selectedExamTitle') || 'Selected Examination';
             const selectedExamId = parseInt(localStorage.getItem('selectedExamId')) || 0;
+            const selectedSessionId = parseInt(localStorage.getItem('selectedSessionId')) || 0;
+            const selectedSessionCode = localStorage.getItem('selectedSessionCode') || '';
             const currentYear = new Date().getFullYear();
 
             // --- SignalR Hub Connection for instant broadcast ---
@@ -322,9 +324,8 @@
             connection.start()
                 .then(() => {
                     signalRStarted = true;
-                    // Join student group for any already-known session code
-                    const code = localStorage.getItem('cbt_session_code');
-                    if (code) connection.invoke('JoinStudentGroup', code).catch(() => {});
+                    // Join student group using the selected session code
+                    if (selectedSessionCode) connection.invoke('JoinStudentGroup', selectedSessionCode).catch(() => {});
                 })
                 .catch(() => {});
             // ----------------------------------------------------
@@ -333,6 +334,8 @@
                 // Clear all session data and redirect to selection
                 localStorage.removeItem('studentExamId');
                 localStorage.removeItem('sessionId');
+                localStorage.removeItem('selectedSessionId');
+                localStorage.removeItem('selectedSessionCode');
                 localStorage.removeItem('cbt_session_code');
                 localStorage.removeItem('encryptedQuestions');
                 localStorage.removeItem('cachedQuestions');
@@ -477,6 +480,7 @@
 
                     // Join SignalR student group NOW that we have the session code
                     localStorage.setItem('cbt_session_code', session.sessionCode);
+                    localStorage.setItem('selectedSessionCode', session.sessionCode);
                     if (typeof window._signalRJoinStudents === 'function')
                         window._signalRJoinStudents(session.sessionCode);
 
@@ -798,6 +802,8 @@
                     localStorage.removeItem('encryptedQuestions');
                     localStorage.removeItem('studentExamId');
                     localStorage.removeItem('sessionId');
+                    localStorage.removeItem('selectedSessionId');
+                    localStorage.removeItem('selectedSessionCode');
                     localStorage.removeItem('cbt_session_code');
                     window.location.href = 'selection.html';
                 }

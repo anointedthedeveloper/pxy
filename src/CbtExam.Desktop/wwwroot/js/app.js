@@ -69,7 +69,7 @@ function clearAllStudentData() {
     const keysToRemove = [
         'studentId', 'studentName', 'studentExamId', 'selectedExamId', 'selectedExamTitle',
         'examDuration', 'cachedQuestions', 'encryptedQuestions',
-        'sessionId', 'cbt_session_code', 'last_broadcast_msg'
+        'sessionId', 'selectedSessionId', 'selectedSessionCode', 'cbt_session_code', 'last_broadcast_msg'
     ];
     keysToRemove.forEach(k => localStorage.removeItem(k));
     Object.keys(localStorage).forEach(k => {
@@ -290,45 +290,51 @@ async function fetchAndRenderExams() {
     const listContainer = document.getElementById('examList');
     
     try {
-        const response = await fetch(`${API_BASE}/Exams?activeOnly=true`);
+        const response = await fetch(`${API_BASE}/Sessions`);
         if (!response.ok) throw new Error('API Error');
         
-        const exams = await response.json();
+        const sessions = await response.json();
         
-        if (exams.length === 0) {
-            listContainer.innerHTML = '<div class="empty-state">No examinations are currently scheduled.</div>';
+        // Filter for active sessions only
+        const activeSessions = sessions.filter(s => s.isActive === true);
+        
+        if (activeSessions.length === 0) {
+            listContainer.innerHTML = '<div class="empty-state">No examination sessions are currently active.</div>';
             return;
         }
 
         listContainer.innerHTML = '';
-        exams.forEach(exam => {
-            const card = createExamCard(exam);
+        activeSessions.forEach(session => {
+            const card = createSessionCard(session);
             listContainer.appendChild(card);
         });
     } catch (error) {
-        console.error('Fetch exams error:', error);
-        listContainer.innerHTML = '<div class="error-state">Failed to load examinations. Please check your connection.</div>';
-        showToast('Error', 'Failed to synchronize available examinations.', 'error');
+        console.error('Fetch sessions error:', error);
+        listContainer.innerHTML = '<div class="error-state">Failed to load sessions. Please check your connection.</div>';
+        showToast('Error', 'Failed to synchronize available sessions.', 'error');
     }
 }
 
-function createExamCard(exam) {
+function createSessionCard(session) {
     const div = document.createElement('div');
     div.className = 'exam-card-modern';
     div.onclick = () => {
-        localStorage.setItem('selectedExamId', exam.id);
-        localStorage.setItem('selectedExamTitle', exam.title);
+        localStorage.setItem('selectedSessionId', session.id);
+        localStorage.setItem('selectedSessionCode', session.sessionCode);
+        localStorage.setItem('selectedExamId', session.examId);
+        localStorage.setItem('selectedExamTitle', session.displayName || session.examTitle);
         window.location.href = 'waiting.html';
     };
 
     div.innerHTML = `
         <div class="exam-type-badge">ACTIVE</div>
-        <h3>${escapeHtml(exam.title)}</h3>
+        <h3>${escapeHtml(session.displayName || session.examTitle)}</h3>
         <div class="exam-meta-pills">
-            <span class="meta-pill">${exam.questionCount || 0} Questions</span>
-            <span class="meta-pill">${exam.durationMinutes} Minutes</span>
+            <span class="meta-pill">Code: ${escapeHtml(session.sessionCode)}</span>
+            <span class="meta-pill">${session.studentCount || 0} Students</span>
+            <span class="meta-pill">${session.isStarted ? 'Started' : 'Waiting'}</span>
         </div>
-        <button class="action-btn">Join Exam</button>
+        <button class="action-btn">Join Session</button>
     `;
     
     return div;
