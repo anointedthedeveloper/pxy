@@ -40,7 +40,7 @@ public static class ApiBootstrap
             o.UseSqlite($"Data Source={dbPath};Cache=Shared;Pooling=True"));
 
         builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
-            p.WithOrigins("http://localhost:*", "http://127.0.0.1:*", "http://192.168.*:*")
+            p.SetIsOriginAllowed(_ => true)
              .AllowAnyMethod()
              .AllowAnyHeader()
              .AllowCredentials()));

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>CbtExam.Web</AssemblyName>
+    <RootNamespace>CbtExam.Web</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CbtExam.Api\CbtExam.Api.csproj" />
+    <ProjectReference Include="..\CbtExam.Shared\CbtExam.Shared.csproj" />
+    <ProjectReference Include="..\CbtExam.Data\CbtExam.Data.csproj" />
+  </ItemGroup>
+</Project>

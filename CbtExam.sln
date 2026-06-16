@@ -1,4 +1,4 @@
-
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -10,6 +10,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CbtExam.Api", "src\CbtExam.Api\CbtExam.Api.csproj", "{A1B2C3D4-0003-0000-0000-000000000003}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CbtExam.Desktop", "src\CbtExam.Desktop\CbtExam.Desktop.csproj", "{A1B2C3D4-0004-0000-0000-000000000004}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{F1EDBE61-024C-424F-A099-39AAF714B7A5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CbtExam.Web", "src\CbtExam.Web\CbtExam.Web.csproj", "{1B3D243B-54A6-49DD-9E2B-B6CC0AF1D88D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,5 +37,12 @@ Global
 		{A1B2C3D4-0004-0000-0000-000000000004}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1B2C3D4-0004-0000-0000-000000000004}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1B2C3D4-0004-0000-0000-000000000004}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1B3D243B-54A6-49DD-9E2B-B6CC0AF1D88D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B3D243B-54A6-49DD-9E2B-B6CC0AF1D88D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B3D243B-54A6-49DD-9E2B-B6CC0AF1D88D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B3D243B-54A6-49DD-9E2B-B6CC0AF1D88D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1B3D243B-54A6-49DD-9E2B-B6CC0AF1D88D} = {F1EDBE61-024C-424F-A099-39AAF714B7A5}
 	EndGlobalSection
 EndGlobal

@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Exam Results</title>
+<script>try{const t=localStorage.getItem('selectedExamTitle');if(t)document.title=t+' — Results';}catch(e){}</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --green:#16a34a;--green-mid:#15803d;--green-dark:#14532d;
+  --green-light:#22c55e;--green-bg:#f0fdf4;--green-bg2:#dcfce7;--green-border:#86efac;
+  --red:#ef4444;--red-bg:#fef2f2;--amber:#f59e0b;--amber-bg:#fffbeb;
+  --n900:#111827;--n800:#1f2937;--n700:#374151;--n600:#4b5563;
+  --n500:#6b7280;--n400:#9ca3af;--n300:#d1d5db;--n200:#e5e7eb;--n100:#f3f4f6;--n50:#f9fafb;
+  --white:#fff;
+}
+html,body{min-height:100%;}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--n50);color:var(--n900);}
+
+/* ── Sticky header ── */
+.rh{
+  position:sticky;top:0;z-index:200;
+  background:var(--white);border-bottom:1px solid var(--n200);
+  box-shadow:0 1px 8px rgba(0,0,0,.07);
+}
+.rh-inner{
+  max-width:860px;margin:0 auto;padding:12px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+}
+.rh-brand{display:flex;align-items:center;gap:10px;}
+.rh-brand img{height:32px;}
+.rh-brand h1{font-size:16px;font-weight:800;color:var(--green-dark);}
+
+/* Sticky score pill — hidden until user scrolls past hero */
+.rh-score-pill{
+  display:none;align-items:center;gap:8px;
+  background:var(--green-bg);border:1.5px solid var(--green-border);
+  border-radius:20px;padding:6px 16px;
+}
+.rh-score-pill.visible{display:flex;}
+.rh-score-pill .score-val{font-size:18px;font-weight:900;color:var(--green);}
+.rh-score-pill .score-max{font-size:12px;color:var(--n500);font-weight:600;}
+
+.btn-back{
+  display:flex;align-items:center;gap:6px;
+  background:var(--n50);border:1.5px solid var(--n200);border-radius:10px;
+  padding:8px 16px;font-size:13px;font-weight:600;color:var(--n700);cursor:pointer;
+  transition:all .15s;
+}
+.btn-back:hover{border-color:var(--green);color:var(--green);background:var(--green-bg);}
+
+/* ── Main container ── */
+.rc{max-width:860px;margin:0 auto;padding:28px 20px 60px;}
+
+/* ── Result slip hero ── */
+.slip{
+  background:var(--white);border:1.5px solid var(--n200);border-radius:20px;
+  box-shadow:0 4px 20px rgba(0,0,0,.07);overflow:hidden;margin-bottom:28px;
+}
+
+/* Slip header stripe */
+.slip-top{
+  background:linear-gradient(135deg,var(--green-dark) 0%,var(--green-mid) 60%,#059669 100%);
+  padding:28px 32px;display:flex;align-items:center;gap:20px;
+}
+.slip-logo{
+  width:60px;height:60px;border-radius:14px;
+  background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;overflow:hidden;
+}
+.slip-logo img{width:44px;height:44px;object-fit:contain;}
+.slip-title-block{}
+.slip-title-block h2{font-size:20px;font-weight:900;color:#fff;margin:0 0 3px;}
+.slip-title-block p{font-size:13px;color:rgba(255,255,255,.75);margin:0;}
+
+/* Candidate info */
+.slip-candidate{
+  padding:22px 32px;border-bottom:1px solid var(--n100);
+  display:flex;align-items:center;gap:20px;
+}
+.slip-avatar{
+  width:56px;height:56px;border-radius:14px;background:var(--green-bg2);
+  border:2px solid var(--green-border);display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:900;color:var(--green-mid);flex-shrink:0;
+}
+.slip-info{}
+.slip-info h3{font-size:18px;font-weight:800;color:var(--n900);margin:0 0 3px;}
+.slip-info p{font-size:13px;color:var(--n500);margin:0;}
+
+/* Score area */
+.slip-scores{padding:24px 32px;}
+.slip-scores-label{
+  font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;
+  color:var(--n400);margin-bottom:16px;
+}
+
+/* Subject score rows */
+.subject-rows{display:flex;flex-direction:column;gap:12px;margin-bottom:20px;}
+.subject-row{
+  display:grid;grid-template-columns:1fr auto 160px;align-items:center;gap:12px;
+}
+.subject-row-name{font-size:14px;font-weight:600;color:var(--n800);}
+.subject-row-score{font-size:18px;font-weight:900;color:var(--green);min-width:48px;text-align:right;}
+.subject-row-bar{height:8px;background:var(--n100);border-radius:4px;overflow:hidden;}
+.subject-row-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--green),var(--green-light));transition:width .6s ease;}
+
+/* Divider + total */
+.slip-total-row{
+  border-top:2px solid var(--n200);padding-top:18px;margin-top:4px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.slip-total-label{font-size:14px;font-weight:700;color:var(--n600);}
+.slip-total-score{
+  font-size:32px;font-weight:900;color:var(--green);
+  display:flex;align-items:baseline;gap:4px;
+}
+.slip-total-score small{font-size:16px;font-weight:600;color:var(--n400);}
+
+/* ── Review section ── */
+.review-header{
+  display:flex;align-items:center;gap:10px;margin-bottom:18px;
+}
+.review-header h3{font-size:18px;font-weight:800;color:var(--n900);}
+
+.review-filters{
+  display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;
+}
+.filter-btn{
+  padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;
+  border:1.5px solid var(--n200);background:var(--white);color:var(--n500);transition:all .15s;
+}
+.filter-btn.active{background:var(--green);border-color:var(--green);color:#fff;}
+.filter-btn:hover:not(.active){border-color:var(--green);color:var(--green);}
+
+.review-list{display:flex;flex-direction:column;gap:14px;}
+.review-card{
+  background:var(--white);border:1.5px solid var(--n200);border-radius:14px;
+  overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05);
+}
+.review-card.correct{border-left:4px solid var(--green);}
+.review-card.incorrect{border-left:4px solid var(--red);}
+.review-card.unanswered{border-left:4px solid var(--n300);}
+
+.review-card-top{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;border-bottom:1px solid var(--n100);
+}
+.rc-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.rc-num{font-size:12px;font-weight:800;color:var(--n500);}
+.rc-subj{font-size:11px;background:var(--n100);color:var(--n600);padding:2px 8px;border-radius:10px;font-weight:600;}
+.rc-year{font-size:10px;background:var(--amber-bg);color:#92400e;padding:2px 7px;border-radius:10px;font-weight:700;border:1px solid #fde68a;}
+.rc-badge{padding:3px 10px;border-radius:10px;font-size:11px;font-weight:800;text-transform:uppercase;}
+.rc-badge.correct{background:var(--green-bg2);color:var(--green-mid);}
+.rc-badge.incorrect{background:var(--red-bg);color:var(--red);}
+.rc-badge.unanswered{background:var(--n100);color:var(--n500);}
+
+.review-card-body{padding:14px 16px;}
+
+/* Section/passage */
+.q-section{
+  background:var(--green-bg);border:1px solid var(--green-border);border-left:3px solid var(--green);
+  border-radius:8px;padding:10px 13px;margin-bottom:12px;font-size:13px;line-height:1.7;color:var(--n700);
+}
+.q-section-lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--green);margin-bottom:5px;}
+
+/* Question image */
+.q-img{margin-bottom:12px;}
+.q-img img{max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--n200);}
+
+.rc-qtext{font-size:14.5px;font-weight:600;line-height:1.65;color:var(--n800);margin-bottom:12px;}
+.rc-options{display:flex;flex-direction:column;gap:7px;}
+.rc-opt{
+  display:flex;align-items:center;gap:10px;padding:9px 13px;
+  border-radius:9px;border:1.5px solid transparent;background:var(--n50);
+  font-size:13.5px;
+}
+.rc-opt-letter{
+  width:26px;height:26px;border-radius:7px;border:1.5px solid var(--n300);background:var(--white);
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--n500);flex-shrink:0;
+}
+.rc-opt.sel-correct{background:var(--green-bg2);border-color:var(--green);}
+.rc-opt.sel-correct .rc-opt-letter{background:var(--green);border-color:var(--green);color:#fff;}
+.rc-opt.sel-wrong{background:var(--red-bg);border-color:var(--red);}
+.rc-opt.sel-wrong .rc-opt-letter{background:var(--red);border-color:var(--red);color:#fff;}
+.rc-opt.right-ans{border-color:var(--green);border-style:dashed;}
+.rc-opt.right-ans .rc-opt-letter{background:var(--green-bg2);border-color:var(--green);color:var(--green);}
+
+/* Solution */
+.rc-solution{
+  margin-top:10px;padding:9px 12px;background:var(--amber-bg);border:1px solid #fde68a;
+  border-radius:8px;font-size:12.5px;color:var(--n700);line-height:1.55;
+}
+.rc-solution strong{color:#92400e;font-weight:700;}
+
+/* ── Toast ── */
+#toastContainer{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+.toast{
+  display:flex;align-items:flex-start;gap:10px;background:var(--white);
+  border:1px solid var(--n200);border-radius:12px;padding:11px 14px;
+  min-width:220px;max-width:320px;box-shadow:0 4px 16px rgba(0,0,0,.1);
+}
+</style>
+</head>
+<body>
+<div id="toastContainer"></div>
+
+<!-- Sticky header -->
+<header class="rh" id="rh">
+  <div class="rh-inner">
+    <div class="rh-brand">
+      <img id="hdr-logo" src="img/prep4jamb.png" alt="Logo"/>
+      <h1>UTME Result Slip</h1>
+    </div>
+    <div class="rh-score-pill" id="sticky-score-pill">
+      <span class="score-val" id="sticky-score-val">0</span>
+      <span class="score-max" id="sticky-score-max">/ 400</span>
+    </div>
+    <button class="btn-back" onclick="goBack()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+      Back
+    </button>
+    <button class="btn-back" onclick="handleLogout()" style="margin-left: 8px; color: var(--red);" title="Logout">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="rc">
+
+  <!-- Result slip -->
+  <div class="slip" id="slip-hero">
+
+    <!-- Slip header -->
+    <div class="slip-top">
+      <div class="slip-logo">
+        <img id="slip-logo-img" src="img/prep4jamb.png" alt="Logo"/>
+      </div>
+      <div class="slip-title-block">
+        <h2 id="slip-exam-title">UTME Examination</h2>
+        <p id="slip-submitted-at">Submitted on —</p>
+      </div>
+    </div>
+
+    <!-- Candidate -->
+    <div class="slip-candidate">
+      <div class="slip-avatar" id="slip-avatar">?</div>
+      <div class="slip-info">
+        <h3 id="slip-name">Candidate Name</h3>
+        <p id="slip-exam-info" style="color:var(--green);font-weight:700;font-size:14px;margin-top:2px;"></p>
+      </div>
+    </div>
+
+    <!-- Scores -->
+    <div class="slip-scores">
+      <div class="slip-scores-label">Subject Scores</div>
+      <div class="subject-rows" id="subject-rows"></div>
+      <div class="slip-total-row">
+        <span class="slip-total-label">Aggregate Score</span>
+        <span class="slip-total-score">
+          <span id="total-score-val">0</span>
+          <small id="total-score-max">/ 400</small>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Review section -->
+  <div class="review-header">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--green)"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+    <h3>Question Review</h3>
+  </div>
+
+  <!-- Subject navigation for results -->
+  <div class="review-subject-tabs" id="review-subject-tabs" style="display:none; margin-bottom:16px; display:flex; gap:8px; flex-wrap:wrap;"></div>
+
+  <div class="review-filters">
+    <button class="filter-btn active" onclick="filterReview('all', this)">All</button>
+    <button class="filter-btn" onclick="filterReview('correct', this)">✓ Correct</button>
+    <button class="filter-btn" onclick="filterReview('incorrect', this)">✗ Wrong</button>
+    <button class="filter-btn" onclick="filterReview('unanswered', this)">— Unanswered</button>
+  </div>
+
+  <div class="review-list" id="review-list"></div>
+</main>
+
+<script>
+let _allCards = [];
+let _schoolLogoUrl = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Load school logo if available
+    try {
+        const theme = JSON.parse(localStorage.getItem('cbt_theme') || '{}');
+        if (theme.schoolLogoUrl) {
+            _schoolLogoUrl = theme.schoolLogoUrl;
+            document.getElementById('slip-logo-img').src = theme.schoolLogoUrl;
+            document.getElementById('hdr-logo').src = theme.schoolLogoUrl;
+        }
+    } catch(e) {}
+
+    const dataStr = localStorage.getItem('lastExamResult');
+    if (!dataStr) { window.location.href = 'selection.html'; return; }
+
+    const result = JSON.parse(dataStr);
+
+    // Populate header
+    document.getElementById('slip-exam-title').textContent = result.examTitle || 'UTME Examination';
+    document.getElementById('slip-submitted-at').textContent = `Submitted on ${result.submittedAt || '—'}`;
+    document.getElementById('slip-name').textContent = result.studentName || 'Candidate';
+    document.getElementById('slip-exam-info').textContent = result.examTitle || '';
+    document.getElementById('slip-avatar').textContent = (result.studentName || 'C').charAt(0).toUpperCase();
+    document.title = (result.examTitle || 'Results') + ' — Results';
+
+    // Subject scores
+    const subjectScores = result.subjectScores || [];
+    const rowsEl = document.getElementById('subject-rows');
+    const hasJamb = result.jambScore && result.jambScore > 0;
+    const totalScore = hasJamb ? Math.round(result.jambScore) : Math.round(parseFloat(result.percentage) || 0);
+    const maxScore = subjectScores.length > 0 ? subjectScores.length * 100 : 400;
+
+    if (subjectScores.length > 0) {
+        subjectScores.forEach(s => {
+            const pct = s.scaled / 100;
+            const row = document.createElement('div');
+            row.className = 'subject-row';
+            const scoreColor = s.scaled < 40 ? 'var(--red)' : s.scaled < 60 ? 'var(--amber)' : 'var(--green)';
+            row.innerHTML = `
+                <span class="subject-row-name">${s.subject}</span>
+                <span class="subject-row-score" style="color:${scoreColor}">${Math.round(s.scaled)}</span>
+                <div class="subject-row-bar">
+                  <div class="subject-row-bar-fill" style="width:${pct*100}%;background:${pct < 0.4 ? 'var(--red)' : pct < 0.6 ? 'var(--amber)' : 'linear-gradient(90deg,var(--green),var(--green-light))'}"></div>
+                </div>
+            `;
+            rowsEl.appendChild(row);
+        });
+    }
+
+    document.getElementById('total-score-val').textContent = totalScore;
+    document.getElementById('total-score-max').textContent = `/ ${maxScore}`;
+    // Sticky pill
+    document.getElementById('sticky-score-val').textContent = totalScore;
+    document.getElementById('sticky-score-max').textContent = `/ ${maxScore}`;
+
+    // Scroll-reveal sticky score
+    const hero = document.getElementById('slip-hero');
+    const pill = document.getElementById('sticky-score-pill');
+    const observer = new IntersectionObserver(([entry]) => {
+        pill.classList.toggle('visible', !entry.isIntersecting);
+    }, { threshold: 0 });
+    observer.observe(hero);
+
+    // Build review cards
+    const container = document.getElementById('review-list');
+    if (!result.questions || result.questions.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:var(--n400);padding:32px;">No question details available.</div>';
+        return;
+    }
+
+    // Extract unique subjects and build subject tabs
+    const subjects = [...new Set(result.questions.map(q => q.subject || 'General'))].sort();
+    const subjectTabsEl = document.getElementById('review-subject-tabs');
+    if (subjects.length > 1) {
+        subjectTabsEl.style.display = 'flex';
+        subjects.forEach(sub => {
+            const btn = document.createElement('button');
+            btn.className = 'filter-btn';
+            btn.textContent = sub;
+            btn.onclick = () => filterBySubject(sub, btn);
+            subjectTabsEl.appendChild(btn);
+        });
+    }
+
+    result.questions.forEach((q, i) => {
+        const answerRecord = result.answers?.find(a => a.questionId === q.questionId);
+        const selected = answerRecord?.selectedAnswer ?? null;
+        const isUnanswered = selected === null;
+
+        let isCorrect = false;
+        if (!isUnanswered) {
+            const correctOpt = q.correctIndex !== undefined ? q.options[q.correctIndex] : q.correctAnswer;
+            if (correctOpt) isCorrect = correctOpt.trim().toLowerCase() === selected.trim().toLowerCase();
+        }
+
+        const state = isUnanswered ? 'unanswered' : (isCorrect ? 'correct' : 'incorrect');
+        const correctOpt = q.correctIndex !== undefined ? q.options[q.correctIndex] : q.correctAnswer;
+
+        // Options HTML
+        let optHtml = '';
+        (q.options || []).forEach((opt, oi) => {
+            const letter = String.fromCharCode(65 + oi);
+            const isSel  = selected !== null && opt.trim().toLowerCase() === selected.trim().toLowerCase();
+            const isRight = correctOpt && opt.trim().toLowerCase() === correctOpt.trim().toLowerCase();
+            let cls = '';
+            if (isSel) cls = isCorrect ? 'sel-correct' : 'sel-wrong';
+            else if (isRight && !isCorrect) cls = 'right-ans';
+            optHtml += `<div class="rc-opt ${cls}"><div class="rc-opt-letter">${letter}</div><span>${opt}</span></div>`;
+        });
+
+        // Section
+        const sectionHtml = (q.section && q.section.trim())
+            ? `<div class="q-section"><div class="q-section-lbl">Read the following</div>${q.section}</div>` : '';
+
+        // Image
+        const imgHtml = (q.imageUrl && q.imageUrl.trim())
+            ? `<div class="q-img"><img src="${q.imageUrl}" alt="Diagram" onerror="this.parentElement.style.display='none'"/></div>` : '';
+
+        // Solution
+        const solHtml = (q.solution && q.solution.trim())
+            ? `<div class="rc-solution"><strong>Explanation:</strong> ${q.solution}</div>` : '';
+
+        const card = document.createElement('div');
+        card.className = `review-card ${state}`;
+        card.dataset.state = state;
+        card.innerHTML = `
+            <div class="review-card-top">
+                <div class="rc-meta">
+                    <span class="rc-num">Q${i + 1}</span>
+                    ${q.subject ? `<span class="rc-subj">${q.subject}</span>` : ''}
+                    ${(q.year && q.year > 0) ? `<span class="rc-year">${q.year}</span>` : ''}
+                </div>
+                <span class="rc-badge ${state}">${state === 'unanswered' ? 'Unanswered' : state === 'correct' ? 'Correct' : 'Incorrect'}</span>
+            </div>
+            <div class="review-card-body">
+                ${sectionHtml}
+                ${imgHtml}
+                <div class="rc-qtext">${q.text}</div>
+                <div class="rc-options">${optHtml}</div>
+                ${solHtml}
+            </div>
+        `;
+        container.appendChild(card);
+        _allCards.push(card);
+    });
+});
+
+function filterReview(state, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    _allCards.forEach(card => {
+        card.style.display = (state === 'all' || card.dataset.state === state) ? '' : 'none';
+    });
+}
+
+function filterBySubject(subject, btn) {
+    document.querySelectorAll('#review-subject-tabs .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    _allCards.forEach(card => {
+        const cardSubject = card.querySelector('.rc-subj')?.textContent || 'General';
+        card.style.display = (cardSubject === subject) ? '' : 'none';
+    });
+}
+
+function goBack() {
+    window.location.href = 'selection.html';
+}
+</script>
+</body>
+</html>

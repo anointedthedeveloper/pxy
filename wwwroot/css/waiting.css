@@ -1,0 +1,401 @@
+/* ── Waiting Room Specific Styles ── */
+
+.waiting-layout {
+    display: flex;
+}
+
+/* Status Visual in Left Panel */
+.status-visual-container {
+    margin: 40px 0;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.pulse-container {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pulse-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 2px solid #10b981;
+    border-radius: 50%;
+    animation: ripple 3s infinite;
+    opacity: 0;
+}
+
+.pulse-ring:nth-child(2) { animation-delay: 1s; }
+.pulse-ring:nth-child(3) { animation-delay: 2s; }
+
+@keyframes ripple {
+    0% { transform: scale(0.5); opacity: 0.8; }
+    100% { transform: scale(2); opacity: 0; }
+}
+
+.status-icon {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    border: 1.5px solid rgba(16, 185, 129, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+/* Right Panel Content Styles */
+.right-panel {
+    padding: 30px 48px; /* Adjusted padding for better spacing */
+}
+
+.waiting-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.welcome-badge {
+    margin-bottom: 0;
+}
+
+.logout-btn-mini {
+    background: #f1f5f9;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #64748b;
+}
+
+.logout-btn-mini:hover {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: white;
+}
+
+/* Make headers smaller */
+.right-panel h2 {
+    font-size: clamp(18px, 2vw, 24px);
+    margin-bottom: 4px;
+}
+
+.right-panel p.instruction-text {
+    font-size: 13px;
+    margin: 0 0 15px 0;
+}
+
+.status-details-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1.5px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.02);
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+.candidate-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1.5px solid #f8fafc;
+}
+
+.avatar-circle {
+    width: 54px;
+    height: 54px;
+    background: linear-gradient(135deg, #16a34a 0%, #059669 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 800;
+    box-shadow: 0 8px 15px rgba(22, 163, 74, 0.2);
+}
+
+.candidate-info .label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.candidate-info h3 {
+    font-size: 18px;
+    color: #1e293b;
+    margin: 0;
+    font-weight: 800;
+}
+
+.exam-info-box {
+    margin-bottom: 20px;
+}
+
+.info-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.info-col .label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.info-col .value {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: #334155;
+}
+
+.status-online {
+    color: #10b981;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-online::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 8px #10b981;
+}
+
+/* Progress Section */
+.sync-progress-section {
+    margin-bottom: 20px;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 8px;
+}
+
+.progress-header span {
+    font-size: 13px;
+    font-weight: 700;
+    color: #475569;
+}
+
+#progress-percent {
+    color: #16a34a;
+    font-size: 14px;
+}
+
+.loading-bar-container {
+    width: 100%;
+    height: 8px;
+    background: #f1f5f9;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.loading-bar-progress {
+    width: 0%;
+    height: 100%;
+    background: #16a34a;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+    box-shadow: 0 0 10px rgba(22, 163, 74, 0.2);
+}
+
+/* Controls Guide Section */
+.controls-guide {
+    background: rgba(248, 250, 252, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(241, 245, 249, 0.5);
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+
+.controls-guide h4 {
+    font-size: 12px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    font-weight: 700;
+}
+
+.controls-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.control-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.control-key {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    color: #0f172a;
+    box-shadow: 0 2px 0 #cbd5e1;
+}
+
+.control-desc {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+}
+
+/* Pre-Exam Checklist */
+.checklist-container {
+    background: rgba(248, 250, 252, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(241, 245, 249, 0.5);
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+
+.checklist-container h4 {
+    font-size: 12px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    font-weight: 700;
+}
+
+.checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.checklist-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #10b981;
+    cursor: pointer;
+}
+
+.checklist-item label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #475569;
+    cursor: pointer;
+}
+
+/* Exam Tips Carousel */
+.tips-container {
+    background: linear-gradient(135deg, #f0fdf4 0%, #f0f9ff 100%);
+    border: 1.5px solid #dcfce7;
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+
+.tips-container h4 {
+    font-size: 12px;
+    color: #16a34a;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+/* Button overrides for waiting state */
+.submit-btn.disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+    box-shadow: none;
+    pointer-events: none;
+}
+
+.submit-btn.disabled:hover {
+    transform: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 850px) {
+    .waiting-layout {
+        flex-direction: column;
+    }
+    .status-visual-container {
+        justify-content: center;
+    }
+    .left-panel {
+        padding: 40px 24px;
+        min-height: auto;
+    }
+    .right-panel {
+        padding: 30px 24px;
+    }
+}
+
+/* Fix for console opening causing layout issues */
+@media (min-height: 600px) {
+    .right-panel {
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .info-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .controls-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .candidate-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 12px;
+    }
+}

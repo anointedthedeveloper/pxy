@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title id="page-title">Examination | CBT Portal</title>
+<script>try{const t=localStorage.getItem('selectedExamTitle');if(t)document.title=t+' | CBT Portal';}catch(e){}</script>
+<link rel="icon" type="image/png" href="/img/prep4jamb.png">
+<script src="/js/signalr.min.js"></script>
+<style>
+/* ── Reset & Base ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  /* Brand palette */
+  --g900:#064e3b;--g800:#065f46;--g700:#047857;--g600:#059669;
+  --g500:#10b981;--g400:#34d399;--g300:#6ee7b7;--g100:#d1fae5;--g50:#ecfdf5;
+  --blue:#3b82f6;--blue-bg:#eff6ff;
+  --red:#ef4444;--red-bg:#fef2f2;
+  --amber:#f59e0b;--amber-bg:#fffbeb;
+
+  /* Neutrals */
+  --n950:#030712;--n900:#111827;--n800:#1f2937;--n700:#374151;
+  --n600:#4b5563;--n500:#6b7280;--n400:#9ca3af;--n300:#d1d5db;
+  --n200:#e5e7eb;--n100:#f3f4f6;--n50:#f9fafb;--white:#ffffff;
+
+  /* Surfaces */
+  --surface:#ffffff;
+  --surface-2:#f8fafc;
+
+  /* Shadows */
+  --s1:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.05);
+  --s2:0 4px 12px rgba(0,0,0,.08);
+  --s3:0 8px 24px rgba(0,0,0,.1);
+  --s4:0 20px 48px rgba(0,0,0,.13);
+  --s-green:0 4px 16px rgba(16,185,129,.25);
+
+  /* Radii */
+  --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:20px;--r-2xl:24px;
+}
+
+html,body{height:100%;overflow:hidden;}
+body{
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  background:var(--surface-2);
+  color:var(--n900);
+  display:flex;flex-direction:column;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--n200);border-radius:9px;}
+::-webkit-scrollbar-thumb:hover{background:var(--n300);}
+
+/* ── Toast + Network bar ── */
+#network-status-bar{
+  display:none;position:fixed;top:0;left:0;width:100%;text-align:center;
+  padding:7px;font-size:13px;font-weight:700;color:#fff;z-index:9999;
+}
+#toastContainer{position:fixed;bottom:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:8px;}
+
+/* ── Header ── */
+.exam-header{
+  height:62px;min-height:62px;
+  background:linear-gradient(135deg,var(--g900) 0%,var(--g800) 45%,var(--g700) 100%);
+  display:flex;align-items:center;padding:0 18px;gap:12px;
+  box-shadow:0 2px 16px rgba(0,0,0,.22);
+  position:relative;z-index:100;flex-shrink:0;
+}
+
+/* Subtle texture overlay */
+.exam-header::before{
+  content:'';position:absolute;inset:0;
+  background:url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.03' fill-rule='evenodd'%3E%3Ccircle cx='20' cy='20' r='1'/%3E%3C/g%3E%3C/svg%3E");
+  pointer-events:none;
+}
+
+.hdr-brand{display:flex;align-items:center;gap:9px;flex-shrink:0;position:relative;}
+.hdr-brand img{height:30px;width:auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));}
+.hdr-divider{width:1px;height:24px;background:rgba(255,255,255,.2);flex-shrink:0;}
+.hdr-exam-name{
+  font-size:13px;font-weight:800;color:#fff;
+  white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;
+}
+
+/* Subject navigation tabs in header */
+.hdr-subjects{
+  display:flex;align-items:center;gap:4px;flex:1;
+  overflow-x:auto;scrollbar-width:none;padding:0 6px;
+}
+.hdr-subjects::-webkit-scrollbar{display:none;}
+.subj-tab{
+  display:flex;align-items:center;gap:5px;
+  padding:5px 13px;border-radius:20px;
+  font-size:11.5px;font-weight:700;white-space:nowrap;
+  background:rgba(255,255,255,.1);
+  color:rgba(255,255,255,.75);
+  border:1.5px solid rgba(255,255,255,.15);
+  cursor:pointer;transition:all .18s;position:relative;
+}
+.subj-tab:hover:not(.active){background:rgba(255,255,255,.18);color:#fff;}
+.subj-tab.active{
+  background:#fff;color:var(--g800);
+  border-color:#fff;
+  box-shadow:0 2px 10px rgba(0,0,0,.2);
+  font-weight:800;
+}
+.subj-tab-count{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:18px;height:18px;padding:0 5px;
+  border-radius:9px;font-size:10px;font-weight:800;
+}
+.subj-tab.active .subj-tab-count{background:var(--g100);color:var(--g800);}
+.subj-tab:not(.active) .subj-tab-count{background:rgba(255,255,255,.2);color:#fff;}
+
+/* Header right */
+.hdr-right{display:flex;align-items:center;gap:8px;flex-shrink:0;position:relative;}
+
+.timer-chip{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.18);
+  border-radius:10px;padding:6px 12px;
+  font-family:'Inter',monospace;font-size:15px;font-weight:800;color:#fff;
+}
+.timer-chip svg{opacity:.8;}
+.timer-chip.warning{
+  background:rgba(239,68,68,.4);border-color:rgba(239,68,68,.6);
+  animation:timerPulse 1s ease-in-out infinite;
+}
+@keyframes timerPulse{0%,100%{opacity:1;}50%{opacity:.6;}}
+
+.prog-chip{
+  display:flex;align-items:center;gap:7px;
+  background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.15);
+  border-radius:10px;padding:5px 11px;
+  font-size:12px;font-weight:700;color:rgba(255,255,255,.9);
+}
+.prog-ring-wrap{position:relative;width:28px;height:28px;flex-shrink:0;}
+.prog-ring-wrap svg{transform:rotate(-90deg);}
+.prog-ring-wrap span{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-size:6.5px;font-weight:900;color:#fff;
+}
+
+.hdr-user{display:flex;align-items:center;gap:8px;}
+.hdr-avatar{
+  width:34px;height:34px;border-radius:9px;
+  background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:13px;color:#fff;flex-shrink:0;
+}
+.hdr-uinfo{display:flex;flex-direction:column;line-height:1.3;}
+.hdr-uname{font-size:12px;font-weight:700;color:#fff;}
+.hdr-uid{font-size:10px;color:rgba(255,255,255,.55);}
+.logout-btn-mini {
+  background: rgba(255,255,255,.15);
+  border: 1.5px solid rgba(255,255,255,.3);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: rgba(255,255,255,.75);
+}
+.logout-btn-mini:hover {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: white;
+}
+
+/* ── Main layout ── */
+.exam-body{flex:1;display:grid;grid-template-columns:268px 1fr;overflow:hidden;}
+
+/* ── Sidebar ── */
+.exam-sidebar{
+  background:var(--surface);
+  border-right:1px solid var(--n200);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+
+.sidebar-header{
+  background:linear-gradient(160deg,var(--g800) 0%,var(--g700) 100%);
+  padding:14px 16px 12px;
+  flex-shrink:0;
+}
+.sidebar-header h3{
+  font-size:10px;font-weight:800;text-transform:uppercase;
+  letter-spacing:1px;color:rgba(255,255,255,.65);margin-bottom:11px;
+}
+.sb-stats{display:flex;gap:8px;}
+.sb-stat{
+  flex:1;background:rgba(255,255,255,.12);border-radius:9px;padding:8px 10px;
+  text-align:center;
+}
+.sb-stat-val{font-size:20px;font-weight:900;color:#fff;line-height:1;}
+.sb-stat-lbl{font-size:9.5px;font-weight:600;color:rgba(255,255,255,.6);margin-top:2px;text-transform:uppercase;letter-spacing:.5px;}
+
+/* Subject selector in sidebar */
+.sb-subject-tabs{
+  padding:10px 12px 0;display:flex;gap:5px;flex-wrap:wrap;border-bottom:1px solid var(--n100);
+  flex-shrink:0;padding-bottom:10px;
+}
+.sb-subj-btn{
+  padding:4px 10px;border-radius:20px;font-size:10.5px;font-weight:700;
+  border:1.5px solid var(--n200);background:var(--n50);color:var(--n500);
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.sb-subj-btn.active{background:var(--g500);color:#fff;border-color:var(--g500);box-shadow:var(--s-green);}
+.sb-subj-btn:hover:not(.active){border-color:var(--g500);color:var(--g600);background:var(--g50);}
+
+.sidebar-scroll{flex:1;overflow-y:auto;padding:12px;}
+
+.nav-section-label{
+  font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;
+  color:var(--n400);margin-bottom:8px;
+}
+
+.nav-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:16px;}
+.nav-btn{
+  aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+  border-radius:8px;border:1.5px solid var(--n200);background:var(--n50);
+  font-size:11px;font-weight:700;color:var(--n500);cursor:pointer;
+  transition:all .14s;
+}
+.nav-btn:hover{border-color:var(--g500);color:var(--g600);background:var(--g50);}
+.nav-btn.current{
+  background:var(--g500);color:#fff;border-color:var(--g500);
+  box-shadow:0 2px 8px rgba(16,185,129,.4);
+}
+.nav-btn.answered{background:var(--blue);color:#fff;border-color:#2563eb;box-shadow:0 2px 6px rgba(59,130,246,.3);}
+.nav-btn.flagged{background:var(--red-bg);color:var(--red);border-color:#fca5a5;}
+.nav-btn.answered.flagged{
+  background:linear-gradient(135deg,#dbeafe 0%,#fef2f2 100%);
+  border-color:var(--red);color:var(--red);
+}
+
+.nav-legend{
+  border-top:1px solid var(--n100);padding-top:11px;
+  display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;
+}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--n500);}
+.leg-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0;}
+.leg-dot.current{background:var(--g500);}
+.leg-dot.answered{background:var(--blue);}
+.leg-dot.flagged{background:var(--red);}
+.leg-dot.unanswered{background:var(--n200);border:1px solid var(--n300);}
+
+/* ── Main exam area ── */
+.exam-main{display:flex;flex-direction:column;overflow:hidden;}
+
+/* Subject tab strip above question card */
+.subject-strip{
+  background:var(--surface);border-bottom:2px solid var(--n100);
+  padding:0 20px;display:flex;align-items:center;gap:0;
+  overflow-x:auto;scrollbar-width:none;flex-shrink:0;min-height:46px;
+}
+.subject-strip::-webkit-scrollbar{display:none;}
+.strip-tab{
+  padding:12px 18px;font-size:12.5px;font-weight:700;
+  border:none;background:transparent;cursor:pointer;
+  color:var(--n500);border-bottom:2.5px solid transparent;
+  margin-bottom:-2px;transition:all .15s;white-space:nowrap;
+  display:flex;align-items:center;gap:6px;
+}
+.strip-tab:hover:not(.active){color:var(--n700);}
+.strip-tab.active{color:var(--g600);border-bottom-color:var(--g500);font-weight:800;}
+.strip-tab-pill{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:20px;height:20px;padding:0 6px;border-radius:10px;
+  font-size:10px;font-weight:800;
+}
+.strip-tab.active .strip-tab-pill{background:var(--g100);color:var(--g700);}
+.strip-tab:not(.active) .strip-tab-pill{background:var(--n100);color:var(--n500);}
+
+/* Question scroll area */
+.question-area{flex:1;overflow-y:auto;padding:20px 22px 16px;display:flex;flex-direction:column;gap:0;}
+
+/* ── Question card ── */
+.q-card{
+  background:var(--surface);border-radius:var(--r-xl);
+  border:1px solid var(--n200);box-shadow:var(--s2);
+  position:relative;overflow:hidden;
+  flex:1;display:flex;flex-direction:column;
+  min-height:0;
+}
+
+/* Gradient accent line at top */
+.q-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--g600) 0%,var(--g400) 50%,#6ee7b7 100%);
+}
+
+/* Card top row */
+.q-card-top{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 22px 12px;border-bottom:1px solid var(--n100);flex-shrink:0;
+}
+.q-badges{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.badge{
+  display:inline-flex;align-items:center;gap:3px;
+  padding:3px 10px;border-radius:20px;font-size:10.5px;font-weight:800;
+}
+.badge-num{background:var(--g50);color:var(--g700);border:1px solid var(--g100);}
+.badge-year{background:var(--amber-bg);color:#92400e;border:1px solid #fde68a;}
+.badge-subj{background:var(--n100);color:var(--n600);border:1px solid var(--n200);}
+
+.q-tools{display:flex;align-items:center;gap:5px;}
+.tool-btn{
+  height:32px;padding:0 11px;border-radius:8px;
+  border:1.5px solid var(--n200);background:var(--n50);
+  cursor:pointer;display:flex;align-items:center;gap:5px;
+  font-size:11px;font-weight:700;color:var(--n500);
+  transition:all .15s;font-family:'Plus Jakarta Sans',sans-serif;
+  white-space:nowrap;
+}
+.tool-btn:hover{border-color:var(--g500);color:var(--g600);background:var(--g50);}
+.tool-btn.flagged{background:var(--red-bg);border-color:#fca5a5;color:var(--red);}
+.tool-btn svg{flex-shrink:0;}
+
+/* Card body */
+.q-body{padding:20px 22px 24px;overflow-y:auto;flex:1;}
+.q-body::-webkit-scrollbar{width:3px;}
+.q-body::-webkit-scrollbar-thumb{background:var(--n200);}
+
+/* Section / passage */
+.q-section{
+  background:linear-gradient(135deg,var(--g50),#f0fdfa);
+  border:1px solid var(--g100);border-left:3px solid var(--g500);
+  border-radius:var(--r-md);padding:14px 16px;margin-bottom:18px;
+  font-size:13.5px;line-height:1.8;color:var(--n700);
+}
+.q-section-label{
+  font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;
+  color:var(--g600);margin-bottom:8px;display:flex;align-items:center;gap:5px;
+}
+
+/* Image */
+.q-img-wrap{
+  margin-bottom:18px;display:flex;align-items:center;justify-content:center;
+}
+.q-img-wrap img{
+  max-width:100%;max-height:260px;object-fit:contain;
+  border-radius:var(--r-md);border:1px solid var(--n200);
+  box-shadow:var(--s2);
+}
+.q-img-caption{
+  font-size:11px;color:var(--n400);text-align:center;margin-top:6px;
+  font-style:italic;
+}
+
+/* Question text */
+.q-text{
+  font-size:16px;font-weight:600;line-height:1.75;color:var(--n800);
+  margin-bottom:22px;
+}
+.q-text u{text-decoration:underline;}
+.q-text b,.q-text strong{font-weight:800;color:var(--n900);}
+.q-text i,.q-text em{font-style:italic;}
+.q-text sup{vertical-align:super;font-size:.73em;}
+.q-text sub{vertical-align:sub;font-size:.73em;}
+
+/* Options */
+.options-list{display:flex;flex-direction:column;gap:10px;}
+.opt{
+  display:flex;align-items:center;gap:12px;
+  padding:13px 16px;border-radius:var(--r-md);
+  border:1.5px solid var(--n200);background:var(--n50);
+  cursor:pointer;transition:all .15s;
+  position:relative;overflow:hidden;
+}
+.opt::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:0;
+  background:linear-gradient(90deg,var(--g100),transparent);
+  transition:width .2s;
+}
+.opt:hover{border-color:var(--g400);background:var(--g50);}
+.opt:hover::before{width:100%;}
+.opt.selected{
+  background:var(--g50);border-color:var(--g500);
+  box-shadow:0 2px 10px rgba(16,185,129,.15);
+}
+.opt.selected::before{width:100%;background:linear-gradient(90deg,var(--g100),transparent);}
+
+.opt-letter{
+  width:32px;height:32px;border-radius:9px;flex-shrink:0;
+  border:1.5px solid var(--n300);background:var(--surface);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:13px;color:var(--n500);
+  transition:all .15s;position:relative;z-index:1;
+}
+.opt:hover .opt-letter{border-color:var(--g500);color:var(--g600);background:var(--surface);}
+.opt.selected .opt-letter{background:var(--g500);border-color:var(--g500);color:#fff;box-shadow:0 2px 6px rgba(16,185,129,.4);}
+
+.opt-text{
+  font-size:14.5px;font-weight:500;color:var(--n800);line-height:1.55;
+  position:relative;z-index:1;
+}
+.opt.selected .opt-text{color:var(--n900);font-weight:600;}
+.opt-text u{text-decoration:underline;}
+.opt-text b,.opt-text strong{font-weight:800;}
+.opt-text i,.opt-text em{font-style:italic;}
+.opt-text sub{vertical-align:sub;font-size:.78em;}
+.opt-text sup{vertical-align:super;font-size:.78em;}
+
+/* Checkmark for selected */
+.opt-check{
+  margin-left:auto;flex-shrink:0;width:22px;height:22px;
+  border-radius:50%;background:var(--g500);color:#fff;
+  display:none;align-items:center;justify-content:center;
+  position:relative;z-index:1;
+}
+.opt.selected .opt-check{display:flex;}
+
+/* ── Bottom controls ── */
+.exam-controls{
+  background:var(--surface);border-top:1px solid var(--n200);
+  padding:12px 22px;display:flex;align-items:center;justify-content:space-between;
+  gap:12px;flex-shrink:0;
+}
+.ctrl-info{font-size:12px;font-weight:700;color:var(--n400);text-align:center;}
+.ctrl-group{display:flex;align-items:center;gap:8px;}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:9px 18px;border-radius:10px;font-size:13px;font-weight:700;
+  cursor:pointer;border:none;transition:all .18s;font-family:'Plus Jakarta Sans',sans-serif;
+  white-space:nowrap;
+}
+.btn-ghost{background:var(--surface);color:var(--n600);border:1.5px solid var(--n200);}
+.btn-ghost:hover{border-color:var(--g500);color:var(--g600);background:var(--g50);}
+.btn-primary{background:var(--g600);color:#fff;}
+.btn-primary:hover{background:var(--g700);}
+.btn-danger{background:var(--red-bg);color:var(--red);border:1.5px solid #fecaca;}
+.btn-danger:hover{background:#fee2e2;}
+.btn-danger-solid{background:var(--red);color:#fff;}
+.btn-danger-solid:hover{background:#dc2626;}
+
+/* ── Modals ── */
+.overlay{
+  position:fixed;inset:0;
+  background:rgba(3,7,18,.55);backdrop-filter:blur(6px);
+  z-index:1000;display:flex;align-items:center;justify-content:center;
+  animation:fadeIn .2s ease;
+}
+.overlay.hidden{display:none;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+
+/* Calculator */
+.calc-panel{
+  background:var(--surface);border-radius:var(--r-xl);width:290px;
+  padding:20px;box-shadow:var(--s4);border:1px solid var(--n200);
+  animation:slideUp .25s cubic-bezier(.22,1,.36,1);
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+
+.calc-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.calc-hdr h4{font-size:14px;font-weight:800;color:var(--n800);}
+.calc-close{
+  width:28px;height:28px;border-radius:8px;border:none;
+  background:var(--n100);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:var(--n500);transition:all .15s;
+}
+.calc-close:hover{background:var(--red-bg);color:var(--red);}
+
+.calc-display{
+  background:var(--n900);border-radius:var(--r-md);
+  padding:12px 14px;text-align:right;
+  font-family:'Inter',monospace;font-size:22px;font-weight:700;
+  color:var(--g400);min-height:52px;word-break:break-all;margin-bottom:12px;
+}
+.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.calc-btn{
+  height:42px;border-radius:9px;border:none;
+  font-size:15px;font-weight:700;cursor:pointer;
+  transition:all .12s;font-family:'Plus Jakarta Sans',sans-serif;
+}
+.cb-n{background:var(--n100);color:var(--n800);}
+.cb-n:hover{background:var(--n200);}
+.cb-op{background:var(--amber-bg);color:#92400e;border:1px solid #fde68a;}
+.cb-op:hover{background:#fef3c7;}
+.cb-clr{background:var(--red-bg);color:var(--red);}
+.cb-clr:hover{background:#fee2e2;}
+.cb-eq{background:var(--g600);color:#fff;}
+.cb-eq:hover{background:var(--g700);}
+
+/* Dialogs */
+.dialog{
+  background:var(--surface);border-radius:var(--r-2xl);width:380px;
+  padding:32px;text-align:center;box-shadow:var(--s4);
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+  animation:slideUp .3s cubic-bezier(.22,1,.36,1);
+  border:1px solid var(--n200);
+}
+.dialog-icon{
+  width:68px;height:68px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.dialog-icon.warn{background:var(--amber-bg);color:var(--amber);}
+.dialog-icon.ok{background:var(--g50);color:var(--g600);}
+.dialog h2{font-size:20px;font-weight:800;color:var(--n900);}
+.dialog p{font-size:13.5px;color:var(--n500);line-height:1.65;}
+.dialog p strong{color:var(--n800);font-weight:700;}
+.dialog-btns{display:flex;gap:10px;width:100%;}
+.dialog-btns .btn{flex:1;height:42px;}
+
+.score-box{
+  background:var(--g50);border:1.5px solid var(--g100);border-radius:var(--r-lg);
+  padding:16px 32px;width:100%;
+}
+.score-num{font-size:38px;font-weight:900;color:var(--g600);}
+.score-lbl{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--n400);margin-top:3px;}
+
+/* Toast */
+.toast{
+  display:flex;align-items:flex-start;gap:10px;
+  background:var(--surface);border:1px solid var(--n200);border-radius:12px;
+  padding:12px 15px;min-width:260px;max-width:340px;
+  box-shadow:var(--s3);animation:toastIn .3s ease;
+}
+.toast.success{border-left:3px solid var(--g500);}
+.toast.error{border-left:3px solid var(--red);}
+.toast.info{border-left:3px solid var(--blue);}
+.toast-icon{width:20px;height:20px;flex-shrink:0;margin-top:1px;}
+.toast.success .toast-icon{color:var(--g500);}
+.toast.error .toast-icon{color:var(--red);}
+.toast.info .toast-icon{color:var(--blue);}
+.toast-title{font-size:13px;font-weight:700;color:var(--n900);}
+.toast-message{font-size:12px;color:var(--n500);margin-top:2px;line-height:1.4;}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+@keyframes toastFadeOut{to{opacity:0;transform:translateX(20px);}}
+
+/* Image zoom overlay */
+.img-zoom-overlay{
+  position:fixed;inset:0;background:rgba(3,7,18,.85);backdrop-filter:blur(8px);
+  z-index:2000;display:flex;align-items:center;justify-content:center;cursor:zoom-out;
+  animation:fadeIn .2s ease;
+}
+.img-zoom-overlay.hidden{display:none;}
+.img-zoom-overlay img{
+  max-width:90vw;max-height:88vh;object-fit:contain;
+  border-radius:var(--r-lg);box-shadow:0 24px 64px rgba(0,0,0,.6);
+}
+.img-zoom-close{
+  position:absolute;top:20px;right:20px;
+  width:40px;height:40px;border-radius:50%;
+  background:rgba(255,255,255,.15);border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  transition:background .15s;
+}
+.img-zoom-close:hover{background:rgba(255,255,255,.25);}
+
+/* ── Mobile ── */
+@media(max-width:900px){
+  .exam-body{grid-template-columns:1fr;}
+  .exam-sidebar{display:none;}
+  .hdr-exam-name{max-width:120px;}
+  .hdr-subjects{max-width:none;}
+  .question-area{padding:14px;}
+  .q-body{padding:16px 16px 20px;}
+  .q-text{font-size:14.5px;}
+  .opt{padding:11px 13px;}
+  .opt-text{font-size:13.5px;}
+  .exam-controls{padding:10px 14px;}
+  .btn{padding:8px 12px;font-size:12px;}
+  .dialog{width:92vw;padding:24px;}
+}
+</style>
+</head>
+<body>
+<div id="toastContainer"></div>
+<div id="network-status-bar"></div>
+
+<!-- ── Header ── -->
+<header class="exam-header">
+  <div class="hdr-brand">
+    <img src="/img/prep4jamb.png" alt="Logo"/>
+  </div>
+  <div class="hdr-divider"></div>
+  <span class="hdr-exam-name" id="exam-title">Examination</span>
+  <div class="hdr-divider"></div>
+
+  <div class="hdr-right">
+    <!-- Timer -->
+    <div class="timer-chip" id="timer-box">
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span id="timer">00:00:00</span>
+    </div>
+
+    <!-- Progress -->
+    <div class="prog-chip">
+      <div class="prog-ring-wrap">
+        <svg width="28" height="28" viewBox="0 0 28 28">
+          <circle cx="14" cy="14" r="11" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="3"/>
+          <circle class="progress-ring__circle" cx="14" cy="14" r="11" fill="none" stroke="#34d399" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        <span id="progress-pct">0%</span>
+      </div>
+      <span id="answered-count">0</span>/<span id="total-count">0</span>
+    </div>
+
+    <!-- User -->
+    <div class="hdr-user">
+      <div class="hdr-avatar" id="user-avatar-initial"></div>
+      <div class="hdr-uinfo">
+        <span class="hdr-uname" id="user-name"></span>
+        <span class="hdr-uid" id="user-id"></span>
+      </div>
+      <button class="logout-btn-mini" onclick="handleLogout()" title="Logout" style="margin-left: 12px;">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ── Body ── -->
+<div class="exam-body">
+
+  <!-- Sidebar -->
+  <aside class="exam-sidebar">
+    <div class="sidebar-header">
+      <h3>Question Navigator</h3>
+      <div class="sb-stats">
+        <div class="sb-stat"><div class="sb-stat-val" id="sb-answered">0</div><div class="sb-stat-lbl">Answered</div></div>
+        <div class="sb-stat"><div class="sb-stat-val" id="sb-total">0</div><div class="sb-stat-lbl">Total</div></div>
+      </div>
+    </div>
+
+    <!-- Subject mini-tabs in sidebar -->
+    <div class="sb-subject-tabs" id="sidebar-subject-tabs"></div>
+
+    < <div class="nav-legend">
+        <div class="leg-item"><span class="leg-dot current"></span>Current</div>
+        <div class="leg-item"><span class="leg-dot answered"></span>Answered</div>
+        <div class="leg-item"><span class="leg-dot unanswered"></span>Unanswered</div>
+        <div class="leg-item"><span class="leg-dot flagged"></span>Flagged</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="exam-main">
+
+    <!-- Subject strip tabs -->
+    <div class="subject-strip" id="subject-content-bar"></div>
+
+    <!-- Question area -->
+    <div class="question-area">
+      <div class="q-card" id="question-card">
+
+        <!-- Top row: badges + tools -->
+        <div class="q-card-top">
+          <div class="q-badges">
+            <span class="badge badge-num" id="q-num-badge">Q 1</span>
+            <span class="badge badge-year" id="q-year-badge" style="display:none;"></span>
+            <span class="badge badge-subj" id="q-subj-badge"></span>
+          </div>
+          <div class="q-tools">
+            <button class="tool-btn" onclick="toggleCalculator()" title="Open calculator">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="8" x2="8" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
+              Calc
+            </button>
+            <button class="tool-btn" onclick="clearCurrentAnswer()" title="Clear selection">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              Clear
+            </button>
+            <button class="tool-btn" id="btn-flag" onclick="toggleFlagCurrent()" title="Flag for review">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
+              Flag
+            </button>
+          </div>
+        </div>
+
+        <!-- Question body -->
+        <div class="q-body">
+          <!-- Section / passage -->
+          <div id="question-section" style="display:none;" class="q-section">
+            <div class="q-section-label">
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              Read carefully
+            </div>
+            <div id="question-section-content"></div>
+          </div>
+
+          <!-- Image with click-to-zoom -->
+          <div id="q-img-wrap" class="q-img-wrap" style="display:none;">
+            <div>
+              <img id="question-image" src="" alt="Question diagram" title="Click to zoom" style="cursor:zoom-in;" onclick="openImageZoom(this.src)"/>
+              <div class="q-img-caption">Tap image to enlarge</div>
+            </div>
+          </div>
+
+          <!-- Question text -->
+          <div class="q-text" id="question-text"></div>
+
+          <!-- Options -->
+          <div class="options-list" id="options-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom controls -->
+    <div class="exam-controls">
+      <div class="ctrl-group">
+        <button class="btn btn-ghost" onclick="prevQuestion()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          Previous
+        </button>
+      </div>
+
+      <div class="ctrl-info" id="current-q-num"></div>
+
+      <div class="ctrl-group">
+        <button class="btn btn-primary" onclick="nextQuestion()">
+          Next
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+        <button class="btn btn-danger" onclick="confirmSubmit()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+          Submit Exam
+        </button>
+      </div>
+    </div>
+  </div><!-- /exam-main -->
+</div><!-- /exam-body -->
+
+<!-- ── Image Zoom Overlay ── -->
+<div id="img-zoom-overlay" class="img-zoom-overlay hidden" onclick="closeImageZoom()">
+  <button class="img-zoom-close" onclick="closeImageZoom()">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <img id="zoom-img" src="" alt="Zoomed diagram" onclick="event.stopPropagation()"/>
+</div>
+
+<!-- ── Calculator Modal ── -->
+<div id="calculator-modal" class="overlay hidden" onclick="if(event.target===this)toggleCalculator()">
+  <div class="calc-panel">
+    <div class="calc-hdr">
+      <h4>Calculator</h4>
+      <button class="calc-close" onclick="toggleCalculator()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="calc-display" id="calc-display">0</div>
+    <div class="calc-grid">
+      <button class="calc-btn cb-clr" onclick="pressCalc('C')" style="grid-column:span 2">AC</button>
+      <button class="calc-btn cb-op" onclick="pressCalc('back')">⌫</button>
+      <button class="calc-btn cb-op" onclick="pressCalc('/')">÷</button>
+
+      <button class="calc-btn cb-n" onclick="pressCalc('7')">7</button>
+      <button class="calc-btn cb-n" onclick="pressCalc('8')">8</button>
+      <button class="calc-btn cb-n" onclick="pressCalc('9')">9</button>
+      <button class="calc-btn cb-op" onclick="pressCalc('*')">×</button>
+
+      <button class="calc-btn cb-n" onclick="pressCalc('4')">4</button>
+      <button class="calc-btn cb-n" onclick="pressCalc('5')">5</button>
+      <button class="calc-btn cb-n" onclick="pressCalc('6')">6</button>
+      <button class="calc-btn cb-op" onclick="pressCalc('-')">−</button>
+
+      <button class="calc-btn cb-n" onclick="pressCalc('1')">1</button>
+      <button class="calc-btn cb-n" onclick="pressCalc('2')">2</button>
+      <button class="calc-btn cb-n" onclick="pressCalc('3')">3</button>
+      <button class="calc-btn cb-op" onclick="pressCalc('+')">+</button>
+
+      <button class="calc-btn cb-n" onclick="pressCalc('0')" style="grid-column:span 2">0</button>
+      <button class="calc-btn cb-n" onclick="pressCalc('.')">.</button>
+      <button class="calc-btn cb-eq" onclick="pressCalc('=')">=</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Submit Confirm ── -->
+<div id="submit-confirm-modal" class="overlay hidden" onclick="if(event.target===this)closeSubmitConfirm()">
+  <div class="dialog">
+    <div class="dialog-icon warn">
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </div>
+    <h2>Submit Examination?</h2>
+    <p>You answered <strong id="confirm-answered">0</strong> of <strong id="confirm-total">0</strong> questions.<br>Once submitted, this cannot be undone.</p>
+    <div class="dialog-btns">
+      <button class="btn btn-ghost" onclick="closeSubmitConfirm()">Cancel</button>
+      <button class="btn btn-danger-solid" onclick="submitExam(true)">Yes, Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Completion ── -->
+<div id="completion-modal" class="overlay hidden">
+  <div class="dialog">
+    <div class="dialog-icon ok">
+      <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    </div>
+    <h2>Exam Submitted!</h2>
+    <p id="completion-msg">Your examination has been submitted successfully.</p>
+    <p id="completion-exam-name" style="font-size:11px;color:var(--n400);"></p>
+    <div class="score-box">
+      <div class="score-num" id="score-text">—</div>
+      <div class="score-lbl" id="score-label">Official Score</div>
+    </div>
+    <button class="btn btn-primary" onclick="exitExamPortal()" style="width:100%;height:44px;font-size:14px;">
+      View Full Results
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+// ── Image zoom helpers ──
+function openImageZoom(src) {
+  const overlay = document.getElementById('img-zoom-overlay');
+  const img = document.getElementById('zoom-img');
+  if (!overlay || !img || !src) return;
+  img.src = src;
+  overlay.classList.remove('hidden');
+}
+function closeImageZoom() {
+  const overlay = document.getElementById('img-zoom-overlay');
+  if (overlay) overlay.classList.add('hidden');
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeImageZoom();
+});
+
+// ── SignalR: ForceSubmit & SessionEnded ──
+let _signalRConnectionStarted = false;
+try {
+  const _hubUrl = (typeof API_BASE !== 'undefined' ? API_BASE : '/api').replace('/api','') + '/hubs/exam';
+  const _conn = new signalR.HubConnectionBuilder().withUrl(_hubUrl).withAutomaticReconnect().build();
+  _conn.on('ForceSubmit', () => { if (typeof submitExam === 'function' && !examCompleted) submitExam(false); });
+  _conn.on('SessionEnded', () => {
+    if (typeof showToast === 'function') showToast('Session Ended', 'The exam session has been ended by the coordinator.', 'error');
+    setTimeout(() => { if (typeof submitExam === 'function' && !examCompleted) submitExam(false); }, 2000);
+  });
+  _conn.on('BroadcastMessage', (p) => {
+    const msg = p?.message || p;
+    if (msg && typeof showToast === 'function') showToast('Broadcast', msg, 'info');
+  });
+  if (!_signalRConnectionStarted) {
+    _conn.start().then(() => {
+      _signalRConnectionStarted = true;
+      const code = localStorage.getItem('selectedSessionCode') || localStorage.getItem('cbt_session_code');
+      if (code) _conn.invoke('JoinStudentGroup', code).catch(() => {});
+    }).catch(() => {});
+  }
+} catch(e) {}
+</script>
+</body>
+</html>

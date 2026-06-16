@@ -1,0 +1,343 @@
+/* ── Internal Workspace Specific Styles ── */
+.internal-workspace {
+    padding: 40px 48px !important;
+    display: flex;
+    flex-direction: column;
+}
+
+.workspace-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 40px;
+    flex-shrink: 0;
+}
+
+.user-profile-mini {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logout-btn-mini {
+    background: #f1f5f9;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #64748b;
+}
+
+.logout-btn-mini:hover {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: white;
+}
+
+.user-avatar-small {
+    width: 36px;
+    height: 36px;
+    background: #f1f5f9;
+    color: #16a34a;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+}
+
+.user-details-mini {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name-small {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+.user-role-small {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+}
+
+.small-logo-box {
+    height: 42px;
+    width: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.small-logo-box img {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+.header-divider {
+    height: 24px;
+    width: 1.5px;
+    background-color: #e2e8f0;
+}
+
+.page-indicator {
+    font-size: 14px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.content-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.candidate-notes-modern {
+    background-color: #f8fafc;
+    border: 1.5px solid #f1f5f9;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 32px;
+}
+
+.note-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #16a34a;
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.note-list {
+    margin: 0;
+    padding-left: 20px;
+    list-style-type: disc;
+}
+
+.note-list li {
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.6;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+/* Exam Grid / Cards */
+.exam-list-modern {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 8px;
+    padding-bottom: 16px;
+}
+
+.exam-list-modern::-webkit-scrollbar { width: 4px; }
+.exam-list-modern::-webkit-scrollbar-track { background: transparent; }
+.exam-list-modern::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+
+.exam-card-modern {
+    background: #ffffff;
+    border: 1.5px solid #f1f5f9;
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.exam-card-modern::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #16a34a, #22c55e);
+}
+
+.exam-card-modern:hover {
+    border-color: #16a34a;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(22, 163, 74, 0.1);
+}
+
+.exam-card-modern:active {
+    transform: translateY(0);
+}
+
+.exam-type-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    background: rgba(22, 163, 74, 0.1);
+    color: #16a34a;
+    font-size: 9px;
+    font-weight: 800;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+}
+
+.exam-type-badge.gray {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.exam-card-modern h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.exam-meta-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.meta-pill {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    background: #f8fafc;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+.action-btn {
+    background: #16a34a;
+    color: white;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s;
+    width: 100%;
+}
+
+.exam-card-modern:hover .action-btn {
+    background: #15803d;
+    box-shadow: 0 3px 10px rgba(22, 163, 74, 0.25);
+}
+
+.exam-card-modern.locked {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background: #fafafa;
+}
+
+.exam-card-modern.locked:hover {
+    transform: none;
+    border-color: #f1f5f9;
+    box-shadow: none;
+}
+
+.exam-lock-reason {
+    font-size: 12px;
+    color: #94a3b8;
+    margin: 4px 0 0 0;
+}
+
+.action-btn:disabled {
+    background: #cbd5e1;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+/* Footer Section */
+.workspace-footer {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1.5px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.btn-back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.btn-back:hover {
+    color: #16a34a;
+}
+
+.copyright {
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+@media (max-width: 850px) {
+    .internal-workspace {
+        padding: 24px 16px !important;
+    }
+    .workspace-header {
+        margin-bottom: 24px;
+        gap: 12px;
+    }
+    .user-profile-mini {
+        display: none;
+    }
+    .candidate-notes-modern {
+        padding: 16px;
+        margin-bottom: 20px;
+    }
+    .exam-card-modern {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+        padding: 20px;
+    }
+    .action-btn {
+        width: 100%;
+        text-align: center;
+    }
+    .workspace-footer {
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
+        margin-top: 24px;
+        padding-top: 16px;
+    }
+}
+
+/* Fix for console opening causing layout issues */
+@media (min-height: 600px) {
+    .internal-workspace {
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+    }
+}

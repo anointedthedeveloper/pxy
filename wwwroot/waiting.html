@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Waiting Room | CBT Portal</title>
+    <script>try { const t = localStorage.getItem('selectedExamTitle'); if(t) document.title = 'Waiting — ' + t; } catch(e){}</script>
+    <link rel="icon" type="image/png" href="/img/prep4jamb.png">
+    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="stylesheet" href="/css/login.css" />
+    <link rel="stylesheet" href="/css/waiting.css" />
+    <!-- SignalR — served locally, no internet required -->
+    <script src="/js/signalr.min.js"></script>
+</head>
+
+<body>
+    <div id="toastContainer"></div>
+
+    <div class="login-card waiting-layout">
+        <!-- Left Panel: Brand & Visuals -->
+        <div class="left-panel">
+            <div class="flowing-gradient"></div>
+            <div class="hex-grid-overlay"></div>
+            <div class="wave-decor"></div>
+
+            <div class="left-content-top">
+                <div class="jamb-logo-container">
+                    <img src="/img/prep4jamb.png" alt="Prep4JAMB Logo" class="main-logo-img">
+                </div>
+
+                <div class="status-visual-container">
+                    <div class="pulse-container">
+                        <div class="pulse-ring"></div>
+                        <div class="pulse-ring"></div>
+                        <div class="pulse-ring"></div>
+                        <div class="status-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <h1 class="mt-8">Waiting Room<br><span class="green-text">Examination Portal</span></h1>
+                <p class="tagline">The exam coordinator will start the session shortly. Please remain on this page as
+                    we synchronize your questions.</p>
+            </div>
+
+            <div class="shield-container">
+                <div class="shield-base"></div>
+                <div class="shield-3d">
+                    <svg viewBox="0 0 50 60" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.3" />
+                                <stop offset="100%" style="stop-color:#064e3b;stop-opacity:0.8" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M25,2 L45,10 L45,30 C45,45 25,58 25,58 C25,58 5,45 5,30 L5,10 Z" fill="url(#shieldGrad)"
+                            stroke="#10b981" stroke-width="2" />
+                        <path d="M18,30 L23,35 L33,25" fill="none" stroke="#ffffff" stroke-width="4"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Status & Details -->
+        <div class="right-panel">
+            <div class="waiting-header">
+                <div class="welcome-badge">UTME Preparation Portal</div>
+                <button class="logout-btn-mini" onclick="handleLogout()" title="Logout">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                </button>
+            </div>
+            <h2 id="wait-page-heading">Session Synchronization</h2>
+            <p class="instruction-text">We are preparing your environment for a seamless examination experience.</p>
+
+            <div class="status-details-card">
+                <div class="candidate-header">
+                    <div class="avatar-circle" id="userAvatar">?</div>
+                    <div class="candidate-info">
+                        <span class="label">Candidate Name</span>
+                        <h3 style="display:flex; align-items:center; gap:8px;">
+                            <span id="wait-candidate-name">Loading...</span>
+                            <span id="wait-joined-check" style="display:none; color:#10b981;">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            </span>
+                        </h3>
+                    </div>
+                </div>
+
+                <div class="exam-info-box">
+                    <div class="info-row">
+                        <div class="info-col">
+                            <span class="label">Examination</span>
+                            <span class="value" id="wait-exam-name">Loading...</span>
+                        </div>
+                        <div class="info-col">
+                            <span class="label">System Status</span>
+                            <span class="value" id="wait-system-status" style="color:#10b981;">Connecting...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sync-progress-section">
+                    <div class="progress-header">
+                        <span id="waiting-status">Waiting for admin to start exam...</span>
+                        <span id="progress-percent">0%</span>
+                    </div>
+                    <div class="loading-bar-container">
+                        <div class="loading-bar-progress" id="loading-bar"></div>
+                    </div>
+                </div>
+
+                <button class="submit-btn disabled" id="btn-start-exam" disabled>
+                    <span>Waiting for Coordinator...</span>
+                </button>
+            </div>
+
+            <!-- Keyboard Controls Guide -->
+            <div class="controls-guide">
+                <h4>Keyboard Controls</h4>
+                <div class="controls-grid">
+                    <div class="control-item">
+                        <div class="control-key">A</div>
+                        <div class="control-desc">Select Option A</div>
+                    </div>
+                    <div class="control-item">
+                        <div class="control-key">B</div>
+                        <div class="control-desc">Select Option B</div>
+                    </div>
+                    <div class="control-item">
+                        <div class="control-key">C</div>
+                        <div class="control-desc">Select Option C</div>
+                    </div>
+                    <div class="control-item">
+                        <div class="control-key">D</div>
+                        <div class="control-desc">Select Option D</div>
+                    </div>
+                    <div class="control-item">
+                        <div class="control-key">P</div>
+                        <div class="control-desc">Previous Question</div>
+                    </div>
+                    <div class="control-item">
+                        <div class="control-key">N</div>
+                        <div class="control-desc">Next Question</div>
+                    </div>
+                    <div class="control-item">
+                        <div class="control-key">S</div>
+                        <div class="control-desc">Submit Exam</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pre-Exam Checklist -->
+            <div class="checklist-container">
+                <h4>Pre-Exam Checklist</h4>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check-id" onchange="updateChecklist()">
+                    <label for="check-id">I have my ID/slip on my desk</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check-mouse" onchange="updateChecklist()">
+                    <label for="check-mouse">My mouse is working properly</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check-keyboard" onchange="updateChecklist()">
+                    <label for="check-keyboard">My keyboard is working properly</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" id="check-shortcuts" onchange="updateChecklist()">
+                    <label for="check-shortcuts">I understand the keyboard shortcuts</label>
+                </div>
+                <div id="checklist-status" style="margin-top: 8px; font-size: 12px; color: #10b981;"></div>
+            </div>
+
+            <!-- Exam Tips Carousel -->
+            <div class="tips-container">
+                <h4>Exam Tips</h4>
+                <div id="tip-display" style="font-size: 13px; color: #64748b; line-height: 1.5;"></div>
+            </div>
+
+            <div class="info-alert-box">
+                <div class="info-alert-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="16" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12.01" y2="8" />
+                    </svg>
+                </div>
+                <div class="info-alert-text">
+                    Do not refresh this page. You will be automatically redirected to the exam page once the coordinator starts the session.
+                </div>
+            </div>
+
+            <footer class="workspace-footer"
+                style="margin-top: auto; padding-top: 20px; border-top: 1.5px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+                <div class="copyright">© <span id="currentYear"></span> Anobyte Technologies</div>
+                <button class="submit-btn" id="btn-leave-room" style="background: #ef4444; padding: 10px 20px; font-size: 13px;" onclick="leaveWaitingRoom()">
+                    <span>Leave Waiting Room</span>
+                </button>
+            </footer>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        // AES decryption helper — uses Web Crypto API when available (HTTPS/localhost),
+        // falls back to fetching questions unencrypted when crypto.subtle is unavailable (plain HTTP).
+        async function decryptAes(cipherTextBase64, keyString) {
+            if (window.crypto && window.crypto.subtle) {
+                const keyBytes = new TextEncoder().encode(keyString.padEnd(32).substring(0, 32));
+                const ivBytes  = new TextEncoder().encode(keyString.padEnd(16).substring(0, 16));
+                const key = await crypto.subtle.importKey('raw', keyBytes, { name: 'AES-CBC' }, false, ['decrypt']);
+                const encryptedBytes = Uint8Array.from(atob(cipherTextBase64), c => c.charCodeAt(0));
+                const decryptedBuffer = await crypto.subtle.decrypt({ name: 'AES-CBC', iv: ivBytes }, key, encryptedBytes);
+                return new TextDecoder().decode(decryptedBuffer);
+            } else {
+                // crypto.subtle unavailable (plain HTTP) — fall back to plain question fetch
+                const studentExamId = localStorage.getItem('studentExamId');
+                const res = await fetch(`${API_BASE}/Student/${studentExamId}/questions`);
+                if (!res.ok) throw new Error('Fallback question fetch failed');
+                const questions = await res.json();
+                return JSON.stringify(questions);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            localStorage.removeItem('last_broadcast_msg');
+            const studentName = localStorage.getItem('studentName') || 'Candidate';
+            const studentId = localStorage.getItem('studentId') || '';
+            const examTitle = localStorage.getItem('selectedExamTitle') || 'Selected Examination';
+            const selectedExamId = parseInt(localStorage.getItem('selectedExamId')) || 0;
+            const selectedSessionId = parseInt(localStorage.getItem('selectedSessionId')) || 0;
+            const selectedSessionCode = localStorage.getItem('selectedSessionCode') || '';
+            const currentYear = new Date().getFullYear();
+
+            // --- SignalR Hub Connection for instant broadcast ---
+            const hubUrl = API_BASE.replace('/api', '') + '/hubs/exam';
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl(hubUrl)
+                .withAutomaticReconnect()
+                .build();
+
+            let signalRStarted = false;
+
+            connection.on('BroadcastMessage', (payload) => {
+                const msg = payload?.message || payload;
+                if (!msg) return;
+                const lastBroadcast = localStorage.getItem('last_broadcast_msg');
+                if (lastBroadcast !== msg) {
+                    localStorage.setItem('last_broadcast_msg', msg);
+                    if (typeof showToast === 'function')
+                        showToast('Broadcast from Coordinator', msg, 'info');
+                }
+            });
+
+            // Handle force logout from invigilator
+            connection.on('ForceLogout', () => {
+                showToast('Logged Out', 'You have been logged out by the invigilator.', 'error');
+                setTimeout(() => {
+                    localStorage.clear();
+                    window.location.href = 'index.html';
+                }, 2000);
+            });
+
+            // Real-time: admin started the exam — trigger decrypt + countdown immediately
+            connection.on('ExamStarted', () => {
+                if (starting) return;
+                const seid = parseInt(localStorage.getItem('studentExamId'));
+                const did = localStorage.getItem('cbt_device_id') || 'NODE-UNKNOWN';
+                const dn = typeof getBrowserAndOS === 'function' ? getBrowserAndOS() : 'Browser';
+                if (seid) {
+                    // Force a heartbeat check immediately to trigger decryption
+                    pollHeartbeatSignal(seid, did, dn);
+                }
+            });
+
+            // Real-time: session ended by admin
+            connection.on('SessionEnded', async () => {
+                if (typeof showToast === 'function')
+                    showToast('Session Ended', 'This session has been ended by the coordinator. Auto-submitting...', 'error');
+                
+                // Auto-submit before redirecting
+                try {
+                    const studentExamId = parseInt(localStorage.getItem('studentExamId'));
+                    if (studentExamId) {
+                        const responses = {};
+                        const encrypted = localStorage.getItem('encryptedQuestions');
+                        if (encrypted) {
+                            const key = localStorage.getItem('sessionId') || 'default';
+                            const decrypted = await decryptAes(encrypted, key);
+                            const questions = JSON.parse(decrypted);
+                            questions.forEach(q => {
+                                const saved = localStorage.getItem(`q_${q.questionId}`);
+                                if (saved) responses[q.questionId] = saved;
+                            });
+                        }
+                        
+                        if (Object.keys(responses).length > 0) {
+                            await fetch(`${API_BASE}/Student/${studentExamId}/submit`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ answers: responses })
+                            });
+                        }
+                    }
+                } catch (e) {
+                    console.error('Auto-submit failed:', e);
+                }
+                
+                setTimeout(() => { window.location.href = 'selection.html'; }, 3000);
+            });
+
+            // Expose joiner early so startExamProcess can call it regardless of connection timing
+            window._signalRJoinStudents = (code) => {
+                if (connection.state === signalR.HubConnectionState.Connected) {
+                    connection.invoke('JoinStudentGroup', code).catch(() => {});
+                } else {
+                    // Queue for when connection is established
+                    connection.onreconnected(() => connection.invoke('JoinStudentGroup', code).catch(() => {}));
+                }
+            };
+
+            connection.start()
+                .then(() => {
+                    signalRStarted = true;
+                    // Join student group using the selected session code
+                    if (selectedSessionCode) connection.invoke('JoinStudentGroup', selectedSessionCode).catch(() => {});
+                })
+                .catch(() => {});
+            // ----------------------------------------------------
+
+            function leaveWaitingRoom() {
+                // Clear all session data and redirect to selection
+                localStorage.removeItem('studentExamId');
+                localStorage.removeItem('sessionId');
+                localStorage.removeItem('selectedSessionId');
+                localStorage.removeItem('selectedSessionCode');
+                localStorage.removeItem('cbt_session_code');
+                localStorage.removeItem('encryptedQuestions');
+                localStorage.removeItem('cachedQuestions');
+                window.location.href = 'selection.html';
+            }
+
+            function updateChecklist() {
+                const checks = ['check-id', 'check-mouse', 'check-keyboard', 'check-shortcuts'];
+                const allChecked = checks.every(id => document.getElementById(id).checked);
+                const status = document.getElementById('checklist-status');
+                if (allChecked) {
+                    status.textContent = '✓ You are fully prepared! Waiting for coordinator...';
+                } else {
+                    status.textContent = '';
+                }
+            }
+
+            const examTips = [
+                "Take a deep breath. Read every question carefully before choosing an answer.",
+                "You can use your keyboard shortcuts (A, B, C, D) to navigate quickly.",
+                "Stuck on a hard question? Skip it using 'N' and come back to it later.",
+                "Manage your time wisely - don't spend too long on any one question.",
+                "Review your answers before submitting if time permits.",
+                "Stay calm and focused. You've prepared for this!"
+            ];
+
+            let currentTipIndex = 0;
+            function rotateTips() {
+                const tipDisplay = document.getElementById('tip-display');
+                if (tipDisplay) {
+                    tipDisplay.textContent = examTips[currentTipIndex];
+                    currentTipIndex = (currentTipIndex + 1) % examTips.length;
+                }
+            }
+
+            // Initialize tips and rotate every 8 seconds
+            rotateTips();
+            setInterval(rotateTips, 8000);
+
+            document.getElementById('wait-candidate-name').textContent = studentName;
+            document.getElementById('wait-exam-name').textContent = examTitle;
+            document.getElementById('userAvatar').textContent = studentName.charAt(0).toUpperCase();
+            document.getElementById('currentYear').textContent = currentYear;
+
+            // Update heading and tab title with actual exam name
+            const heading = document.getElementById('wait-page-heading');
+            if (heading) heading.textContent = examTitle;
+            document.title = 'Waiting — ' + examTitle;
+
+            const progressBar = document.getElementById('loading-bar');
+            const percentText = document.getElementById('progress-percent');
+            const statusText = document.getElementById('waiting-status');
+            const btn = document.getElementById('btn-start-exam');
+
+            let pollingInterval;
+            let heartbeatInterval;
+            let downloading = false;
+            let currentSession = null;
+            let starting = false;
+
+            // Step 1: Poll for active session via public student endpoint
+            const checkSession = async () => {
+                if (downloading) return; // Prevent multiple joins
+                try {
+                    const response = await fetch(`${API_BASE}/Student/active-session/${selectedExamId}`);
+                    if (!response.ok) return;
+
+                    const data = await response.json();
+                    if (data.found && data.isActive) {
+                        clearInterval(pollingInterval);
+                        // Shape into the format startExamProcess expects
+                        currentSession = {
+                            id: data.id,
+                            examId: data.examId,
+                            examTitle: data.examTitle,
+                            sessionCode: data.sessionCode,
+                            isActive: data.isActive,
+                            isStarted: data.isStarted
+                        };
+                        // Check if already joined to avoid duplicate join
+                        const existingStudentExamId = localStorage.getItem('studentExamId');
+                        if (existingStudentExamId) {
+                            // Already joined, just wait for exam to start
+                            statusText.textContent = 'Reconnected to session. Waiting for exam to start...';
+                            progressBar.style.width = '100%';
+                            percentText.textContent = '100%';
+                            btn.innerHTML = '<span>Connected to Room</span>';
+                            btn.disabled = true;
+                            
+                            // Set up heartbeat and wait for exam start
+                            const seid = parseInt(existingStudentExamId);
+                            const did = localStorage.getItem('cbt_device_id') || 'NODE-UNKNOWN';
+                            const dn = typeof getBrowserAndOS === 'function' ? getBrowserAndOS() : 'Browser';
+                            heartbeatInterval = setInterval(() => {
+                                pollHeartbeatSignal(seid, did, dn);
+                            }, 3000);
+                            pollHeartbeatSignal(seid, did, dn);
+                        } else {
+                            startExamProcess(currentSession);
+                        }
+                    }
+                } catch (err) {
+                    // Silent — network may not be ready yet
+                }
+            };
+
+            // Start polling for session
+            pollingInterval = setInterval(checkSession, 3000);
+            checkSession();
+
+            // Step 2: Join, Download, and Wait for Admin to Start
+            const startExamProcess = async (session) => {
+                downloading = true;
+                statusText.textContent = 'Active session found! Requesting entrance...';
+                progressBar.style.width = '30%';
+                percentText.textContent = '30%';
+
+                try {
+                    // Join Session
+                    const activeDeviceId = localStorage.getItem('cbt_device_id') || 'NODE-UNKNOWN';
+                    const activeDeviceName = typeof getBrowserAndOS === 'function' ? getBrowserAndOS() : 'Student Browser';
+                    const joinRes = await fetch(`${API_BASE}/Student/join`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            sessionCode: session.sessionCode,
+                            fullName: studentName,
+                            studentId: studentId,
+                            deviceId: activeDeviceId,
+                            deviceName: activeDeviceName
+                        })
+                    });
+
+                    if (!joinRes.ok) throw new Error('Failed to join');
+                    const joinData = await joinRes.json();
+                    const studentExamId = joinData.studentExamId;
+                    
+                    // Save context
+                    localStorage.setItem('studentExamId', studentExamId);
+                    localStorage.setItem('sessionId', joinData.sessionId);
+                    localStorage.setItem('examDuration', joinData.durationMinutes);
+                    localStorage.setItem('selectedExamTitle', joinData.examTitle || session.displayName || session.examTitle);
+                    localStorage.setItem('selectedExamId', joinData.examId);
+
+                    // Join SignalR student group NOW that we have the session code
+                    localStorage.setItem('cbt_session_code', session.sessionCode);
+                    localStorage.setItem('selectedSessionCode', session.sessionCode);
+                    if (typeof window._signalRJoinStudents === 'function')
+                        window._signalRJoinStudents(session.sessionCode);
+
+                    // Register device so admin sees this candidate as connected
+                    console.log('[Waiting Room] Registering device:', { deviceId: activeDeviceId, deviceName: activeDeviceName, studentId });
+                    try {
+                        const deviceRes = await fetch(`${API_BASE}/Student/device`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                deviceId: activeDeviceId,
+                                deviceName: activeDeviceName,
+                                batteryLevel: 100,
+                                studentId: studentId
+                            })
+                        });
+                        if (!deviceRes.ok) {
+                            console.error('[Waiting Room] Device registration failed:', deviceRes.status, deviceRes.statusText);
+                            const errorText = await deviceRes.text();
+                            console.error('[Waiting Room] Device registration error response:', errorText);
+                        } else {
+                            console.log('[Waiting Room] Device registration successful');
+                        }
+                    } catch (err) {
+                        console.error('[Waiting Room] Device registration exception:', err);
+                    }
+                    statusText.textContent = 'Pre-hydrating secure exam cache...';
+                    progressBar.style.width = '60%';
+                    percentText.textContent = '60%';
+
+                    // Download Secure Encrypted Questions
+                    console.log('[Waiting Room] Fetching secure questions for studentExamId:', studentExamId);
+                    const qRes = await fetch(`${API_BASE}/Student/${studentExamId}/questions/secure`);
+
+                    // 409 = already submitted — student re-joined after finishing exam
+                    if (qRes.status === 409) {
+                        console.log('[Waiting Room] Exam already submitted, redirecting to results');
+                        statusText.textContent = 'You have already submitted this exam.';
+                        statusText.style.color = '#f59e0b';
+                        btn.innerHTML = '<span>Already Submitted — Redirecting to Results...</span>';
+                        btn.disabled = true;
+                        setTimeout(() => { window.location.href = 'results.html'; }, 2000);
+                        return;
+                    }
+
+                    if (!qRes.ok) {
+                        console.error('[Waiting Room] Failed to fetch secure questions:', qRes.status, qRes.statusText);
+                        // Track repeated failures and offer a leave button after 2 minutes
+                        const firstFail = parseInt(localStorage.getItem('_waitFailedAt') || '0');
+                        if (!firstFail) localStorage.setItem('_waitFailedAt', Date.now().toString());
+                        const elapsed = Date.now() - (firstFail || Date.now());
+                        const remaining = Math.max(0, 120 - Math.floor(elapsed / 1000));
+
+                        statusText.textContent = `Failed to load exam questions. Retrying... (auto-leave in ${remaining}s)`;
+                        statusText.style.color = '#ef4444';
+
+                        // Show leave button
+                        let leaveBtn = document.getElementById('btn-leave-room');
+                        if (!leaveBtn) {
+                            leaveBtn = document.createElement('button');
+                            leaveBtn.id = 'btn-leave-room';
+                            leaveBtn.className = 'submit-btn';
+                            leaveBtn.style.cssText = 'margin-top:12px;background:#ef4444;';
+                            leaveBtn.textContent = 'Leave Waiting Room';
+                            leaveBtn.onclick = () => {
+                                localStorage.removeItem('_waitFailedAt');
+                                window.location.href = 'selection.html';
+                            };
+                            btn.parentNode.insertBefore(leaveBtn, btn.nextSibling);
+                        }
+
+                        if (elapsed >= 120000) {
+                            localStorage.removeItem('_waitFailedAt');
+                            showToast('Redirecting', 'Could not join exam. Returning to exam list.', 'error');
+                            setTimeout(() => { window.location.href = 'selection.html'; }, 1500);
+                            return;
+                        }
+
+                        throw new Error('Failed to fetch secure questions');
+                    }
+
+                    // Success — clear any failure tracking
+                    localStorage.removeItem('_waitFailedAt');
+                    const leaveBtn2 = document.getElementById('btn-leave-room');
+                    if (leaveBtn2) leaveBtn2.remove();
+
+                    const qData = await qRes.json();
+                    console.log('[Waiting Room] Secure questions fetched successfully, isApproved:', qData.isApproved);
+
+                    // Download images as backup - fetch unencrypted questions to get image URLs (non-blocking)
+                    try {
+                        const studentExamId = localStorage.getItem('studentExamId');
+                        console.log('[Waiting Room] Fetching plain questions for image URLs');
+                        const plainRes = await fetch(`${API_BASE}/Student/${studentExamId}/questions`);
+                        if (plainRes.ok) {
+                            const plainData = await plainRes.json();
+                            const questions = plainData.questions || plainData; // Handle both old and new format
+                            const imageUrls = new Set();
+                            questions?.forEach(q => {
+                                if (q.imageUrl && q.imageUrl.trim()) {
+                                    imageUrls.add(q.imageUrl.trim());
+                                }
+                            });
+                            
+                            // Also save exam duration if provided
+                            if (plainData.durationMinutes) {
+                                localStorage.setItem('examDuration', plainData.durationMinutes);
+                            }
+                            
+                            // Download images in background without blocking exam entry
+                            if (imageUrls.size > 0) {
+                                console.log('[Waiting Room] Starting background image download for', imageUrls.size, 'images');
+                                // Don't await - let it run in background
+                                Array.from(imageUrls).map(url => {
+                                    fetch(url).then(res => {
+                                        if (res.ok) return res.blob();
+                                        return null;
+                                    }).catch(() => null);
+                                });
+                            }
+                        }
+                    } catch (e) {
+                        console.log('[Waiting Room] Image download backup skipped:', e);
+                    }
+
+                    // Check if auto-approved or waiting for admin approval
+                    if (qData.isApproved === false) {
+                        console.log('[Waiting Room] Student not approved, waiting for admin approval');
+                        statusText.textContent = 'Waiting for admin to accept you to exam...';
+                        statusText.style.color = '#f59e0b';
+                        btn.innerHTML = '<span>Pending Approval</span>';
+                        btn.disabled = true;
+                        
+                        // Poll for approval status
+                        const approvalInterval = setInterval(async () => {
+                            try {
+                                const checkRes = await fetch(`${API_BASE}/Student/${studentExamId}/status`);
+                                if (checkRes.ok) {
+                                    const checkData = await checkRes.json();
+                                    if (checkData.isApproved) {
+                                        clearInterval(approvalInterval);
+                                        // Continue with normal flow
+                                        localStorage.setItem('encryptedQuestions', qData.encryptedQuestions);
+                                        progressBar.style.width = '100%';
+                                        percentText.textContent = '100%';
+                                        statusText.textContent = 'Securely Hydrated – Awaiting Activation Lock Signal...';
+                                        statusText.style.color = '#10b981';
+                                        btn.innerHTML = '<span>Connected to Room (Offline-Hydrated)</span><div class="spinner"></div>';
+                                        
+                                        const checkIcon = document.getElementById('wait-joined-check');
+                                        if (checkIcon) checkIcon.style.display = 'inline-block';
+                                        
+                                        heartbeatInterval = setInterval(() => {
+                                            pollHeartbeatSignal(studentExamId, activeDeviceId, activeDeviceName);
+                                        }, 3000);
+                                        pollHeartbeatSignal(studentExamId, activeDeviceId, activeDeviceName);
+                                    }
+                                }
+                            } catch (e) {
+                                console.error('Approval check failed:', e);
+                            }
+                        }, 3000);
+                        return;
+                    }
+
+                    // Cache encrypted string to local storage
+                    localStorage.setItem('encryptedQuestions', qData.encryptedQuestions);
+                    progressBar.style.width = '100%';
+                    percentText.textContent = '100%';
+
+                    statusText.textContent = 'Securely Hydrated – Awaiting Activation Lock Signal...';
+                    statusText.style.color = '#10b981';
+                    
+                    const checkIcon = document.getElementById('wait-joined-check');
+                    if (checkIcon) checkIcon.style.display = 'inline-block';
+                    
+                    btn.innerHTML = '<span>Connected to Room (Offline-Hydrated)</span><div class="spinner"></div>';
+
+                    // If the exam was already started when we joined, skip the heartbeat loop
+                    // and go directly to decrypt + countdown to avoid the race condition
+                    if (session.isStarted) {
+                        statusText.textContent = 'Exam already in progress — decrypting and launching...';
+                        try {
+                            const keyRes = await fetch(`${API_BASE}/Student/heartbeat`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    studentExamId: studentExamId,
+                                    currentQuestion: 0,
+                                    batteryLevel: 100,
+                                    isOnline: true,
+                                    connectionState: 'online',
+                                    deviceName: activeDeviceName,
+                                    deviceId: activeDeviceId
+                                })
+                            });
+                            if (keyRes.ok) {
+                                const keyData = await keyRes.json();
+                                if (keyData.isStarted && keyData.decryptionKey) {
+                                    starting = true;
+                                    const encryptedData = localStorage.getItem('encryptedQuestions');
+                                    if (!encryptedData) throw new Error('No encrypted questions cached!');
+                                    const decrypted = await decryptAes(encryptedData, keyData.decryptionKey);
+                                    localStorage.setItem('cachedQuestions', decrypted);
+                                    triggerCountdown();
+                                    return;
+                                }
+                            }
+                        } catch (earlyErr) {
+                            console.error('Early-start decryption failed:', earlyErr);
+                            // Fall through to normal heartbeat polling
+                        }
+                    }
+
+                    // Assign interval FIRST so clearInterval always has a valid handle
+                    heartbeatInterval = setInterval(() => {
+                        pollHeartbeatSignal(studentExamId, activeDeviceId, activeDeviceName);
+                    }, 3000);
+                    // Then fire the first poll immediately
+                    pollHeartbeatSignal(studentExamId, activeDeviceId, activeDeviceName);
+
+                } catch (error) {
+                    console.error(error);
+                    statusText.textContent = 'Connection failed. Retrying...';
+                    statusText.style.color = '#ef4444';
+                    downloading = false;
+                    pollingInterval = setInterval(checkSession, 5000); // Resume polling
+                }
+            };
+
+            // Continuous LAN Heartbeat & Activation Lock poll
+            const pollHeartbeatSignal = async (studentExamId, activeDeviceId, activeDeviceName) => {
+                if (starting) return;
+                const statusEl = document.getElementById('wait-system-status');
+                try {
+                    // Use POST /heartbeat endpoint to get isStarted and decryptionKey
+                    let batteryLevel = 100;
+                    try {
+                        if (navigator.getBattery) {
+                            const battery = await navigator.getBattery();
+                            batteryLevel = Math.round(battery.level * 100);
+                        }
+                    } catch (e) { }
+
+                    const res = await fetch(`${API_BASE}/Student/heartbeat`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            studentExamId: parseInt(studentExamId),
+                            currentQuestion: 0,
+                            batteryLevel: batteryLevel,
+                            isOnline: true,
+                            connectionState: 'online',
+                            deviceName: activeDeviceName,
+                            deviceId: activeDeviceId
+                        })
+                    });
+                    if (!res.ok) {
+                        if (statusEl) { statusEl.textContent = 'Local Mode (Secure)'; statusEl.style.color = '#f59e0b'; }
+                        return;
+                    }
+                    if (statusEl) { statusEl.textContent = 'Sync Status: Ready'; statusEl.style.color = '#10b981'; }
+                    const data = await res.json();
+                    
+                    if (data.broadcastMessage) {
+                        const lastBroadcast = localStorage.getItem('last_broadcast_msg');
+                        if (lastBroadcast !== data.broadcastMessage) {
+                            localStorage.setItem('last_broadcast_msg', data.broadcastMessage);
+                            showToast('Broadcast from Coordinator', data.broadcastMessage, 'info');
+                        }
+                    }
+
+                    if (data.isStarted && data.decryptionKey) {
+                        starting = true;
+                        clearInterval(heartbeatInterval);
+                        
+                        try {
+                            const encryptedData = localStorage.getItem('encryptedQuestions');
+                            if (!encryptedData) throw new Error('No encrypted questions cached!');
+                            
+                            const decrypted = await decryptAes(encryptedData, data.decryptionKey);
+                            localStorage.setItem('cachedQuestions', decrypted);
+                            
+                            triggerCountdown();
+                        } catch (decryptErr) {
+                            console.error('Decryption failed:', decryptErr);
+                            statusText.textContent = 'Secure decryption error! Please contact proctor.';
+                            statusText.style.color = '#ef4444';
+                            starting = false;
+                        }
+                    }
+                } catch (err) {
+                    if (statusEl) { statusEl.textContent = 'No Connection'; statusEl.style.color = '#ef4444'; }
+                }
+            };
+
+            // Fullscreen 5-second synchronized countdown
+            const triggerCountdown = () => {
+                const overlay = document.createElement('div');
+                overlay.style.position = 'fixed';
+                overlay.style.top = '0'; overlay.style.left = '0';
+                overlay.style.width = '100vw'; overlay.style.height = '100vh';
+                overlay.style.backgroundColor = '#020617';
+                overlay.style.zIndex = '9999';
+                overlay.style.display = 'flex';
+                overlay.style.flexDirection = 'column';
+                overlay.style.justifyContent = 'center';
+                overlay.style.alignItems = 'center';
+                overlay.style.color = 'white';
+                
+                const title = document.createElement('h2');
+                title.textContent = 'PREPARE TO BEGIN';
+                title.style.fontSize = '2rem';
+                title.style.color = '#10b981';
+                title.style.letterSpacing = '5px';
+                title.style.marginBottom = '2rem';
+                
+                const count = document.createElement('div');
+                count.style.fontSize = '12rem';
+                count.style.fontWeight = '900';
+                count.style.lineHeight = '1';
+                count.style.textShadow = '0 0 40px rgba(16, 185, 129, 0.5)';
+                
+                overlay.appendChild(title);
+                overlay.appendChild(count);
+                document.body.appendChild(overlay);
+                
+                let time = 5;
+                count.textContent = time;
+                
+                const int = setInterval(() => {
+                    time--;
+                    if(time > 0) {
+                        count.textContent = time;
+                        count.style.transform = 'scale(1.2)';
+                        setTimeout(() => count.style.transform = 'scale(1)', 200);
+                    } else {
+                        clearInterval(int);
+                        count.textContent = 'GO!';
+                        count.style.color = '#10b981';
+                        setTimeout(() => window.location.href = 'exam.html', 500);
+                    }
+                }, 1000);
+            };
+
+            function updateProgress(percent) {
+                progressBar.style.width = percent + '%';
+                percentText.textContent = percent + '%';
+                if(percent === 100) {
+                    progressBar.style.background = '#10b981';
+                    progressBar.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.4)';
+                }
+            }
+
+            function leaveWaitingRoom() {
+                if (confirm('Are you sure you want to leave the waiting room? You will need to rejoin the exam later.')) {
+                    localStorage.removeItem('_waitFailedAt');
+                    localStorage.removeItem('encryptedQuestions');
+                    localStorage.removeItem('studentExamId');
+                    localStorage.removeItem('sessionId');
+                    localStorage.removeItem('selectedSessionId');
+                    localStorage.removeItem('selectedSessionCode');
+                    localStorage.removeItem('cbt_session_code');
+                    window.location.href = 'selection.html';
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

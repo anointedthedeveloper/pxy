@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JAMB CBT Mock System | Student Portal</title>
+    <link rel="icon" type="image/png" href="/img/prep4jamb.png">
+    <link rel="stylesheet" href="/css/login.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div id="toastContainer"></div>
+
+    <div class="login-card">
+        
+        <div class="left-panel">
+            <div class="flowing-gradient"></div>
+            <div class="hex-grid-overlay"></div>
+            <div class="wave-decor"></div>
+            
+            <div class="left-content-top">
+                <div class="jamb-logo-container">
+                    <img src="/img/prep4jamb.png" alt="Prep4JAMB Logo" class="main-logo-img">
+                </div>
+
+                <h1>Secure. Reliable.<br><span class="green-text">Built for Excellence.</span></h1>
+                <p class="tagline">Access your CBT exam with confidence in a secure and trusted environment.</p>
+                
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        </div>
+                        <div class="feature-title">Secure Testing</div>
+                        <div class="feature-desc">Your data is protected at every step.</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                        </div>
+                        <div class="feature-title">Fast Login</div>
+                        <div class="feature-desc">Quick access, so you can focus on what matters.</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        </div>
+                        <div class="feature-title">Trusted Platform</div>
+                        <div class="feature-desc">Used by thousands of students nationwide.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="shield-container">
+                <div class="shield-base"></div>
+                <div class="shield-3d">
+                    <svg viewBox="0 0 50 60" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.3" />
+                                <stop offset="100%" style="stop-color:#064e3b;stop-opacity:0.8" />
+                            </linearGradient>
+                        </defs>
+                        <path d="M25,2 L45,10 L45,30 C45,45 25,58 25,58 C25,58 5,45 5,30 L5,10 Z" fill="url(#shieldGrad)" stroke="#10b981" stroke-width="2"/>
+                        <path d="M18,30 L23,35 L33,25" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="right-panel">
+            
+            <div class="welcome-badge">UTME Preparation Portal</div>
+            <h2>JAMB CBT Mock System</h2>
+            <p class="instruction-text">A simulation environment designed to help you prepare for the official UTME exam.</p>
+
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <div class="input-wrapper">
+                        <div class="input-icon-left">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </div>
+                        <input type="text" id="username" placeholder="Enter your username" required autocomplete="username">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-wrapper">
+                        <div class="input-icon-left">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        </div>
+                        <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
+                        <button type="button" class="password-toggle" id="passwordToggle" onclick="togglePasswordVisibility()" aria-label="Toggle visibility">
+                            <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <span>Sign In</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </button>
+
+            </form>
+
+            <div class="divider-container">
+                <div class="divider-text">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="12" height="12"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    Secure and monitored environment
+                </div>
+            </div>
+
+            <div class="info-alert-box">
+                <div class="info-alert-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+                <div class="info-alert-text">
+                    This is a secure testing platform. All activity is monitored and recorded.
+                </div>
+            </div>
+
+            <div class="disclaimer-text">
+                <strong>Disclaimer:</strong> This application is a mock examination system created solely for the purpose of candidate preparation. It is NOT an official JAMB application and is not affiliated with, endorsed by, or connected to the Joint Admissions and Matriculation Board (JAMB) in any way.
+            </div>
+
+            <div style="position: absolute; top: 20px; right: 20px;">
+                <button class="logout-btn-mini" onclick="handleLogout()" title="Logout">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                </button>
+            </div>
+
+            <!-- Connection Settings (Visible only on local file load or on demand) -->
+            <div id="connectionSettings" class="connection-box" style="display: none; margin-top: 20px; padding: 16px; border-radius: 12px; background: #f8fafc; border: 1.5px solid #e2e8f0; animation: fadeIn 0.4s ease-out;">
+                <label style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; display: block; margin-bottom: 8px; letter-spacing: 0.5px;">Server Connection IP</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="serverIpInput" value="localhost" style="flex: 1; height: 38px; font-size: 13px; padding: 0 12px; border-radius: 8px; border: 1.5px solid #cbd5e1; outline: none; transition: border-color 0.2s;" placeholder="e.g. 192.168.1.15" onfocus="this.style.borderColor='#16a34a'" onblur="this.style.borderColor='#cbd5e1'">
+                    <button type="button" onclick="saveServerIp()" style="background: #16a34a; color: white; border: none; font-size: 12px; padding: 0 16px; height: 38px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#15803d'" onmouseout="this.style.background='#16a34a'">Save</button>
+                </div>
+            </div>
+
+            <footer class="workspace-footer" style="margin-top: 30px; padding-top: 20px; border-top: 1.5px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+                <div class="copyright">© <span id="currentYear"></span> Anobyte Technologies</div>
+            </footer>
+
+        </div>
+
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        // Request fullscreen on login page load for JAMB-like experience
+        document.addEventListener('DOMContentLoaded', () => {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log('Fullscreen request failed:', err);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
