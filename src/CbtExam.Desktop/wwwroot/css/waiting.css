@@ -59,8 +59,35 @@
     padding: 30px 48px; /* Adjusted padding for better spacing */
 }
 
+.waiting-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
 .welcome-badge {
-    margin-bottom: 4px;
+    margin-bottom: 0;
+}
+
+.logout-btn-mini {
+    background: #f1f5f9;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #64748b;
+}
+
+.logout-btn-mini:hover {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: white;
 }
 
 /* Make headers smaller */
@@ -345,6 +372,14 @@
     }
     .right-panel {
         padding: 30px 24px;
+    }
+}
+
+/* Fix for console opening causing layout issues */
+@media (min-height: 600px) {
+    .right-panel {
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
     }
 }
 

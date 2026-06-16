@@ -73,6 +73,7 @@ body::after {
     width: 100vw;
     height: 100vh;
     max-width: 100vw;
+    max-height: 100vh;
     background-color: #ffffff;
     border-radius: 0; /* Full screen, no rounded corners on card edges */
     display: flex;
@@ -280,6 +281,7 @@ body::after {
     flex-direction: column;
     justify-content: flex-start;
     position: relative;
+    min-height: 0; /* Fix flex overflow issue */
     overflow-y: auto; /* Enable scrolling for small window heights */
 }
 
@@ -501,6 +503,26 @@ input:-webkit-autofill:focus {
     font-weight: 800;
 }
 
+.logout-btn-mini {
+    background: rgba(255,255,255,0.1);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: rgba(255,255,255,0.7);
+}
+
+.logout-btn-mini:hover {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: white;
+}
+
 /* Spinner for Loading State */
 .spinner {
     width: 20px;
@@ -527,8 +549,16 @@ input:-webkit-autofill:focus {
 @media (max-width: 850px) {
     body { overflow-y: auto; height: auto; display: block; }
     .left-panel { display: none; }
-    .login-card { width: 100vw; height: auto; margin: 0; }
+    .login-card { width: 100vw; height: auto; margin: 0; max-height: none; }
     .right-panel { padding: 48px 32px; min-height: 100vh; }
+}
+
+/* Fix for console opening causing layout issues */
+@media (min-height: 500px) {
+    .login-card {
+        max-height: 100vh;
+        overflow: hidden;
+    }
 }
 
 @media (max-width: 480px) {

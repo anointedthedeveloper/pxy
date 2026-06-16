@@ -71,7 +71,12 @@
 
         <!-- Right Panel: Status & Details -->
         <div class="right-panel">
-            <div class="welcome-badge">UTME Preparation Portal</div>
+            <div class="waiting-header">
+                <div class="welcome-badge">UTME Preparation Portal</div>
+                <button class="logout-btn-mini" onclick="handleLogout()" title="Logout">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                </button>
+            </div>
             <h2 id="wait-page-heading">Session Synchronization</h2>
             <p class="instruction-text">We are preparing your environment for a seamless examination experience.</p>
 
@@ -114,10 +119,6 @@
 
                 <button class="submit-btn disabled" id="btn-start-exam" disabled>
                     <span>Waiting for Coordinator...</span>
-                </button>
-
-                <button class="submit-btn" id="btn-leave-room" style="background: #ef4444; margin-top: 12px;" onclick="leaveWaitingRoom()">
-                    <span>Leave Waiting Room</span>
                 </button>
             </div>
 
@@ -201,6 +202,9 @@
             <footer class="workspace-footer"
                 style="margin-top: auto; padding-top: 20px; border-top: 1.5px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
                 <div class="copyright">© <span id="currentYear"></span> Anobyte Technologies</div>
+                <button class="submit-btn" id="btn-leave-room" style="background: #ef4444; padding: 10px 20px; font-size: 13px;" onclick="leaveWaitingRoom()">
+                    <span>Leave Waiting Room</span>
+                </button>
             </footer>
         </div>
     </div>
@@ -480,6 +484,8 @@
                     localStorage.setItem('studentExamId', studentExamId);
                     localStorage.setItem('sessionId', joinData.sessionId);
                     localStorage.setItem('examDuration', joinData.durationMinutes);
+                    localStorage.setItem('selectedExamTitle', joinData.examTitle || session.displayName || session.examTitle);
+                    localStorage.setItem('selectedExamId', joinData.examId);
 
                     // Join SignalR student group NOW that we have the session code
                     localStorage.setItem('cbt_session_code', session.sessionCode);

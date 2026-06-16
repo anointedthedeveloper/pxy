@@ -80,6 +80,15 @@ function clearAllStudentData() {
     // NOTE: lastExamResult is intentionally kept so results.html can display after logout redirect
 }
 
+// --- Logout Handler ---
+function handleLogout() {
+    if (confirm('Are you sure you want to logout?')) {
+        clearAllStudentData();
+        localStorage.removeItem('lastExamResult'); // Also clear results on logout
+        window.location.href = 'index.html';
+    }
+}
+
 // --- Smart User & Session Detection ---
 function runSmartSessionDetection() {
     const currentPath = window.location.pathname;
@@ -288,6 +297,7 @@ async function initializeSelectionPage() {
 
 async function fetchAndRenderExams() {
     const listContainer = document.getElementById('examList');
+    const studentId = localStorage.getItem('studentId');
     
     try {
         const response = await fetch(`${API_BASE}/Sessions`);
@@ -303,9 +313,24 @@ async function fetchAndRenderExams() {
             return;
         }
 
+        // Fetch student's completed exams if logged in
+        let completedExamIds = new Set();
+        if (studentId) {
+            try {
+                const progressRes = await fetch(`${API_BASE}/Student/${studentId}/completed-exams`);
+                if (progressRes.ok) {
+                    const completedData = await progressRes.json();
+                    completedExamIds = new Set(completedData.map(e => e.sessionId));
+                }
+            } catch (e) {
+                console.warn('Could not fetch completed exams:', e);
+            }
+        }
+
         listContainer.innerHTML = '';
         activeSessions.forEach(session => {
-            const card = createSessionCard(session);
+            const isCompleted = completedExamIds.has(session.id);
+            const card = createSessionCard(session, isCompleted);
             listContainer.appendChild(card);
         });
     } catch (error) {
@@ -315,26 +340,34 @@ async function fetchAndRenderExams() {
     }
 }
 
-function createSessionCard(session) {
+function createSessionCard(session, isCompleted = false) {
     const div = document.createElement('div');
-    div.className = 'exam-card-modern';
-    div.onclick = () => {
-        localStorage.setItem('selectedSessionId', session.id);
-        localStorage.setItem('selectedSessionCode', session.sessionCode);
-        localStorage.setItem('selectedExamId', session.examId);
-        localStorage.setItem('selectedExamTitle', session.displayName || session.examTitle);
-        window.location.href = 'waiting.html';
-    };
+    div.className = 'exam-card-modern' + (isCompleted ? ' locked' : '');
+    
+    if (isCompleted) {
+        div.onclick = () => {
+            showToast('Already Completed', 'You have already taken this exam. View your results instead.', 'info');
+        };
+    } else {
+        div.onclick = () => {
+            localStorage.setItem('selectedSessionId', session.id);
+            localStorage.setItem('selectedSessionCode', session.sessionCode);
+            localStorage.setItem('selectedExamId', session.examId);
+            localStorage.setItem('selectedExamTitle', session.displayName || session.examTitle);
+            window.location.href = 'waiting.html';
+        };
+    }
 
     div.innerHTML = `
-        <div class="exam-type-badge">ACTIVE</div>
+        <div class="exam-type-badge ${isCompleted ? 'gray' : ''}">${isCompleted ? 'COMPLETED' : 'ACTIVE'}</div>
         <h3>${escapeHtml(session.displayName || session.examTitle)}</h3>
         <div class="exam-meta-pills">
             <span class="meta-pill">Code: ${escapeHtml(session.sessionCode)}</span>
             <span class="meta-pill">${session.studentCount || 0} Students</span>
             <span class="meta-pill">${session.isStarted ? 'Started' : 'Waiting'}</span>
         </div>
-        <button class="action-btn">Join Session</button>
+        <button class="action-btn" ${isCompleted ? 'disabled' : ''}>${isCompleted ? 'View Results' : 'Join Session'}</button>
+        ${isCompleted ? '<p class="exam-lock-reason">You have already completed this examination.</p>' : ''}
     `;
     
     return div;
@@ -371,11 +404,13 @@ async function initializeExamPage() {
     examDuration = parseInt(localStorage.getItem('examDuration')) || 60;
     const examTitle = localStorage.getItem('selectedExamTitle') || 'Examination';
 
+    console.log('[Exam Page] Initializing with:', { studentExamId, examTitle, examDuration, studentId, studentName });
+
     // Validate studentExamId - redirect to waiting room if missing
     if (!studentExamId) {
-        showToast('Error', 'Missing exam session ID. Redirecting to waiting room...', 'error');
+        showToast('Error', 'Missing exam session ID. Redirecting to selection page...', 'error');
         setTimeout(() => {
-            window.location.href = 'waiting.html';
+            window.location.href = 'selection.html';
         }, 2000);
         return;
     }
@@ -404,11 +439,13 @@ async function initializeExamPage() {
             const parsed = JSON.parse(cached);
             // Handle both old array format and new object format in cache
             questions = Array.isArray(parsed) ? parsed : (parsed.questions || []);
+            console.log('[Exam Page] Loaded', questions.length, 'questions from cache');
         } catch (e) {
             console.error('Failed to parse cached questions:', e);
             questions = [];
         }
     } else {
+        console.warn('[Exam Page] No cached questions found, fetching from API');
         // Fallback fetch
         try {
             const res = await fetch(`${API_BASE}/Student/${studentExamId}/questions`);
@@ -416,6 +453,7 @@ async function initializeExamPage() {
                 const data = await res.json();
                 // Handle both old array format and new object format
                 questions = Array.isArray(data) ? data : (data.questions || []);
+                console.log('[Exam Page] Fetched', questions.length, 'questions from API');
                 
                 // Save exam duration if provided
                 if (data.durationMinutes) {

@@ -201,6 +201,22 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         return Ok(new { encryptedQuestions = encrypted, isApproved = se.IsApproved });
     }
 
+    // GET /api/student/{studentId}/completed-exams
+    [HttpGet("{studentId}/completed-exams")]
+    public async Task<IActionResult> GetCompletedExams(string studentId)
+    {
+        var student = await db.Students.FirstOrDefaultAsync(s => s.StudentId == studentId);
+        if (student is null) return NotFound();
+
+        var completedExams = await db.StudentExams
+            .Include(se => se.Session)
+            .Where(se => se.StudentId == student.Id && se.IsSubmitted)
+            .Select(se => new { se.SessionId, se.Session.SessionCode })
+            .ToListAsync();
+
+        return Ok(completedExams);
+    }
+
     // GET /api/student/{studentExamId}/progress
     [HttpGet("{studentExamId}/progress")]
     public async Task<IActionResult> GetProgress(int studentExamId)

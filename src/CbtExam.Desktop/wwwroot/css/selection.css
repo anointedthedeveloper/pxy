@@ -20,6 +20,26 @@
     gap: 12px;
 }
 
+.logout-btn-mini {
+    background: #f1f5f9;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #64748b;
+}
+
+.logout-btn-mini:hover {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: white;
+}
+
 .user-avatar-small {
     width: 36px;
     height: 36px;
@@ -120,11 +140,12 @@
 /* Exam Grid / Cards */
 .exam-list-modern {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 12px;
-    max-height: 340px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    max-height: 500px;
     overflow-y: auto;
-    padding-right: 4px;
+    padding-right: 8px;
+    padding-bottom: 16px;
 }
 
 .exam-list-modern::-webkit-scrollbar { width: 4px; }
@@ -310,5 +331,13 @@
         align-items: center;
         margin-top: 24px;
         padding-top: 16px;
+    }
+}
+
+/* Fix for console opening causing layout issues */
+@media (min-height: 600px) {
+    .internal-workspace {
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
     }
 }
