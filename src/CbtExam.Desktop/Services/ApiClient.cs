@@ -82,6 +82,10 @@ public class ApiClient
     public Task<HttpResponseMessage> ForceLogoutStudentAsync(int studentDbId) => IsReady ? _http.PostAsync($"api/students/{studentDbId}/logout", null) : OfflineResponse();
     public Task<HttpResponseMessage> ForceLogoutAllAsync() => IsReady ? _http.PostAsync("api/students/logout-all", null) : OfflineResponse();
 
+    // Pending approvals
+    public Task<List<PendingJoinDto>?> GetPendingJoinsAsync(int sessionId) => IsReady ? _http.GetFromJsonAsync<List<PendingJoinDto>>($"api/sessions/{sessionId}/pending-joins") : Task.FromResult<List<PendingJoinDto>?>([]);
+    public Task<HttpResponseMessage> ApproveJoinAsync(int studentExamId, bool approved) => IsReady ? _http.PostAsJsonAsync("api/sessions/approve-join", new { studentExamId, approved }) : OfflineResponse();
+
     private static Task<HttpResponseMessage> OfflineResponse() =>
         Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
         {

@@ -272,7 +272,10 @@
                 const seid = parseInt(localStorage.getItem('studentExamId'));
                 const did = localStorage.getItem('cbt_device_id') || 'NODE-UNKNOWN';
                 const dn = typeof getBrowserAndOS === 'function' ? getBrowserAndOS() : 'Browser';
-                if (seid) pollHeartbeatSignal(seid, did, dn);
+                if (seid) {
+                    // Force a heartbeat check immediately to trigger decryption
+                    pollHeartbeatSignal(seid, did, dn);
+                }
             });
 
             // Real-time: session ended by admin
@@ -485,25 +488,39 @@
                         window._signalRJoinStudents(session.sessionCode);
 
                     // Register device so admin sees this candidate as connected
-                    fetch(`${API_BASE}/Student/device`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            deviceId: activeDeviceId,
-                            deviceName: activeDeviceName,
-                            batteryLevel: 100,
-                            studentId: studentId
-                        })
-                    }).catch(() => {});
+                    console.log('[Waiting Room] Registering device:', { deviceId: activeDeviceId, deviceName: activeDeviceName, studentId });
+                    try {
+                        const deviceRes = await fetch(`${API_BASE}/Student/device`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                deviceId: activeDeviceId,
+                                deviceName: activeDeviceName,
+                                batteryLevel: 100,
+                                studentId: studentId
+                            })
+                        });
+                        if (!deviceRes.ok) {
+                            console.error('[Waiting Room] Device registration failed:', deviceRes.status, deviceRes.statusText);
+                            const errorText = await deviceRes.text();
+                            console.error('[Waiting Room] Device registration error response:', errorText);
+                        } else {
+                            console.log('[Waiting Room] Device registration successful');
+                        }
+                    } catch (err) {
+                        console.error('[Waiting Room] Device registration exception:', err);
+                    }
                     statusText.textContent = 'Pre-hydrating secure exam cache...';
                     progressBar.style.width = '60%';
                     percentText.textContent = '60%';
 
                     // Download Secure Encrypted Questions
+                    console.log('[Waiting Room] Fetching secure questions for studentExamId:', studentExamId);
                     const qRes = await fetch(`${API_BASE}/Student/${studentExamId}/questions/secure`);
 
                     // 409 = already submitted — student re-joined after finishing exam
                     if (qRes.status === 409) {
+                        console.log('[Waiting Room] Exam already submitted, redirecting to results');
                         statusText.textContent = 'You have already submitted this exam.';
                         statusText.style.color = '#f59e0b';
                         btn.innerHTML = '<span>Already Submitted — Redirecting to Results...</span>';
@@ -513,6 +530,7 @@
                     }
 
                     if (!qRes.ok) {
+                        console.error('[Waiting Room] Failed to fetch secure questions:', qRes.status, qRes.statusText);
                         // Track repeated failures and offer a leave button after 2 minutes
                         const firstFail = parseInt(localStorage.getItem('_waitFailedAt') || '0');
                         if (!firstFail) localStorage.setItem('_waitFailedAt', Date.now().toString());
@@ -553,10 +571,12 @@
                     if (leaveBtn2) leaveBtn2.remove();
 
                     const qData = await qRes.json();
+                    console.log('[Waiting Room] Secure questions fetched successfully, isApproved:', qData.isApproved);
 
-                    // Download images as backup - fetch unencrypted questions to get image URLs
+                    // Download images as backup - fetch unencrypted questions to get image URLs (non-blocking)
                     try {
                         const studentExamId = localStorage.getItem('studentExamId');
+                        console.log('[Waiting Room] Fetching plain questions for image URLs');
                         const plainRes = await fetch(`${API_BASE}/Student/${studentExamId}/questions`);
                         if (plainRes.ok) {
                             const plainData = await plainRes.json();
@@ -573,23 +593,25 @@
                                 localStorage.setItem('examDuration', plainData.durationMinutes);
                             }
                             
+                            // Download images in background without blocking exam entry
                             if (imageUrls.size > 0) {
-                                statusText.textContent = 'Downloading question images as backup...';
-                                const downloadPromises = Array.from(imageUrls).map(url => {
-                                    return fetch(url).then(res => {
+                                console.log('[Waiting Room] Starting background image download for', imageUrls.size, 'images');
+                                // Don't await - let it run in background
+                                Array.from(imageUrls).map(url => {
+                                    fetch(url).then(res => {
                                         if (res.ok) return res.blob();
                                         return null;
                                     }).catch(() => null);
                                 });
-                                await Promise.all(downloadPromises);
                             }
                         }
                     } catch (e) {
-                        console.log('Image download backup skipped:', e);
+                        console.log('[Waiting Room] Image download backup skipped:', e);
                     }
 
                     // Check if auto-approved or waiting for admin approval
                     if (qData.isApproved === false) {
+                        console.log('[Waiting Room] Student not approved, waiting for admin approval');
                         statusText.textContent = 'Waiting for admin to accept you to exam...';
                         statusText.style.color = '#f59e0b';
                         btn.innerHTML = '<span>Pending Approval</span>';

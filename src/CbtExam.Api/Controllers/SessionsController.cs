@@ -71,9 +71,21 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
             }
             else
             {
-                // Count how many sessions with this base name exist
-                var count = existingSessions.Count;
-                sessionName = $"{exam.Title} {count + 1}";
+                // Find the highest numbered session with this base name
+                var maxNumber = 0;
+                foreach (var s in existingSessions)
+                {
+                    var customName = s.CustomSessionName ?? "";
+                    if (customName.StartsWith(exam.Title))
+                    {
+                        var suffix = customName.Substring(exam.Title.Length).Trim();
+                        if (int.TryParse(suffix, out int num))
+                        {
+                            if (num > maxNumber) maxNumber = num;
+                        }
+                    }
+                }
+                sessionName = maxNumber > 0 ? $"{exam.Title} {maxNumber + 1}" : $"{exam.Title} 2";
             }
         }
 
@@ -95,8 +107,9 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
     [HttpPost("{id}/begin")]
     public async Task<IActionResult> Begin(int id)
     {
-        var session = await db.ExamSessions.FindAsync(id);
+        var session = await db.ExamSessions.Include(s => s.Exam).ThenInclude(e => e.Questions).FirstOrDefaultAsync(s => s.Id == id);
         if (session is null || !session.IsActive) return NotFound("Session not found or already ended.");
+        
         session.IsStarted = true;
         await db.SaveChangesAsync();
         // Push real-time signal to all students in this session

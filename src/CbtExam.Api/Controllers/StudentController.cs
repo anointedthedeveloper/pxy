@@ -133,8 +133,11 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
 
         var se = new StudentExam { StudentId = student.Id, SessionId = session.Id, DeviceId = dto.DeviceId, DeviceName = dto.DeviceName };
         
-        // Auto-approve if session has auto-approve enabled (even during ongoing exam)
-        if (session.AutoApprove)
+        // Auto-approve if:
+        // 1. Session has auto-approve enabled, OR
+        // 2. Exam hasn't started yet (students joining waiting room don't need approval)
+        // Only require approval for ongoing exams when auto-approve is toggled off
+        if (session.AutoApprove || !session.IsStarted)
         {
             se.IsApproved = true;
         }
@@ -143,7 +146,7 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         await db.SaveChangesAsync();
 
         // Only notify admin if not auto-approved (for manual approval)
-        if (!session.AutoApprove)
+        if (!se.IsApproved)
         {
             await NotifyAdmin(session.SessionCode, session.Id);
         }

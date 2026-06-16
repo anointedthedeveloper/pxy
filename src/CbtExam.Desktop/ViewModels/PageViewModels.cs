@@ -1019,6 +1019,12 @@ public class SessionViewModel : BaseViewModel, IRefreshable
     public ObservableCollection<StudentStatusDto> RoomStudents { get; } = [];
     public ObservableCollection<StudentStatusDto> FilteredRoomStudents { get; } = [];
     
+    // Pending approvals
+    public ObservableCollection<PendingJoinDto> PendingApprovals { get; } = [];
+    private bool _hasPendingApprovals;
+    public bool HasPendingApprovals { get => _hasPendingApprovals; set => Set(ref _hasPendingApprovals, value); }
+    public int PendingApprovalsCount => PendingApprovals.Count;
+    
     // Retake management
     public ObservableCollection<SubmittedStudentDto> SubmittedStudents { get; } = [];
     public ObservableCollection<SubmittedStudentDto> FilteredSubmittedStudents { get; } = [];
@@ -1178,9 +1184,11 @@ public class SessionViewModel : BaseViewModel, IRefreshable
         CurrentRoom = s;
         RoomStudents.Clear();
         SubmittedStudents.Clear();
+        PendingApprovals.Clear();
         IsManagingRoom = true;  // this triggers StartRoomPolling
         await RefreshRoomStudents();
         await RefreshSubmittedStudents();
+        await RefreshPendingApprovals();
     });
     
     public RelayCommand<SelectableSubmittedStudent> ToggleRetakeSelectionCommand => new(s => {
@@ -1233,6 +1241,99 @@ public class SessionViewModel : BaseViewModel, IRefreshable
         }
     });
     
+    // Pending approval commands
+    public RelayCommand<PendingJoinDto> ApprovePendingCommand => new(async p => {
+        if (CurrentRoom is null || p is null) return;
+        try
+        {
+            var response = await api.ApproveJoinAsync(p.Id, true);
+            if (response.IsSuccessStatusCode)
+            {
+                await RefreshPendingApprovals();
+                await RefreshRoomStudents();
+                NotificationsViewModel.Instance?.Add(new NotificationItem(
+                    "Student Approved",
+                    $"{p.FullName} ({p.StudentId}) has been approved to join the exam.",
+                    DateTime.Now,
+                    "success"
+                ));
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Error approving student: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+        }
+    });
+
+    public RelayCommand<PendingJoinDto> RejectPendingCommand => new(async p => {
+        if (CurrentRoom is null || p is null) return;
+        try
+        {
+            var response = await api.ApproveJoinAsync(p.Id, false);
+            if (response.IsSuccessStatusCode)
+            {
+                await RefreshPendingApprovals();
+                await RefreshRoomStudents();
+                NotificationsViewModel.Instance?.Add(new NotificationItem(
+                    "Student Rejected",
+                    $"{p.FullName} ({p.StudentId}) has been rejected from joining the exam.",
+                    DateTime.Now,
+                    "warning"
+                ));
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Error rejecting student: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+        }
+    });
+
+    public RelayCommand ApproveAllPendingCommand => new(async () => {
+        if (CurrentRoom is null || PendingApprovals.Count == 0) return;
+        try
+        {
+            foreach (var p in PendingApprovals.ToList())
+            {
+                await api.ApproveJoinAsync(p.Id, true);
+            }
+            await RefreshPendingApprovals();
+            await RefreshRoomStudents();
+            NotificationsViewModel.Instance?.Add(new NotificationItem(
+                "All Students Approved",
+                $"{PendingApprovals.Count} student(s) have been approved to join the exam.",
+                DateTime.Now,
+                "success"
+            ));
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Error approving all students: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+        }
+    });
+
+    public RelayCommand RejectAllPendingCommand => new(async () => {
+        if (CurrentRoom is null || PendingApprovals.Count == 0) return;
+        try
+        {
+            foreach (var p in PendingApprovals.ToList())
+            {
+                await api.ApproveJoinAsync(p.Id, false);
+            }
+            await RefreshPendingApprovals();
+            await RefreshRoomStudents();
+            NotificationsViewModel.Instance?.Add(new NotificationItem(
+                "All Students Rejected",
+                $"{PendingApprovals.Count} student(s) have been rejected from joining the exam.",
+                DateTime.Now,
+                "warning"
+            ));
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Error rejecting all students: {ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+        }
+    });
+
     public RelayCommand<SelectableSubmittedStudent> AllowSingleRetakeCommand => new(async s => {
         if (CurrentRoom is null || s is null) return;
         
@@ -1274,6 +1375,7 @@ public class SessionViewModel : BaseViewModel, IRefreshable
         IsManagingRoom = false;  // this triggers StopRoomPolling
         CurrentRoom = null;
         RoomStudents.Clear();
+        PendingApprovals.Clear();
     });
     
     public RelayCommand BeginExamCommand => new(async () => {
@@ -1296,7 +1398,10 @@ public class SessionViewModel : BaseViewModel, IRefreshable
     public async Task OnSignalRStudentUpdate()
     {
         if (IsManagingRoom && CurrentRoom != null)
+        {
             await RefreshRoomStudents();
+            await RefreshPendingApprovals();
+        }
     }
 
     public async Task RefreshRoomStudents()
@@ -1320,6 +1425,22 @@ public class SessionViewModel : BaseViewModel, IRefreshable
                 // Sync room metadata (IsStarted flag etc.)
                 var updated = ActiveSessions.FirstOrDefault(x => x.Id == CurrentRoom.Id);
                 if (updated != null) CurrentRoom = updated;
+            });
+        }
+        catch { /* silently ignore poll errors */ }
+    }
+
+    public async Task RefreshPendingApprovals()
+    {
+        if (CurrentRoom is null) return;
+        try
+        {
+            var list = await api.GetPendingJoinsAsync(CurrentRoom.Id);
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                PendingApprovals.Clear();
+                list?.ForEach(PendingApprovals.Add);
+                HasPendingApprovals = PendingApprovals.Count > 0;
             });
         }
         catch { /* silently ignore poll errors */ }

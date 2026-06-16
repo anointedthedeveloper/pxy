@@ -391,15 +391,40 @@ public partial class App : Application
     }
 
     // ── Persistence ────────────────────────────────────────────────────────
-    private void SaveTheme(string theme, string accent) =>
-        File.WriteAllText(ThemeFile, $"{theme}|{accent}");
+    private void SaveTheme(string theme, string accent)
+    {
+        try
+        {
+            // Use FileStream with FileShare.ReadWrite to handle locked files
+            using var fs = new FileStream(ThemeFile, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+            using var writer = new StreamWriter(fs);
+            writer.Write($"{theme}|{accent}");
+        }
+        catch (IOException)
+        {
+            // Silently ignore if file is locked - theme will be saved on next successful attempt
+        }
+    }
 
     private void LoadTheme()
     {
-        if (!File.Exists(ThemeFile)) { ApplyTheme("Light", "Teal"); return; }
-        var parts = File.ReadAllText(ThemeFile).Split('|');
-        ApplyTheme(parts.Length >= 1 ? parts[0] : "Light",
-                   parts.Length >= 2 ? parts[1] : "Teal");
+        try
+        {
+            if (!File.Exists(ThemeFile)) { ApplyTheme("Light", "Teal"); return; }
+            
+            // Use FileStream with FileShare.ReadWrite to handle locked files
+            using var fs = new FileStream(ThemeFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var reader = new StreamReader(fs);
+            var content = reader.ReadToEnd();
+            var parts = content.Split('|');
+            ApplyTheme(parts.Length >= 1 ? parts[0] : "Light",
+                       parts.Length >= 2 ? parts[1] : "Teal");
+        }
+        catch (IOException)
+        {
+            // If file is locked, use default theme
+            ApplyTheme("Light", "Teal");
+        }
     }
 }
 

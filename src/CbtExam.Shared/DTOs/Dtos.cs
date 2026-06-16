@@ -88,6 +88,7 @@ public record ExamGenerateDto(string Title, int DurationMinutes, bool ShuffleQue
 public record NotificationDto(string Title, string Message, DateTime CreatedAt, string Level);
 public record BroadcastDto(string Message);
 public record ApproveJoinDto(int StudentExamId, bool Approved);
+public record PendingJoinDto(int Id, string FullName, string StudentId, DateTime JoinedAt);
 
 // --- Retake management ---
 public record SubmittedStudentDto(int Id, string FullName, string StudentId, DateTime? SubmittedAt, int Score);

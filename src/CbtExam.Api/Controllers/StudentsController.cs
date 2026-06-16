@@ -1,7 +1,9 @@
+using CbtExam.Api.Hubs;
 using CbtExam.Data;
 using CbtExam.Shared.DTOs;
 using CbtExam.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace CbtExam.Api.Controllers;
@@ -86,17 +88,43 @@ public class StudentsController(AppDbContext db) : ControllerBase
 
     // POST /api/students/{id}/logout — force-clears the active session lock for one student
     [HttpPost("{id}/logout")]
-    public IActionResult ForceLogout(int id)
+    public async Task<IActionResult> ForceLogout(int id)
     {
         StudentController._activeSessions.TryRemove(id, out _);
+        
+        // Send SignalR notification to force logout the student's browser
+        try
+        {
+            var hub = HttpContext.RequestServices.GetRequiredService<IHubContext<ExamHub>>();
+            await hub.Clients.All.SendAsync("ForceLogout");
+        }
+        catch (Exception ex)
+        {
+            // Log but don't fail the logout if SignalR fails
+            Console.WriteLine($"SignalR ForceLogout failed: {ex.Message}");
+        }
+        
         return Ok(new { message = "Session cleared." });
     }
 
     // POST /api/students/logout-all — force-clears all active session locks
     [HttpPost("logout-all")]
-    public IActionResult ForceLogoutAll()
+    public async Task<IActionResult> ForceLogoutAll()
     {
         StudentController._activeSessions.Clear();
+        
+        // Send SignalR notification to force logout all students' browsers
+        try
+        {
+            var hub = HttpContext.RequestServices.GetRequiredService<IHubContext<ExamHub>>();
+            await hub.Clients.All.SendAsync("ForceLogout");
+        }
+        catch (Exception ex)
+        {
+            // Log but don't fail the logout if SignalR fails
+            Console.WriteLine($"SignalR ForceLogout failed: {ex.Message}");
+        }
+        
         return Ok(new { message = "All sessions cleared." });
     }
 }

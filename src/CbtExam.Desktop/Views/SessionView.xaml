@@ -83,6 +83,12 @@
                                                 <TextBlock Text="{Binding StudentCount}" FontSize="13" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Border>
+                                        <Border Background="#1AFFFFFF" CornerRadius="8" Padding="10,5" Margin="0,0,8,0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE8F7;" FontFamily="Segoe MDL2 Assets" Foreground="#A7F3D0" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding QuestionCount}" FontSize="13" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Border>
                                         <Button Command="{Binding DataContext.CopyJoinUrlCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                 CommandParameter="{Binding}"
                                                 Style="{StaticResource PrimaryBtn}" Background="#1AFFFFFF"
@@ -295,6 +301,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
@@ -420,8 +427,108 @@
                          </Grid>
                     </Border>
                     
-                    <!-- 3. Candidate Grid -->
-                    <ListBox Grid.Row="2" ItemsSource="{Binding FilteredRoomStudents}" Background="Transparent" BorderThickness="0"
+                    <!-- 3. Pending Approvals Section -->
+                    <Border Grid.Row="2" Background="#FFF7ED" BorderBrush="#FED7AA" BorderThickness="1" CornerRadius="16" Padding="20" Margin="0,0,0,24"
+                            Visibility="{Binding HasPendingApprovals, Converter={StaticResource BoolToVis}}">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.04" Color="Black"/>
+                        </Border.Effect>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <!-- Header -->
+                            <Grid Grid.Row="0" Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                    <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="#EA580C" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Pending Approvals" FontWeight="SemiBold" FontSize="16" Foreground="#9A3412" VerticalAlignment="Center"/>
+                                    <Border Background="#FED7AA" CornerRadius="12" Padding="8,4" Margin="8,0,0,0">
+                                        <TextBlock Text="{Binding PendingApprovalsCount}" FontSize="12" FontWeight="Bold" Foreground="#9A3412"/>
+                                    </Border>
+                                </StackPanel>
+                                
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Button Command="{Binding ApproveAllPendingCommand}" Background="#10B981" Foreground="White" BorderThickness="0" Padding="16,8" FontSize="13" FontWeight="SemiBold" Margin="0,0,8,0">
+                                        <Button.Resources>
+                                            <Style TargetType="Border"><Setter Property="CornerRadius" Value="8"/></Style>
+                                        </Button.Resources>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE8FB;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Approve All"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Command="{Binding RejectAllPendingCommand}" Background="#DC2626" Foreground="White" BorderThickness="0" Padding="16,8" FontSize="13" FontWeight="SemiBold">
+                                        <Button.Resources>
+                                            <Style TargetType="Border"><Setter Property="CornerRadius" Value="8"/></Style>
+                                        </Button.Resources>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="&#xE8FB;" FontFamily="Segoe MDL2 Assets" FontSize="14" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Reject All"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                            
+                            <!-- Pending Students List -->
+                            <ListBox Grid.Row="1" ItemsSource="{Binding PendingApprovals}" Background="Transparent" BorderThickness="0"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" MaxHeight="200">
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel ItemWidth="320" ItemHeight="80"/>
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="White" BorderBrush="#FED7AA" BorderThickness="1" CornerRadius="12" Padding="16" Margin="6">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                
+                                                <!-- Student Info -->
+                                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding FullName}" FontWeight="SemiBold" FontSize="14" Foreground="#1E293B" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding StudentId}" FontSize="12" Foreground="#64748B" Margin="0,2,0,0"/>
+                                                    <TextBlock Text="{Binding JoinedAt, StringFormat='Joined: {0:HH:mm}'}" FontSize="11" Foreground="#94A3B8" Margin="0,2,0,0"/>
+                                                </StackPanel>
+                                                
+                                                <!-- Approve/Reject Buttons -->
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                    <Button Command="{Binding DataContext.ApprovePendingCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" 
+                                                            CommandParameter="{Binding}" Background="#10B981" Foreground="White" BorderThickness="0" 
+                                                            Padding="12,6" FontSize="12" FontWeight="SemiBold" Margin="0,0,4,0">
+                                                        <Button.Resources>
+                                                            <Style TargetType="Border"><Setter Property="CornerRadius" Value="6"/></Style>
+                                                        </Button.Resources>
+                                                        <TextBlock Text="&#xE8FB;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
+                                                    </Button>
+                                                    <Button Command="{Binding DataContext.RejectPendingCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" 
+                                                            CommandParameter="{Binding}" Background="#DC2626" Foreground="White" BorderThickness="0" 
+                                                            Padding="12,6" FontSize="12" FontWeight="SemiBold">
+                                                        <Button.Resources>
+                                                            <Style TargetType="Border"><Setter Property="CornerRadius" Value="6"/></Style>
+                                                        </Button.Resources>
+                                                        <TextBlock Text="&#xE8FB;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
+                                                    </Button>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+                    </Border>
+                    
+                    <!-- 4. Candidate Grid -->
+                    <ListBox Grid.Row="3" ItemsSource="{Binding FilteredRoomStudents}" Background="Transparent" BorderThickness="0"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -527,8 +634,8 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
                     
-                    <!-- 4. Retake Management Section -->
-                    <Border Grid.Row="3" Background="White" BorderBrush="#F1F5F9" BorderThickness="1" CornerRadius="16" Padding="20" Margin="0,16,0,0">
+                    <!-- 5. Retake Management Section -->
+                    <Border Grid.Row="4" Background="White" BorderBrush="#F1F5F9" BorderThickness="1" CornerRadius="16" Padding="20" Margin="0,16,0,0">
                         <Border.Effect>
                             <DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.04" Color="Black"/>
                         </Border.Effect>

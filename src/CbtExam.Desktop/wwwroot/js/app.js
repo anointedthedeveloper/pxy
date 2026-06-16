@@ -371,6 +371,15 @@ async function initializeExamPage() {
     examDuration = parseInt(localStorage.getItem('examDuration')) || 60;
     const examTitle = localStorage.getItem('selectedExamTitle') || 'Examination';
 
+    // Validate studentExamId - redirect to waiting room if missing
+    if (!studentExamId) {
+        showToast('Error', 'Missing exam session ID. Redirecting to waiting room...', 'error');
+        setTimeout(() => {
+            window.location.href = 'waiting.html';
+        }, 2000);
+        return;
+    }
+
     // Set exam title in header and browser tab
     const examTitleEl = document.getElementById('exam-title');
     if (examTitleEl) examTitleEl.textContent = examTitle;
