@@ -52,15 +52,30 @@ function getBrowserAndOS() {
 }
 
 async function runDeviceHeartbeat() {
-    // Device heartbeat is optional - don't fail if endpoint doesn't exist
+    // Lightweight keep-alive: only runs on exam page where studentExamId exists.
+    // The real heartbeat (POST /Student/heartbeat) is handled by startHeartbeat()
+    // inside the exam runner. This just prevents the browser from being marked
+    // idle by the server between page navigations.
     try {
         const studentExamId = localStorage.getItem('studentExamId');
-        if (studentExamId) {
-            // Use GET endpoint for heartbeat instead of POST to avoid validation issues
-            await fetch(`${API_BASE}/Student/${studentExamId}/progress`);
-        }
+        if (!studentExamId) return;
+        const activeDeviceId = localStorage.getItem('cbt_device_id') || 'NODE-UNKNOWN';
+        const activeDeviceName = typeof getBrowserAndOS === 'function' ? getBrowserAndOS() : 'Browser';
+        await fetch(`${API_BASE}/Student/heartbeat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                studentExamId: parseInt(studentExamId),
+                currentQuestion: 0,
+                batteryLevel: 100,
+                isOnline: true,
+                connectionState: 'online',
+                deviceName: activeDeviceName,
+                deviceId: activeDeviceId
+            })
+        });
     } catch (e) {
-        console.warn("Device heartbeat failed", e);
+        console.warn('Device heartbeat failed', e);
     }
 }
 

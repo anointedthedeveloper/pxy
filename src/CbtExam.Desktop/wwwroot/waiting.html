@@ -143,18 +143,29 @@
                         <div class="control-desc">Select Option D</div>
                     </div>
                     <div class="control-item">
-                        <div class="control-key">P</div>
-                        <div class="control-desc">Previous Question</div>
+                        <div class="control-key">N</div>
+                        <div class="control-desc">Next question</div>
                     </div>
                     <div class="control-item">
-                        <div class="control-key">N</div>
-                        <div class="control-desc">Next Question</div>
+                        <div class="control-key">P</div>
+                        <div class="control-desc">Previous question</div>
                     </div>
                     <div class="control-item">
                         <div class="control-key">S</div>
-                        <div class="control-desc">Submit Exam</div>
+                        <div class="control-desc">Submit exam</div>
+                    </div>
+                    <div class="control-item">
+                        <div class="control-key">&larr;</div>
+                        <div class="control-desc">Previous question</div>
+                    </div>
+                    <div class="control-item">
+                        <div class="control-key">&rarr;</div>
+                        <div class="control-desc">Next question</div>
                     </div>
                 </div>
+                <p style="font-size:12px; color:#94a3b8; margin:10px 0 0 0; line-height:1.5;">
+                    <strong>Tip:</strong> Use <strong>N</strong> / <strong>P</strong> or the arrow keys to move between questions without touching the mouse. Press <strong>A–D</strong> to instantly select an option on the current question.
+                </p>
             </div>
 
             <!-- Pre-Exam Checklist -->
@@ -222,11 +233,13 @@
                 const decryptedBuffer = await crypto.subtle.decrypt({ name: 'AES-CBC', iv: ivBytes }, key, encryptedBytes);
                 return new TextDecoder().decode(decryptedBuffer);
             } else {
-                // crypto.subtle unavailable (plain HTTP) — fall back to plain question fetch
+                // crypto.subtle unavailable on plain HTTP — fall back to fetching questions directly.
+                // This LAN-only system operates without HTTPS so this path is expected in production.
                 const studentExamId = localStorage.getItem('studentExamId');
                 const res = await fetch(`${API_BASE}/Student/${studentExamId}/questions`);
                 if (!res.ok) throw new Error('Fallback question fetch failed');
-                const questions = await res.json();
+                const data = await res.json();
+                const questions = Array.isArray(data) ? data : (data.questions || data);
                 return JSON.stringify(questions);
             }
         }
@@ -286,35 +299,37 @@
             connection.on('SessionEnded', async () => {
                 if (typeof showToast === 'function')
                     showToast('Session Ended', 'This session has been ended by the coordinator. Auto-submitting...', 'error');
-                
-                // Auto-submit before redirecting
+
+                // Auto-submit any cached answers before redirecting.
+                // Uses the correct POST /api/Student/submit endpoint (no /{id} in path).
                 try {
                     const studentExamId = parseInt(localStorage.getItem('studentExamId'));
                     if (studentExamId) {
-                        const responses = {};
-                        const encrypted = localStorage.getItem('encryptedQuestions');
-                        if (encrypted) {
-                            const key = localStorage.getItem('sessionId') || 'default';
-                            const decrypted = await decryptAes(encrypted, key);
-                            const questions = JSON.parse(decrypted);
+                        // Build answers list from the already-decrypted cached questions
+                        const answersList = [];
+                        const cached = localStorage.getItem('cachedQuestions');
+                        if (cached) {
+                            const parsed = JSON.parse(cached);
+                            const questions = Array.isArray(parsed) ? parsed : (parsed.questions || []);
+                            const savedAnswers = JSON.parse(localStorage.getItem(`studentExamAnswers_${studentExamId}`) || '{}');
                             questions.forEach(q => {
-                                const saved = localStorage.getItem(`q_${q.questionId}`);
-                                if (saved) responses[q.questionId] = saved;
+                                const ans = savedAnswers[q.questionId];
+                                if (ans) answersList.push({ questionId: q.questionId, selectedAnswer: ans });
                             });
                         }
-                        
-                        if (Object.keys(responses).length > 0) {
-                            await fetch(`${API_BASE}/Student/${studentExamId}/submit`, {
+
+                        if (answersList.length > 0) {
+                            await fetch(`${API_BASE}/Student/submit`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ answers: responses })
+                                body: JSON.stringify({ studentExamId, answers: answersList })
                             });
                         }
                     }
                 } catch (e) {
                     console.error('Auto-submit failed:', e);
                 }
-                
+
                 setTimeout(() => { window.location.href = 'selection.html'; }, 3000);
             });
 
@@ -336,18 +351,6 @@
                 })
                 .catch(() => {});
             // ----------------------------------------------------
-
-            function leaveWaitingRoom() {
-                // Clear all session data and redirect to selection
-                localStorage.removeItem('studentExamId');
-                localStorage.removeItem('sessionId');
-                localStorage.removeItem('selectedSessionId');
-                localStorage.removeItem('selectedSessionCode');
-                localStorage.removeItem('cbt_session_code');
-                localStorage.removeItem('encryptedQuestions');
-                localStorage.removeItem('cachedQuestions');
-                window.location.href = 'selection.html';
-            }
 
             function updateChecklist() {
                 const checks = ['check-id', 'check-mouse', 'check-keyboard', 'check-shortcuts'];
@@ -844,10 +847,12 @@
                 }
             }
 
-            function leaveWaitingRoom() {
+            // Single authoritative leaveWaitingRoom — clears all state and confirms before leaving
+            window.leaveWaitingRoom = function() {
                 if (confirm('Are you sure you want to leave the waiting room? You will need to rejoin the exam later.')) {
                     localStorage.removeItem('_waitFailedAt');
                     localStorage.removeItem('encryptedQuestions');
+                    localStorage.removeItem('cachedQuestions');
                     localStorage.removeItem('studentExamId');
                     localStorage.removeItem('sessionId');
                     localStorage.removeItem('selectedSessionId');
@@ -855,7 +860,7 @@
                     localStorage.removeItem('cbt_session_code');
                     window.location.href = 'selection.html';
                 }
-            }
+            };
         });
     </script>
 </body>

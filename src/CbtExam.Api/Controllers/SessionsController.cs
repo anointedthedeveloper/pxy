@@ -365,13 +365,14 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
         
         if (!se.IsSubmitted)
             return BadRequest("Student has not submitted the exam yet.");
-        
-        // Reset the student exam for retake
+
+        var answers = await db.Answers.Where(a => a.StudentExamId == studentExamId).ToListAsync();
+        db.Answers.RemoveRange(answers);
+
         se.IsSubmitted = false;
         se.SubmittedAt = null;
         se.Score = 0;
-        se.Answers.Clear();
-        
+
         await db.SaveChangesAsync();
         return Ok();
     }
@@ -388,14 +389,17 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
             .Where(se => se.SessionId == id && studentExamIds.Contains(se.Id) && se.IsSubmitted)
             .ToListAsync();
         
+        var seIds = studentExams.Select(s => s.Id).ToList();
+        var answers = await db.Answers.Where(a => seIds.Contains(a.StudentExamId)).ToListAsync();
+        db.Answers.RemoveRange(answers);
+
         foreach (var se in studentExams)
         {
             se.IsSubmitted = false;
             se.SubmittedAt = null;
             se.Score = 0;
-            se.Answers.Clear();
         }
-        
+
         await db.SaveChangesAsync();
         return Ok(new { count = studentExams.Count });
     }

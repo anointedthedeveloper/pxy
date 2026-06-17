@@ -110,30 +110,24 @@ public partial class App : Application
     // ── Forceful close handler ──────────────────────────────────────────────
     private void OnProcessExit(object? sender, EventArgs e)
     {
+        // Best-effort only — the embedded server may already be stopping.
+        // Use task.Wait(timeout) to avoid a deadlock from .Result on the
+        // thread-pool during shutdown.
         try
         {
             Log("Process exit detected - attempting to end all active sessions");
-            
-            // Try to end all active sessions via API
-            // This is a synchronous call since ProcessExit is not async
+
             var exeDir = Path.GetDirectoryName(Environment.ProcessPath)
                           ?? AppDomain.CurrentDomain.BaseDirectory;
             var serverUrlFile = Path.Combine(exeDir, "server_url.txt");
-            
+
             string serverUrl = "http://localhost:5000";
-            
-            // Try to read the actual server URL from file
             if (File.Exists(serverUrlFile))
             {
-                try
-                {
-                    serverUrl = File.ReadAllText(serverUrlFile).Trim();
-                }
-                catch { }
+                try { serverUrl = File.ReadAllText(serverUrlFile).Trim(); } catch { }
             }
             else
             {
-                // Fallback: try to read port from settings.json
                 var settingsFile = Path.Combine(exeDir, "settings.json");
                 if (File.Exists(settingsFile))
                 {
@@ -142,33 +136,24 @@ public partial class App : Application
                         var json = File.ReadAllText(settingsFile);
                         using var doc = System.Text.Json.JsonDocument.Parse(json);
                         if (doc.RootElement.TryGetProperty("Port", out var portProp))
-                        {
-                            var port = portProp.GetInt32();
-                            serverUrl = $"http://localhost:{port}";
-                        }
+                            serverUrl = $"http://localhost:{portProp.GetInt32()}";
                     }
                     catch { }
                 }
             }
-            
-            using var httpClient = new System.Net.Http.HttpClient();
-            httpClient.Timeout = TimeSpan.FromSeconds(1); // Very short timeout
+
+            using var httpClient = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(1) };
             httpClient.BaseAddress = new Uri(serverUrl + "/");
-            httpClient.DefaultRequestHeaders.Add("X-Admin-Key", 
+            httpClient.DefaultRequestHeaders.Add("X-Admin-Key",
                 Environment.GetEnvironmentVariable("CBT_ADMIN_KEY") ?? "admin123");
-            
-            // Make a synchronous call to end all sessions
+
             try
             {
-                var response = httpClient.PostAsync("api/sessions/end-all", null).Result;
-                if (response.IsSuccessStatusCode)
-                {
+                var task = httpClient.PostAsync("api/sessions/end-all", null);
+                if (task.Wait(TimeSpan.FromSeconds(1)) && task.Result.IsSuccessStatusCode)
                     Log("Successfully ended all active sessions on forceful close");
-                }
                 else
-                {
-                    Log($"Failed to end sessions: {response.StatusCode}");
-                }
+                    Log($"end-all did not succeed (status: {(task.IsCompleted ? task.Result.StatusCode.ToString() : "timeout")})");
             }
             catch (Exception ex)
             {
@@ -285,7 +270,10 @@ public partial class App : Application
             ApplyTitleBar(w, dark, accentHex);
     }
 
-    // Called from MainWindow after it's loaded so the HWND exists
+    // Called from MainWindow after it's loaded so the HWND exists.
+    // ForceWindowIcon sets both WPF icon and native WM_SETICON; ApplyTitleBar
+    // then sets the DWM caption colour. Kept as one call site to avoid the
+    // double icon-load that occurred when both were called separately.
     public void ApplyTitleBarToWindow(Window w)
     {
         ForceWindowIcon(w);
