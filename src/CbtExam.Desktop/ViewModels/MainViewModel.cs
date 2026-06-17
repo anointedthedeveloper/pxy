@@ -116,7 +116,7 @@ public class MainViewModel : BaseViewModel
         CopyServerUrlCommand = new RelayCommand(() =>
         {
             if (!string.IsNullOrEmpty(ServerUrl))
-                System.Windows.Clipboard.SetText(ServerUrl);
+                ClipboardSetTextSafe(ServerUrl);
         });
         Settings.ThemeApplied += () => ThemeChanged?.Invoke();
         ToggleServerCommand = new RelayCommand(async () => await ToggleServerAsync());

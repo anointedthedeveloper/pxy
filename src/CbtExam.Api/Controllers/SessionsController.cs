@@ -59,33 +59,36 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
         }
         else
         {
-            // Auto-increment: check existing sessions for this exam
-            var existingSessions = await db.ExamSessions
+            // Auto-increment: "Exam Title", then "Exam Title 2", "Exam Title 3", …
+            var existingNames = await db.ExamSessions
                 .Where(s => s.ExamId == dto.ExamId)
-                .OrderByDescending(s => s.StartedAt)
+                .Select(s => s.CustomSessionName)
                 .ToListAsync();
-            
-            if (existingSessions.Count == 0)
+
+            if (existingNames.Count == 0)
             {
                 sessionName = exam.Title;
             }
             else
             {
-                // Find the highest numbered session with this base name
-                var maxNumber = 0;
-                foreach (var s in existingSessions)
+                // Find highest existing numeric suffix for this exam title
+                int maxNumber = 1; // treat the un-suffixed first session as "1"
+                foreach (var name in existingNames)
                 {
-                    var customName = s.CustomSessionName ?? "";
-                    if (customName.StartsWith(exam.Title))
+                    if (string.IsNullOrWhiteSpace(name)) continue;
+                    if (string.Equals(name.Trim(), exam.Title, StringComparison.OrdinalIgnoreCase))
                     {
-                        var suffix = customName.Substring(exam.Title.Length).Trim();
-                        if (int.TryParse(suffix, out int num))
-                        {
-                            if (num > maxNumber) maxNumber = num;
-                        }
+                        // The base name with no suffix counts as 1
+                        if (maxNumber < 1) maxNumber = 1;
+                    }
+                    else if (name.Trim().StartsWith(exam.Title + " ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var suffix = name.Trim().Substring(exam.Title.Length).Trim();
+                        if (int.TryParse(suffix, out int num) && num > maxNumber)
+                            maxNumber = num;
                     }
                 }
-                sessionName = maxNumber > 0 ? $"{exam.Title} {maxNumber + 1}" : $"{exam.Title} 2";
+                sessionName = $"{exam.Title} {maxNumber + 1}";
             }
         }
 
@@ -126,6 +129,7 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
         session.EndedAt = DateTime.UtcNow;
         await AutoSubmitUnsubmittedAsync(session.Id);
         await db.SaveChangesAsync();
+        await RenumberSessionsForExam(session.ExamId);
         await exports.ExportAllAsync();
         await ExamHub.NotifySessionEnded(hub, session.SessionCode);
         return Ok();
@@ -407,6 +411,49 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
     private static string GenerateCode() =>
         Guid.NewGuid().ToString("N").Substring(0, 6).ToUpper();
 
+    // DELETE /api/sessions/{id} — delete a session and renumber siblings
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var session = await db.ExamSessions.FindAsync(id);
+        if (session is null) return NotFound();
+        int examId = session.ExamId;
+        db.ExamSessions.Remove(session);
+        await db.SaveChangesAsync();
+        await RenumberSessionsForExam(examId);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// After a session is deleted or stopped, renumber auto-generated session
+    /// names so they stay contiguous: Exam → Exam 2 → Exam 3…
+    /// Sessions with a truly custom name (not matching the auto pattern) are untouched.
+    /// </summary>
+    private async Task RenumberSessionsForExam(int examId)
+    {
+        var exam = await db.Exams.FindAsync(examId);
+        if (exam is null) return;
+
+        var sessions = await db.ExamSessions
+            .Where(s => s.ExamId == examId)
+            .OrderBy(s => s.StartedAt)
+            .ToListAsync();
+
+        int counter = 1;
+        foreach (var s in sessions)
+        {
+            var name = (s.CustomSessionName ?? "").Trim();
+            bool isAuto = string.Equals(name, exam.Title, StringComparison.OrdinalIgnoreCase)
+                || (name.StartsWith(exam.Title + " ", StringComparison.OrdinalIgnoreCase)
+                    && int.TryParse(name[(exam.Title.Length)..].Trim(), out _));
+            if (!isAuto) { counter++; continue; }
+            s.CustomSessionName = counter == 1 ? exam.Title : $"{exam.Title} {counter}";
+            counter++;
+        }
+        await db.SaveChangesAsync();
+    }
+
+
     private async Task AutoSubmitUnsubmittedAsync(int sessionId)
     {
         var studentExams = await db.StudentExams
@@ -418,9 +465,26 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
         foreach (var se in studentExams)
         {
             var questions = se.Session!.Exam!.Questions.ToDictionary(q => q.Id);
-            var score = se.Answers.Count(a => questions.TryGetValue(a.QuestionId, out var q) &&
+            int rawScore = se.Answers.Count(a => questions.TryGetValue(a.QuestionId, out var q) &&
                 string.Equals(a.SelectedAnswer, q.CorrectAnswer, StringComparison.OrdinalIgnoreCase));
-            se.Score = score;
+
+            // Apply JAMB scaling: sum of (correct/pool)*100 per subject
+            var subjectGroups = questions.Values
+                .GroupBy(q => q.Subject ?? "General", StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
+
+            double jambTotal = 0;
+            foreach (var (sub, qList) in subjectGroups)
+            {
+                int pool = qList.Count;
+                int correct = se.Answers.Count(a =>
+                    questions.TryGetValue(a.QuestionId, out var q) &&
+                    (q.Subject ?? "General").Equals(sub, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(a.SelectedAnswer, q.CorrectAnswer, StringComparison.OrdinalIgnoreCase));
+                jambTotal += pool > 0 ? Math.Round((double)correct / pool * 100) : 0;
+            }
+
+            se.Score = (int)Math.Round(jambTotal);
             se.IsSubmitted = true;
             se.SubmittedAt = DateTime.UtcNow;
         }

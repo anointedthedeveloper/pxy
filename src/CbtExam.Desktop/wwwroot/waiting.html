@@ -428,20 +428,24 @@
                         // Check if already joined to avoid duplicate join
                         const existingStudentExamId = localStorage.getItem('studentExamId');
                         if (existingStudentExamId) {
-                            // Already joined, just wait for exam to start
+                            // Already joined — but if encrypted questions are missing (e.g. page reload),
+                            // run the full startExamProcess to re-fetch them.
+                            const hasQuestions = localStorage.getItem('encryptedQuestions') || localStorage.getItem('cachedQuestions');
+                            if (!hasQuestions) {
+                                startExamProcess(currentSession);
+                                return;
+                            }
+                            // Questions cached — just reconnect heartbeat
                             statusText.textContent = 'Reconnected to session. Waiting for exam to start...';
                             progressBar.style.width = '100%';
                             percentText.textContent = '100%';
                             btn.innerHTML = '<span>Connected to Room</span>';
                             btn.disabled = true;
-                            
-                            // Set up heartbeat and wait for exam start
+
                             const seid = parseInt(existingStudentExamId);
                             const did = localStorage.getItem('cbt_device_id') || 'NODE-UNKNOWN';
                             const dn = typeof getBrowserAndOS === 'function' ? getBrowserAndOS() : 'Browser';
-                            heartbeatInterval = setInterval(() => {
-                                pollHeartbeatSignal(seid, did, dn);
-                            }, 3000);
+                            heartbeatInterval = setInterval(() => pollHeartbeatSignal(seid, did, dn), 3000);
                             pollHeartbeatSignal(seid, did, dn);
                         } else {
                             startExamProcess(currentSession);

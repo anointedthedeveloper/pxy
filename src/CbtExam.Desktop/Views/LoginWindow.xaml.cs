@@ -21,8 +21,10 @@ public partial class LoginWindow : Window
 
     private void LoginWindow_Loaded(object sender, RoutedEventArgs e)
     {
-        var app = App.Current as App;
-        app?.ApplyTitleBarToWindow(this);
+        // ForceWindowIcon sets the WPF icon so alt-tab shows correctly.
+        // ApplyTitleBarToWindow also calls the DWM caption APIs which will
+        // fail silently on WindowStyle=None — that's fine.
+        App.ForceWindowIcon(this);
         UsernameTextBox?.Focus();
 
         if (DataContext is LoginViewModel vm && !string.IsNullOrEmpty(vm.AccessCode))

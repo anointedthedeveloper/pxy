@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
@@ -291,44 +292,79 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Sets the window icon on both the WPF layer AND the native Win32 layer
-    /// (WM_SETICON small + big) so the taskbar button always shows the correct icon,
-    /// even after a window transition where the shell re-creates the taskbar entry.
+    /// Sets the window icon on the WPF layer and sends WM_SETICON to the native
+    /// Win32 layer so the taskbar button always shows the correct icon even after
+    /// a LoginWindow → MainWindow transition recreates the taskbar entry.
     /// </summary>
     public static void ForceWindowIcon(Window w)
     {
         try
         {
-            // ── WPF layer ──────────────────────────────────────────────────
-            var iconUri    = new Uri("pack://application:,,,/Resources/appicon.ico");
-            var iconStream = Application.GetResourceStream(iconUri)?.Stream;
-            if (iconStream != null)
+            // ── WPF layer ──────────────────────────────────────────────────────────
+            // BitmapImage cannot decode .ico properly — it picks the smallest frame.
+            // Use IconBitmapDecoder to explicitly select the largest frame (256x256
+            // or 32x32 if no 256 frame exists), which is what the taskbar shows.
+            var iconUri    = new Uri("pack://application:,,,/Resources/appicon.ico", UriKind.Absolute);
+            var stream     = Application.GetResourceStream(iconUri)?.Stream;
+            if (stream != null)
             {
-                var ms = new System.IO.MemoryStream();
-                iconStream.CopyTo(ms);
+                using var ms = new System.IO.MemoryStream();
+                stream.CopyTo(ms);
                 ms.Position = 0;
-                var frame = System.Windows.Media.Imaging.BitmapFrame.Create(
+
+                var decoder = new System.Windows.Media.Imaging.IconBitmapDecoder(
                     ms,
-                    System.Windows.Media.Imaging.BitmapCreateOptions.None,
+                    System.Windows.Media.Imaging.BitmapCreateOptions.PreservePixelFormat,
                     System.Windows.Media.Imaging.BitmapCacheOption.OnLoad);
-                w.Icon = frame;
+
+                // Pick the largest frame available (sorted by width descending)
+                var bestFrame = decoder.Frames
+                    .OrderByDescending(f => f.PixelWidth)
+                    .First();
+
+                w.Icon = bestFrame;
             }
 
-            // ── Native layer — WM_SETICON ──────────────────────────────────
-            // Load HICON directly from the exe using LoadImage so the shell
-            // always gets the right icon for the taskbar button — even after
-            // a window transition drops and re-creates the taskbar entry.
-            var hwnd    = new WindowInteropHelper(w).EnsureHandle();
+            // ── Native layer: WM_SETICON ───────────────────────────────────────────
+            var hwnd = new WindowInteropHelper(w).EnsureHandle();
             if (hwnd == IntPtr.Zero) return;
 
-            var exePath = Environment.ProcessPath ?? System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
-            if (string.IsNullOrEmpty(exePath)) return;
+            // Try loading from the exe first (works in published builds)
+            var exePath = Environment.ProcessPath
+                          ?? System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
 
-            // LR_LOADFROMFILE = 0x10, IMAGE_ICON = 1
-            // Load 32×32 for ICON_BIG (taskbar)
-            IntPtr hIconBig = LoadImage(IntPtr.Zero, exePath, 1, 32, 32, 0x10);
-            // Load 16×16 for ICON_SMALL (title bar / alt-tab small)
-            IntPtr hIconSmall = LoadImage(IntPtr.Zero, exePath, 1, 16, 16, 0x10);
+            IntPtr hIconBig   = IntPtr.Zero;
+            IntPtr hIconSmall = IntPtr.Zero;
+
+            if (!string.IsNullOrEmpty(exePath) && File.Exists(exePath))
+            {
+                // IMAGE_ICON=1, LR_LOADFROMFILE=0x10
+                hIconBig   = LoadImage(IntPtr.Zero, exePath, 1, 32, 32, 0x10);
+                hIconSmall = LoadImage(IntPtr.Zero, exePath, 1, 16, 16, 0x10);
+            }
+
+            // Fallback: extract from the .ico resource file written next to the exe
+            if (hIconBig == IntPtr.Zero)
+            {
+                var icoPath = Path.Combine(
+                    Path.GetDirectoryName(exePath ?? AppDomain.CurrentDomain.BaseDirectory) ?? "",
+                    "appicon.ico");
+                if (!File.Exists(icoPath))
+                {
+                    // Write the embedded icon to disk so LoadImage can read it
+                    var res = Application.GetResourceStream(iconUri)?.Stream;
+                    if (res != null)
+                    {
+                        using var fs = File.Create(icoPath);
+                        res.CopyTo(fs);
+                    }
+                }
+                if (File.Exists(icoPath))
+                {
+                    hIconBig   = LoadImage(IntPtr.Zero, icoPath, 1, 32, 32, 0x10);
+                    hIconSmall = LoadImage(IntPtr.Zero, icoPath, 1, 16, 16, 0x10);
+                }
+            }
 
             if (hIconBig   != IntPtr.Zero) SendMessage(hwnd, WM_SETICON, ICON_BIG,   hIconBig);
             if (hIconSmall != IntPtr.Zero) SendMessage(hwnd, WM_SETICON, ICON_SMALL, hIconSmall);

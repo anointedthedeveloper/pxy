@@ -357,34 +357,46 @@ async function fetchAndRenderExams() {
 
 function createSessionCard(session, isCompleted = false) {
     const div = document.createElement('div');
+    // Use customSessionName if set, otherwise fall back to examTitle
+    const displayName = (session.customSessionName && session.customSessionName.trim())
+        ? session.customSessionName.trim()
+        : (session.examTitle || 'Examination');
+
+    const isOngoing = session.isStarted && session.isActive;
+    const statusLabel  = isCompleted ? 'COMPLETED' : isOngoing ? 'ONGOING' : 'WAITING';
+    const badgeClass   = isCompleted ? 'gray' : isOngoing ? 'ongoing' : '';
+    // Top accent colour: green for waiting, amber for ongoing, grey for completed
+    const accentColor  = isCompleted ? '#94a3b8' : isOngoing ? '#f59e0b' : '#16a34a';
+
     div.className = 'exam-card-modern' + (isCompleted ? ' locked' : '');
-    
+    div.style.setProperty('--card-accent', accentColor);
+
     if (isCompleted) {
-        div.onclick = () => {
-            showToast('Already Completed', 'You have already taken this exam. View your results instead.', 'info');
-        };
+        div.onclick = () => showToast('Already Completed', 'You have already taken this exam. View your results instead.', 'info');
     } else {
         div.onclick = () => {
-            localStorage.setItem('selectedSessionId', session.id);
+            localStorage.setItem('selectedSessionId',   session.id);
             localStorage.setItem('selectedSessionCode', session.sessionCode);
-            localStorage.setItem('selectedExamId', session.examId);
-            localStorage.setItem('selectedExamTitle', session.displayName || session.examTitle);
+            localStorage.setItem('selectedExamId',      session.examId);
+            localStorage.setItem('selectedExamTitle',   displayName);
             window.location.href = 'waiting.html';
         };
     }
 
     div.innerHTML = `
-        <div class="exam-type-badge ${isCompleted ? 'gray' : ''}">${isCompleted ? 'COMPLETED' : 'ACTIVE'}</div>
-        <h3>${escapeHtml(session.displayName || session.examTitle)}</h3>
+        <div class="exam-type-badge ${badgeClass}" style="background:${accentColor}22;color:${accentColor};">${statusLabel}</div>
+        <h3>${escapeHtml(displayName)}</h3>
         <div class="exam-meta-pills">
             <span class="meta-pill">Code: ${escapeHtml(session.sessionCode)}</span>
             <span class="meta-pill">${session.studentCount || 0} Students</span>
-            <span class="meta-pill">${session.isStarted ? 'Started' : 'Waiting'}</span>
+            <span class="meta-pill" style="color:${accentColor};font-weight:700;">${isOngoing ? '● In Progress' : isCompleted ? 'Done' : '○ Waiting'}</span>
         </div>
-        <button class="action-btn" ${isCompleted ? 'disabled' : ''}>${isCompleted ? 'View Results' : 'Join Session'}</button>
+        <button class="action-btn" ${isCompleted ? 'disabled' : ''} style="background:${isCompleted ? '' : accentColor};">
+            ${isCompleted ? 'Completed' : isOngoing ? 'Join Ongoing Exam' : 'Enter Waiting Room'}
+        </button>
         ${isCompleted ? '<p class="exam-lock-reason">You have already completed this examination.</p>' : ''}
     `;
-    
+
     return div;
 }
 
@@ -1233,13 +1245,22 @@ function closeModalOnOuterClick(event, modalId) {
 
 async function submitExam(manual = true) {
     if (examCompleted) return;
-    examCompleted = true;
 
+    // Re-read from localStorage in case the module-level var was never set
+    if (!studentExamId) studentExamId = localStorage.getItem('studentExamId');
+    const seId = parseInt(studentExamId);
+    if (!seId || isNaN(seId)) {
+        showToast('Error', 'Missing exam session ID. Please return to the selection page and rejoin.', 'error');
+        setTimeout(() => { window.location.href = 'selection.html'; }, 2500);
+        return;
+    }
+
+    examCompleted = true;
     closeSubmitConfirm();
     clearInterval(timerInterval);
     clearInterval(heartbeatInterval);
 
-    // Collect all answers (including unanswered questions for completeness)
+    // Collect answered questions
     const answersList = [];
     questions.forEach(q => {
         const ans = responses[q.questionId];
@@ -1247,13 +1268,6 @@ async function submitExam(manual = true) {
             answersList.push({ questionId: q.questionId, selectedAnswer: ans });
         }
     });
-
-    const seId = parseInt(studentExamId);
-    if (!seId || isNaN(seId)) {
-        showToast('Error', 'Missing exam session ID. Please rejoin.', 'error');
-        examCompleted = false;
-        return;
-    }
 
     // Always compute score offline first
     const offlineResult = computeScoreOffline(questions, answersList);

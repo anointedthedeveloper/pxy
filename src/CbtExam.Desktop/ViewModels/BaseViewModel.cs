@@ -23,6 +23,26 @@ public abstract class BaseViewModel : INotifyPropertyChanged
 
     private string _busyMessage = "Loading...";
     public string BusyMessage { get => _busyMessage; set => Set(ref _busyMessage, value); }
+
+    /// <summary>
+    /// Clipboard.SetText can throw CLIPBRD_E_CANT_OPEN if another app holds
+    /// the clipboard. Retry up to 5 times with a short delay.
+    /// </summary>
+    protected static void ClipboardSetTextSafe(string text)
+    {
+        for (int i = 0; i < 5; i++)
+        {
+            try
+            {
+                System.Windows.Clipboard.SetText(text);
+                return;
+            }
+            catch (System.Runtime.InteropServices.COMException)
+            {
+                System.Threading.Thread.Sleep(20);
+            }
+        }
+    }
 }
 
 public class RelayCommand(Action execute, Func<bool>? canExecute = null) : ICommand

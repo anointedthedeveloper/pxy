@@ -3606,7 +3606,7 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
     {
         if (!string.IsNullOrEmpty(ServerUrl))
         {
-            System.Windows.Clipboard.SetText(ServerUrl);
+            ClipboardSetTextSafe(ServerUrl);
             CopyStatus = "Copied!";
             Task.Delay(2000).ContinueWith(_ => App.Current.Dispatcher.Invoke(() => CopyStatus = string.Empty));
         }

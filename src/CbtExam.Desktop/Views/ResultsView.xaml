@@ -49,10 +49,20 @@
                     <TextBlock Text="Session:" FontSize="13" FontWeight="SemiBold"
                                Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,12,0"/>
                     <ComboBox ItemsSource="{Binding Sessions}" SelectedItem="{Binding SelectedSession}"
-                               DisplayMemberPath="ExamTitle" Width="280" Margin="0,0,20,0" Height="40"/>
+                               Width="320" Margin="0,0,20,0" Height="40">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding CustomSessionName}" FontWeight="SemiBold"/>
+                                    <TextBlock Text=" — " Foreground="#94A3B8"/>
+                                    <TextBlock Text="{Binding StartedAt, StringFormat='dd MMM HH:mm'}" Foreground="#94A3B8" FontSize="12"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
                                
                     <Border Background="{DynamicResource BgBrush}" CornerRadius="8" Padding="12,6" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding SelectedSession.ExamTitle}" FontSize="13" FontWeight="SemiBold"
+                        <TextBlock Text="{Binding SelectedSession.CustomSessionName}" FontSize="13" FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextPrimaryBrush}"/>
                     </Border>
                 </StackPanel>

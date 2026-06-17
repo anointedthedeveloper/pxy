@@ -265,7 +265,12 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         return Ok();
     }
 
-    // POST /api/student/{studentExamId}/submit
+    // POST /api/student/submit  (studentExamId in body — used by browser client)
+    [HttpPost("submit")]
+    public Task<IActionResult> SubmitFromBody([FromBody] ExamSubmitDto dto)
+        => Submit(dto?.StudentExamId ?? 0, dto!);
+
+    // POST /api/student/{studentExamId}/submit  (studentExamId in URL — legacy)
     [HttpPost("{studentExamId}/submit")]
     public async Task<IActionResult> Submit(int studentExamId, [FromBody] ExamSubmitDto dto)
     {
@@ -337,16 +342,26 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
 
         double jambTotal = 0;
         var breakdown = new List<string>();
+        var subjectScoresList = new List<object>();
         foreach (var (sub, qList) in subjectGroups)
         {
             int pool = qList.Count;
             int correct = correctBySubject.GetValueOrDefault(sub, 0);
+            int wrong = answers.DistinctBy(a => a.QuestionId)
+                .Count(a => questions.TryGetValue(a.QuestionId, out var qq)
+                    && (qq.Subject ?? "General").Equals(sub, StringComparison.OrdinalIgnoreCase)
+                    && !string.IsNullOrEmpty(a.SelectedAnswer)
+                    && !qq.CorrectAnswer.Equals(a.SelectedAnswer?.Trim() ?? "", StringComparison.OrdinalIgnoreCase));
+            // JAMB formula: (correct / pool) * 100, rounded to whole number
             double scaled = pool > 0 ? Math.Round((double)correct / pool * 100) : 0;
             jambTotal += scaled;
             var abbreviated = AbbreviateSubject(sub);
             breakdown.Add($"{abbreviated}: {correct}/{pool} ({(int)scaled}/100)");
+            subjectScoresList.Add(new { subject = sub, correct, wrong, unanswered = pool - correct - wrong, pool, scaled });
         }
 
+        // jambTotal IS the aggregate score out of (numSubjects * 100)
+        // percentage is jambTotal expressed as 0-100 for display purposes
         double maxScore = subjectGroups.Count * 100.0;
         double percentage = maxScore > 0 ? Math.Round(jambTotal / maxScore * 100) : 0;
 

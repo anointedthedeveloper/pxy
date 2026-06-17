@@ -37,7 +37,8 @@ public static class QuestionShuffler
 
     public static List<ShuffledQuestionDto> ShuffleAll(IEnumerable<Question> questions, bool shuffleQuestions, bool shuffleOptions, int? seed = null)
     {
-        var list = questions.ToList();
+        // Copy to a new list of value-tuples so we never mutate the EF-tracked entity objects
+        var list = questions.Select((q, i) => (q, origNum: q.QuestionNumber)).ToList();
         var rng = seed.HasValue ? new Random(seed.Value) : Random.Shared;
         if (shuffleQuestions)
         {
@@ -46,9 +47,12 @@ public static class QuestionShuffler
                 int j = rng.Next(i + 1);
                 (list[i], list[j]) = (list[j], list[i]);
             }
-            // Re-number after shuffle
-            for (int i = 0; i < list.Count; i++) list[i].QuestionNumber = i + 1;
         }
-        return list.Select(q => Shuffle(q, shuffleOptions, rng)).ToList();
+        // Assign display numbers without touching the entity
+        return list.Select((t, i) =>
+        {
+            var dto = Shuffle(t.q, shuffleOptions, rng);
+            return dto with { QuestionNumber = i + 1 };
+        }).ToList();
     }
 }

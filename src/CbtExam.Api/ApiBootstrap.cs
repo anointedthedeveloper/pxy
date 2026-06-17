@@ -70,36 +70,57 @@ public static class ApiBootstrap
                 // Enable Write-Ahead Logging for high concurrency (500+ users)
                 db.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
                 
-                // Add CustomSessionName column if it doesn't exist
+                // Patch any columns added after initial EnsureCreated (safe on existing DBs)
                 try
                 {
                     var connection = db.Database.GetDbConnection();
                     await connection.OpenAsync();
-                    using var command = connection.CreateCommand();
-                    command.CommandText = "PRAGMA table_info(ExamSessions)";
-                    using var reader = await command.ExecuteReaderAsync();
-                    var hasCustomSessionName = false;
-                    while (await reader.ReadAsync())
+
+                    async Task AddColumnIfMissing(string table, string column, string definition)
                     {
-                        var columnName = reader.GetString(1);
-                        if (columnName == "CustomSessionName")
+                        using var cmd = connection.CreateCommand();
+                        cmd.CommandText = $"PRAGMA table_info({table})";
+                        using var rdr = await cmd.ExecuteReaderAsync();
+                        bool exists = false;
+                        while (await rdr.ReadAsync())
+                            if (string.Equals(rdr.GetString(1), column, StringComparison.OrdinalIgnoreCase))
+                            { exists = true; break; }
+                        if (!exists)
                         {
-                            hasCustomSessionName = true;
-                            break;
+                            using var alter = connection.CreateCommand();
+                            alter.CommandText = $"ALTER TABLE {table} ADD COLUMN {column} {definition}";
+                            await alter.ExecuteNonQueryAsync();
                         }
                     }
-                    
-                    if (!hasCustomSessionName)
-                    {
-                        using var addColumnCommand = connection.CreateCommand();
-                        addColumnCommand.CommandText = "ALTER TABLE ExamSessions ADD COLUMN CustomSessionName TEXT DEFAULT ''";
-                        await addColumnCommand.ExecuteNonQueryAsync();
-                    }
+
+                    // ExamSessions columns
+                    await AddColumnIfMissing("ExamSessions", "CustomSessionName", "TEXT DEFAULT ''");
+                    await AddColumnIfMissing("ExamSessions", "IsStarted",         "INTEGER DEFAULT 0");
+                    await AddColumnIfMissing("ExamSessions", "AutoApprove",        "INTEGER DEFAULT 1");
+                    await AddColumnIfMissing("ExamSessions", "AllowRetakes",       "INTEGER DEFAULT 0");
+
+                    // StudentExams columns
+                    await AddColumnIfMissing("StudentExams", "IsApproved",  "INTEGER DEFAULT 1");
+                    await AddColumnIfMissing("StudentExams", "IsRejected",  "INTEGER DEFAULT 0");
+                    await AddColumnIfMissing("StudentExams", "DeviceId",    "TEXT DEFAULT ''");
+                    await AddColumnIfMissing("StudentExams", "DeviceName",  "TEXT DEFAULT ''");
+
+                    // Questions columns
+                    await AddColumnIfMissing("Questions", "Subject",  "TEXT DEFAULT ''");
+                    await AddColumnIfMissing("Questions", "Year",      "INTEGER DEFAULT 0");
+                    await AddColumnIfMissing("Questions", "Section",   "TEXT DEFAULT ''");
+                    await AddColumnIfMissing("Questions", "ImageUrl",  "TEXT DEFAULT ''");
+
+                    // QuestionBank columns
+                    await AddColumnIfMissing("QuestionBank", "Section",   "TEXT DEFAULT ''");
+                    await AddColumnIfMissing("QuestionBank", "ImageUrl",  "TEXT DEFAULT ''");
+                    await AddColumnIfMissing("QuestionBank", "SourceId",  "INTEGER NULL");
+
                     await connection.CloseAsync();
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error adding CustomSessionName column: {ex.Message}");
+                    Console.WriteLine($"Schema patch error: {ex.Message}");
                 }
                 
                 // Verify schema is usable by probing known tables
@@ -172,8 +193,21 @@ public static class ApiBootstrap
         app.MapControllers();
         app.MapHub<ExamHub>("/hubs/exam");
 
-        // SPA fallback — serve index.html for unknown routes
-        app.MapFallbackToFile("index.html");
+        // SPA fallback — serve index.html for unknown GET routes only.
+        // Must be GET-only so POST/PUT/DELETE to unknown paths return 404
+        // instead of 405 from the static file middleware.
+        app.MapFallback(async ctx =>
+        {
+            if (ctx.Request.Method == "GET")
+            {
+                ctx.Response.ContentType = "text/html";
+                await ctx.Response.SendFileAsync(Path.Combine(wwwrootPath, "index.html"));
+            }
+            else
+            {
+                ctx.Response.StatusCode = 404;
+            }
+        });
 
         return app;
     }

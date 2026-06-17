@@ -15,14 +15,14 @@ public partial class MainWindow : Window
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        // Apply title bar color now that HWND exists
         App? app = App.Current as App;
         app?.ApplyTitleBarToWindow(this);
 
-        // Re-force the native icon now that the HWND is fully realised —
-        // this catches the case where the shell re-created the taskbar button
-        // during the LoginWindow → MainWindow transition.
-        App.ForceWindowIcon(this);
+        // Post a second icon refresh at background priority so it fires
+        // after the shell has finished re-creating the taskbar button
+        // during the LoginWindow -> MainWindow transition.
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
+            () => App.ForceWindowIcon(this));
 
         try
         {

@@ -68,7 +68,7 @@
                                     </Grid>
                                     <TextBlock Text="LIVE" FontSize="10" FontWeight="Black" Foreground="#A7F3D0" VerticalAlignment="Center"/>
                                 </StackPanel>
-                                <TextBlock Grid.Row="1" Text="{Binding ExamTitle}" FontSize="16" FontWeight="Bold" Foreground="White"
+                                <TextBlock Grid.Row="1" Text="{Binding CustomSessionName}" FontSize="16" FontWeight="Bold" Foreground="White"
                                            TextTrimming="CharacterEllipsis" Margin="0,0,0,12"/>
                                 <!-- Stats row -->
                                 <Grid Grid.Row="2">
@@ -163,12 +163,21 @@
                                   HeadersVisibility="Column">
                             <DataGrid.Columns>
 
-                                <DataGridTextColumn Header="EXAM TITLE" Binding="{Binding ExamTitle}" Width="*">
+                                <DataGridTextColumn Header="SESSION NAME" Binding="{Binding CustomSessionName}" Width="*">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="FontWeight" Value="SemiBold"/>
                                             <Setter Property="VerticalAlignment" Value="Center"/>
                                             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="EXAM TEMPLATE" Binding="{Binding ExamTitle}" Width="160">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="VerticalAlignment" Value="Center"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                                            <Setter Property="FontSize" Value="12"/>
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
