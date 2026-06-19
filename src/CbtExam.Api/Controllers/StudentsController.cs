@@ -33,13 +33,30 @@ public class StudentsController(AppDbContext db) : ControllerBase
         var studentId = dto.StudentId?.Trim();
         if (string.IsNullOrWhiteSpace(studentId))
         {
-            var count = await db.Students.CountAsync();
-            studentId = $"STU-{(count + 1):D4}";
+            studentId = await GenerateUniqueUsernameAsync();
         }
 
-        // Ensure uniqueness on new records
-        if (entity is null && await db.Students.AnyAsync(s => s.StudentId == studentId))
-            studentId = $"STU-{(await db.Students.CountAsync() + 1):D4}-{Guid.NewGuid().ToString()[..4]}";
+        // Check for duplicate username (case-insensitive) on new records or on ID change
+        if (entity is null || !string.Equals(entity.StudentId, studentId, StringComparison.OrdinalIgnoreCase))
+        {
+            var allStudents = await db.Students.ToListAsync();
+            bool duplicate = allStudents.Any(s =>
+                (entity is null || s.Id != entity.Id) &&
+                s.StudentId.Equals(studentId, StringComparison.OrdinalIgnoreCase));
+            if (duplicate)
+                return BadRequest($"Username '{studentId}' already exists (usernames are case-insensitive).");
+        }
+
+        // Check for duplicate full name (case-insensitive) to prevent two accounts with same name differing only by case
+        {
+            var allStudents = await db.Students.ToListAsync();
+            bool dupName = allStudents.Any(s =>
+                (entity is null || s.Id != entity.Id) &&
+                s.FullName.Equals(dto.FullName.Trim(), StringComparison.OrdinalIgnoreCase) &&
+                s.StudentId.Equals(studentId, StringComparison.OrdinalIgnoreCase));
+            if (dupName)
+                return BadRequest($"A student with name '{dto.FullName.Trim()}' and username '{studentId}' already exists.");
+        }
 
         if (entity is null)
         {
@@ -63,6 +80,29 @@ public class StudentsController(AppDbContext db) : ControllerBase
 
         await db.SaveChangesAsync();
         return Ok(new StudentAdminDto(entity.Id, entity.FullName, entity.StudentId, entity.IsActive, entity.Password));
+    }
+
+    private static readonly char[] _usernameChars = "abcdefghijklmnopqrstuvwxyz".ToCharArray();
+    private static readonly Random _rng = new();
+
+    private async Task<string> GenerateUniqueUsernameAsync()
+    {
+        var existing = await db.Students.Select(s => s.StudentId).ToListAsync();
+        var existingSet = new HashSet<string>(existing, StringComparer.OrdinalIgnoreCase);
+
+        for (int attempt = 0; attempt < 1000; attempt++)
+        {
+            // Format: 1-4 digit number + 2 random lowercase letters, e.g. "001ab", "042xy", "1000aq"
+            int num = _rng.Next(1, 10000);
+            char c1 = _usernameChars[_rng.Next(_usernameChars.Length)];
+            char c2 = _usernameChars[_rng.Next(_usernameChars.Length)];
+            string candidate = $"{num:D3}{c1}{c2}";
+            if (!existingSet.Contains(candidate))
+                return candidate;
+        }
+
+        // Extremely unlikely fallback
+        return Guid.NewGuid().ToString("N")[..8];
     }
 
     [HttpPost("password")]

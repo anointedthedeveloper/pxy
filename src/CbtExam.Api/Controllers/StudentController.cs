@@ -123,21 +123,20 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
         if (existing is not null)
         {
             // If retakes are not allowed and student already submitted, reject
-            if (!session.AllowRetakes && existing.IsSubmitted)
+            if (existing.IsSubmitted)
             {
                 return BadRequest("You have already taken this exam and retakes are not allowed.");
             }
-            // If retakes are allowed or not submitted, allow rejoining
+            // Not submitted yet — allow rejoining
             return Ok(new JoinResultDto(existing.Id, session.Id, session.ExamId, session.Exam!.Title, session.Exam.DurationMinutes));
         }
 
         var se = new StudentExam { StudentId = student.Id, SessionId = session.Id, DeviceId = dto.DeviceId, DeviceName = dto.DeviceName };
         
-        // Auto-approve if:
-        // 1. Session has auto-approve enabled, OR
-        // 2. Exam hasn't started yet (students joining waiting room don't need approval)
-        // Only require approval for ongoing exams when auto-approve is toggled off
-        if (session.AutoApprove || !session.IsStarted)
+        // Auto-approve only when:
+        // 1. Exam hasn't started yet (joining waiting room → always OK), OR
+        // 2. Exam is ongoing AND AutoApprove is explicitly enabled
+        if (!session.IsStarted || session.AutoApprove)
         {
             se.IsApproved = true;
         }

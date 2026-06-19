@@ -609,7 +609,7 @@ body{
         <span class="hdr-uname" id="user-name"></span>
         <span class="hdr-uid" id="user-id"></span>
       </div>
-      <button class="logout-btn-mini" onclick="handleLogout()" title="Logout" style="margin-left: 12px;">
+      <button class="logout-btn-mini" onclick="handleExamLogout()" title="Logout" style="margin-left: 12px;">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
       </button>
     </div>
@@ -830,6 +830,25 @@ document.addEventListener('keydown', function(e) {
 
 // ── SignalR: ForceSubmit & SessionEnded ──
 let _signalRConnectionStarted = false;
+let _sessionStatusPollInterval = null;
+
+async function pollSessionStatus() {
+    if (examCompleted) return;
+    try {
+        const sessionId = localStorage.getItem('sessionId') || localStorage.getItem('selectedSessionId');
+        if (!sessionId) return;
+        const res = await fetch(`${API_BASE}/Sessions`);
+        if (!res.ok) return;
+        const sessions = await res.json();
+        const session = sessions.find(s => s.id === parseInt(sessionId));
+        if (session && !session.isActive && !examCompleted) {
+            if (typeof showToast === 'function')
+                showToast('Session Ended', 'The exam session has been ended by the coordinator. Auto-submitting...', 'error');
+            setTimeout(() => { if (typeof submitExam === 'function' && !examCompleted) submitExam(false); }, 2000);
+        }
+    } catch(e) { /* ignore network errors */ }
+}
+
 try {
   const _hubUrl = (typeof API_BASE !== 'undefined' ? API_BASE : '/api').replace('/api','') + '/hubs/exam';
   const _conn = new signalR.HubConnectionBuilder().withUrl(_hubUrl).withAutomaticReconnect().build();
@@ -850,6 +869,18 @@ try {
     }).catch(() => {});
   }
 } catch(e) {}
+
+// Poll session status every 5 seconds as a fallback for when SignalR misses the event
+_sessionStatusPollInterval = setInterval(pollSessionStatus, 5000);
+
+// Confirmation when leaving an ongoing exam
+window.addEventListener('beforeunload', function(e) {
+  if (!examCompleted) {
+    e.preventDefault();
+    e.returnValue = 'You have an ongoing exam. Are you sure you want to leave?';
+    return e.returnValue;
+  }
+});
 </script>
 </body>
 </html>

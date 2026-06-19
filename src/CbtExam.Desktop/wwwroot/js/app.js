@@ -104,6 +104,20 @@ function handleLogout() {
     }
 }
 
+// --- Exam-page Logout Handler (warns about ongoing exam) ---
+function handleExamLogout() {
+    if (typeof examCompleted !== 'undefined' && !examCompleted) {
+        if (!confirm('You have an ongoing exam. Logging out will NOT submit your answers.\n\nAre you sure you want to leave?')) {
+            return;
+        }
+    } else if (!confirm('Are you sure you want to logout?')) {
+        return;
+    }
+    clearAllStudentData();
+    localStorage.removeItem('lastExamResult');
+    window.location.href = 'index.html';
+}
+
 // --- Smart User & Session Detection ---
 function runSmartSessionDetection() {
     const currentPath = window.location.pathname;

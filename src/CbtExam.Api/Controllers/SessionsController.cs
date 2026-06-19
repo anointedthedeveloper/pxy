@@ -31,7 +31,9 @@ public class SessionsController(AppDbContext db, SnapshotExportService exports, 
             var result = sessions.Select(s => {
                 _broadcasts.TryGetValue(s.Id, out var msg);
                 var displayName = string.IsNullOrWhiteSpace(s.CustomSessionName) ? s.Exam!.Title : s.CustomSessionName;
-                return new SessionDto(s.Id, s.ExamId, s.Exam!.Title, s.SessionCode, s.StartedAt, s.IsActive, s.StudentExams.Count, s.IsStarted, msg ?? "", s.AutoApprove, s.AllowRetakes, displayName);
+                // Count only students still in the room (not yet submitted)
+                var activeCount = s.StudentExams.Count(se => !se.IsSubmitted);
+                return new SessionDto(s.Id, s.ExamId, s.Exam!.Title, s.SessionCode, s.StartedAt, s.IsActive, activeCount, s.IsStarted, msg ?? "", s.AutoApprove, s.AllowRetakes, displayName);
             }).ToList();
 
             return Ok(result);
