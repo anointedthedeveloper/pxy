@@ -131,7 +131,7 @@ public class StudentController(AppDbContext db, IHubContext<ExamHub> hub, Snapsh
             return Ok(new JoinResultDto(existing.Id, session.Id, session.ExamId, session.Exam!.Title, session.Exam.DurationMinutes));
         }
 
-        var se = new StudentExam { StudentId = student.Id, SessionId = session.Id, DeviceId = dto.DeviceId, DeviceName = dto.DeviceName };
+        var se = new StudentExam { StudentId = student.Id, SessionId = session.Id, DeviceId = dto.DeviceId, DeviceName = dto.DeviceName, IsApproved = false };
         
         // Auto-approve only when:
         // 1. Exam hasn't started yet (joining waiting room → always OK), OR

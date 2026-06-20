@@ -407,13 +407,6 @@
                                          <CheckBox IsChecked="{Binding CurrentRoomAutoApprove}" Command="{Binding ToggleAutoApproveCommand}" VerticalAlignment="Center" ToolTip="Automatically approve students who join an ongoing exam"/>
                                      </StackPanel>
                                  </Border>
-                                 <!-- Allow Retakes Toggle -->
-                                 <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="12" Padding="12,8" Margin="0,0,10,0">
-                                     <StackPanel Orientation="Horizontal">
-                                         <TextBlock Text="Allow Retakes" FontSize="13" FontWeight="SemiBold" Foreground="#475569" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                         <CheckBox IsChecked="{Binding CurrentRoomAllowRetakes}" Command="{Binding ToggleAllowRetakesCommand}" VerticalAlignment="Center" ToolTip="Allow students to retake the exam if they have already submitted"/>
-                                     </StackPanel>
-                                 </Border>
                                  <Button Command="{Binding BroadcastCommand}" Background="Transparent" BorderBrush="#E2E8F0" BorderThickness="1" Foreground="#475569" Padding="14,8" Margin="0,0,10,0">
                                      <Button.Resources>
                                          <Style TargetType="Border"><Setter Property="CornerRadius" Value="12"/></Style>
@@ -536,8 +529,77 @@
                         </Grid>
                     </Border>
                     
-                    <!-- 4. Candidate Grid -->
-                    <ListBox Grid.Row="3" ItemsSource="{Binding FilteredRoomStudents}" Background="Transparent" BorderThickness="0"
+                    <!-- 4. Submitted Students Section (Retake Management) -->
+                    <Border Grid.Row="3" Background="#F0FDF4" BorderBrush="#86EFAC" BorderThickness="1" CornerRadius="16" Padding="20" Margin="0,0,0,24"
+                            Visibility="{Binding HasSubmittedStudents, Converter={StaticResource BoolToVis}}">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.04" Color="Black"/>
+                        </Border.Effect>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <!-- Header -->
+                            <Grid Grid.Row="0" Margin="0,0,0,12">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE8FB;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="#16A34A" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                    <TextBlock Text="Submitted Students" FontWeight="SemiBold" FontSize="16" Foreground="#166534" VerticalAlignment="Center"/>
+                                    <Border Background="#BBF7D0" CornerRadius="12" Padding="8,4" Margin="8,0,0,0">
+                                        <TextBlock Text="{Binding SubmittedStudentsCount}" FontSize="12" FontWeight="Bold" Foreground="#166534"/>
+                                    </Border>
+                                    <TextBlock Text="— Allow retakes individually" FontSize="12" Foreground="#64748B" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                </StackPanel>
+                            </Grid>
+                            
+                            <!-- Submitted Students List -->
+                            <ListBox Grid.Row="1" ItemsSource="{Binding SubmittedStudents}" Background="Transparent" BorderThickness="0"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" MaxHeight="200">
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel ItemWidth="320" ItemHeight="80"/>
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="White" BorderBrush="#86EFAC" BorderThickness="1" CornerRadius="12" Padding="16" Margin="6">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                
+                                                <!-- Student Info -->
+                                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding FullName}" FontWeight="SemiBold" FontSize="14" Foreground="#1E293B" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding StudentId}" FontSize="12" Foreground="#64748B" Margin="0,2,0,0"/>
+                                                    <TextBlock Text="{Binding SubmittedAt, StringFormat='Submitted: {0:HH:mm}'}" FontSize="11" Foreground="#94A3B8" Margin="0,2,0,0"/>
+                                                    <TextBlock Text="{Binding Score, StringFormat='Score: {0}'}" FontSize="11" Foreground="#16A34A" Margin="0,2,0,0" FontWeight="SemiBold"/>
+                                                </StackPanel>
+                                                
+                                                <!-- Allow Retake Button -->
+                                                <Button Grid.Column="1" Command="{Binding DataContext.AllowRetakeCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" 
+                                                        CommandParameter="{Binding}" Background="#F59E0B" Foreground="White" BorderThickness="0" 
+                                                        Padding="12,6" FontSize="12" FontWeight="SemiBold">
+                                                    <Button.Resources>
+                                                        <Style TargetType="Border"><Setter Property="CornerRadius" Value="6"/></Style>
+                                                    </Button.Resources>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="&#xE8FB;" FontFamily="Segoe MDL2 Assets" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="Allow Retake"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+                    </Border>
+                    
+                    <!-- 5. Candidate Grid -->
+                    <ListBox Grid.Row="4" ItemsSource="{Binding FilteredRoomStudents}" Background="Transparent" BorderThickness="0"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.ItemsPanel>
                             <ItemsPanelTemplate>

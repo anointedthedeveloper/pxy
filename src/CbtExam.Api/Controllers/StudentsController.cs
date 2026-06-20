@@ -92,11 +92,13 @@ public class StudentsController(AppDbContext db) : ControllerBase
 
         for (int attempt = 0; attempt < 1000; attempt++)
         {
-            // Format: 1-4 digit number + 2 random lowercase letters, e.g. "001ab", "042xy", "1000aq"
+            // Format: 3-4 digit number + 2-3 random lowercase letters, e.g. "001ab", "003fd", "999ds", "1000aq"
             int num = _rng.Next(1, 10000);
             char c1 = _usernameChars[_rng.Next(_usernameChars.Length)];
             char c2 = _usernameChars[_rng.Next(_usernameChars.Length)];
-            string candidate = $"{num:D3}{c1}{c2}";
+            // Randomly add a third letter (30% chance)
+            string letters = _rng.Next(100) < 30 ? $"{c1}{c2}{_usernameChars[_rng.Next(_usernameChars.Length)]}" : $"{c1}{c2}";
+            string candidate = $"{num:D3}{letters}";
             if (!existingSet.Contains(candidate))
                 return candidate;
         }

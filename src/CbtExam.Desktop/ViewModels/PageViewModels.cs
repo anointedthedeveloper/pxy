@@ -995,12 +995,6 @@ public class SessionViewModel : BaseViewModel, IRefreshable
         get => _currentRoom?.AutoApprove ?? true;
         set { /* toggled via command */ }
     }
-
-    public bool CurrentRoomAllowRetakes
-    {
-        get => _currentRoom?.AllowRetakes ?? false;
-        set { /* toggled via command */ }
-    }
     
     private bool _isManagingRoom;
     public bool IsManagingRoom
@@ -1029,6 +1023,9 @@ public class SessionViewModel : BaseViewModel, IRefreshable
     public ObservableCollection<SubmittedStudentDto> SubmittedStudents { get; } = [];
     public ObservableCollection<SubmittedStudentDto> FilteredSubmittedStudents { get; } = [];
     private HashSet<int> _selectedSubmittedStudentIds = new();
+    private bool _hasSubmittedStudents;
+    public bool HasSubmittedStudents { get => _hasSubmittedStudents; set => Set(ref _hasSubmittedStudents, value); }
+    public int SubmittedStudentsCount => SubmittedStudents.Count;
     
     // Wrapper class for tracking selection state
     public class SelectableSubmittedStudent
@@ -1083,15 +1080,25 @@ public class SessionViewModel : BaseViewModel, IRefreshable
         var updated = ActiveSessions.FirstOrDefault(x => x.Id == CurrentRoom.Id);
         if (updated != null) { CurrentRoom = updated; OnPropertyChanged(nameof(CurrentRoomAutoApprove)); }
     });
-    public RelayCommand ToggleAllowRetakesCommand => new(async () =>
+    public RelayCommand<SubmittedStudentDto> AllowRetakeCommand => new(async (student) =>
     {
-        if (CurrentRoom is null) return;
-        var newVal = !CurrentRoom.AllowRetakes;
-        await api.SetAllowRetakesAsync(CurrentRoom.Id, newVal);
-        // Reload to get updated session state
-        await LoadAsync();
-        var updated = ActiveSessions.FirstOrDefault(x => x.Id == CurrentRoom.Id);
-        if (updated != null) { CurrentRoom = updated; OnPropertyChanged(nameof(CurrentRoomAllowRetakes)); }
+        if (CurrentRoom is null || student is null) return;
+        try
+        {
+            await api.AllowRetakeAsync(CurrentRoom.Id, student.Id);
+            await RefreshRoomStudents();
+            await RefreshSubmittedStudents();
+            NotificationsViewModel.Instance?.Add(new NotificationItem(
+                "Retake Allowed",
+                $"Retake allowed for {student.FullName}.",
+                DateTime.Now,
+                "success"
+            ));
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Error allowing retake: {ex.Message}", "Retake Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+        }
     });
     public RelayCommand BroadcastCommand => new(async () => {
         if (CurrentRoom is null) return;
@@ -1401,6 +1408,7 @@ public class SessionViewModel : BaseViewModel, IRefreshable
         {
             await RefreshRoomStudents();
             await RefreshPendingApprovals();
+            await RefreshSubmittedStudents();
         }
     }
 
@@ -1458,6 +1466,7 @@ public class SessionViewModel : BaseViewModel, IRefreshable
                 SelectableSubmittedStudents.Clear();
                 list?.ForEach(SubmittedStudents.Add);
                 list?.ForEach(s => SelectableSubmittedStudents.Add(new SelectableSubmittedStudent { Student = s, IsSelected = false }));
+                HasSubmittedStudents = SubmittedStudents.Count > 0;
                 FilterSubmittedStudents();
             });
         }

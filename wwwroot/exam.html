@@ -828,6 +828,15 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeImageZoom();
 });
 
+// ── Warn before leaving exam if not completed ──
+window.addEventListener('beforeunload', function(e) {
+  if (typeof examCompleted !== 'undefined' && !examCompleted) {
+    e.preventDefault();
+    e.returnValue = 'You have an ongoing exam. Are you sure you want to leave?';
+    return e.returnValue;
+  }
+});
+
 // ── SignalR: ForceSubmit & SessionEnded ──
 let _signalRConnectionStarted = false;
 try {
@@ -850,6 +859,43 @@ try {
     }).catch(() => {});
   }
 } catch(e) {}
+
+// ── Poll session status to auto-submit when session ends ──
+let _sessionPollInterval = null;
+async function startSessionStatusPolling() {
+  if (_sessionPollInterval) return;
+  
+  const sessionId = localStorage.getItem('selectedSessionId');
+  const studentExamId = localStorage.getItem('studentExamId');
+  
+  if (!sessionId || !studentExamId) return;
+  
+  _sessionPollInterval = setInterval(async () => {
+    try {
+      if (typeof examCompleted !== 'undefined' && examCompleted) {
+        clearInterval(_sessionPollInterval);
+        return;
+      }
+      
+      const response = await fetch(`${API_BASE}/sessions/${sessionId}`);
+      if (response.ok) {
+        const session = await response.json();
+        if (!session.isActive && typeof submitExam === 'function' && !examCompleted) {
+          if (typeof showToast === 'function') showToast('Session Ended', 'The exam session has ended. Auto-submitting...', 'error');
+          clearInterval(_sessionPollInterval);
+          setTimeout(() => { if (typeof submitExam === 'function' && !examCompleted) submitExam(false); }, 2000);
+        }
+      }
+    } catch (e) {
+      // Silently ignore polling errors
+    }
+  }, 5000); // Poll every 5 seconds
+}
+
+// Start polling when exam page loads
+document.addEventListener('DOMContentLoaded', () => {
+  startSessionStatusPolling();
+});
 </script>
 </body>
 </html>
