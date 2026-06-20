@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="/css/style.css" />
     <link rel="stylesheet" href="/css/login.css" />
     <link rel="stylesheet" href="/css/waiting.css" />
+    <link rel="stylesheet" href="/css/theme.css" />
     <!-- SignalR — served locally, no internet required -->
     <script src="/js/signalr.min.js"></script>
 </head>
@@ -315,7 +316,7 @@
                     console.error('Auto-submit failed:', e);
                 }
                 
-                setTimeout(() => { window.location.href = 'selection.html'; }, 3000);
+                setTimeout(() => { window.location.href = '/selection'; }, 3000);
             });
 
             // Expose joiner early so startExamProcess can call it regardless of connection timing
@@ -346,7 +347,7 @@
                 localStorage.removeItem('cbt_session_code');
                 localStorage.removeItem('encryptedQuestions');
                 localStorage.removeItem('cachedQuestions');
-                window.location.href = 'selection.html';
+                window.location.href = '/selection';
             }
 
             function updateChecklist() {
@@ -531,7 +532,7 @@
                         statusText.style.color = '#f59e0b';
                         btn.innerHTML = '<span>Already Submitted — Redirecting to Results...</span>';
                         btn.disabled = true;
-                        setTimeout(() => { window.location.href = 'results.html'; }, 2000);
+                        setTimeout(() => { window.location.href = 'esults..htmlhtml'; }, 2000);
                         return;
                     }
 
@@ -556,7 +557,7 @@
                             leaveBtn.textContent = 'Leave Waiting Room';
                             leaveBtn.onclick = () => {
                                 localStorage.removeItem('_waitFailedAt');
-                                window.location.href = 'selection.html';
+                                window.location.href = 'election..htmlhtml';
                             };
                             btn.parentNode.insertBefore(leaveBtn, btn.nextSibling);
                         }
@@ -564,7 +565,7 @@
                         if (elapsed >= 120000) {
                             localStorage.removeItem('_waitFailedAt');
                             showToast('Redirecting', 'Could not join exam. Returning to exam list.', 'error');
-                            setTimeout(() => { window.location.href = 'selection.html'; }, 1500);
+                            setTimeout(() => { window.location.href = '/selection'; }, 1500);
                             return;
                         }
 
@@ -830,7 +831,7 @@
                         clearInterval(int);
                         count.textContent = 'GO!';
                         count.style.color = '#10b981';
-                        setTimeout(() => window.location.href = 'exam.html', 500);
+                        setTimeout(() => window.location.href = '/exam', 500);
                     }
                 }, 1000);
             };
@@ -853,7 +854,7 @@
                     localStorage.removeItem('selectedSessionId');
                     localStorage.removeItem('selectedSessionCode');
                     localStorage.removeItem('cbt_session_code');
-                    window.location.href = 'selection.html';
+                    window.location.href = '/selection';
                 }
             }
         });

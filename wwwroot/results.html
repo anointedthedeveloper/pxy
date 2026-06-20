@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Exam Results</title>
 <script>try{const t=localStorage.getItem('selectedExamTitle');if(t)document.title=t+' — Results';}catch(e){}</script>
+<link rel="stylesheet" href="/css/theme.css">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -300,7 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(e) {}
 
     const dataStr = localStorage.getItem('lastExamResult');
-    if (!dataStr) { window.location.href = 'selection.html'; return; }
+    if (!dataStr) { window.location.href = '/selection'; return; }
 
     const result = JSON.parse(dataStr);
 
@@ -452,7 +453,7 @@ function filterBySubject(subject, btn) {
 }
 
 function goBack() {
-    window.location.href = 'selection.html';
+    window.location.href = '/selection';
 }
 </script>
 <script src="/js/app.js"></script>

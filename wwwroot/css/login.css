@@ -7,7 +7,7 @@
     --text-dark: #1e293b;
     --text-muted: #64748b;
     --input-border: #cbd5e1;
-    --input-bg: #ffffff;
+    --input-bg: var(--theme-input-bg);
     --font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
@@ -20,13 +20,14 @@
 }
 
 body {
-    background: #020b08;
+    background: var(--theme-bg);
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 0; /* Remove padding around card */
     overflow: hidden;
+    transition: var(--theme-transition);
 }
 
 /* Live Gradient & Particle Effect for Background */

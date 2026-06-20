@@ -4,6 +4,7 @@ using CbtExam.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.IO;
+using Microsoft.AspNetCore.Rewrite;
 
 namespace CbtExam.Api;
 
@@ -151,6 +152,16 @@ public static class ApiBootstrap
         }
 
         app.UseCors();
+        
+        // URL rewriting to remove .html extensions
+        var rewriteOptions = new RewriteOptions()
+            .AddRewrite("^selection$", "selection.html", skipRemainingRules: true)
+            .AddRewrite("^exam$", "exam.html", skipRemainingRules: true)
+            .AddRewrite("^results$", "results.html", skipRemainingRules: true)
+            .AddRewrite("^waiting$", "waiting.html", skipRemainingRules: true)
+            .AddRewrite("^index$", "index.html", skipRemainingRules: true);
+        app.UseRewriter(rewriteOptions);
+        
         app.Use(async (ctx, next) =>
         {
             var path = ctx.Request.Path.Value?.ToLower() ?? "";
