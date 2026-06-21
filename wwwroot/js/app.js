@@ -77,7 +77,7 @@ function clearAllStudentData() {
             localStorage.removeItem(k);
         }
     });
-    // NOTE: lastExamResult is intentionally kept so results.html can display after logout redirect
+    // NOTE: lastExamResult is intentionally kept so results.html.html can display after logout redirect
 }
 
 // --- Logout Handler ---
@@ -92,7 +92,7 @@ function handleLogout() {
 // --- Smart User & Session Detection ---
 function runSmartSessionDetection() {
     const currentPath = window.location.pathname;
-    const isLoginPage = currentPath.endsWith('/index') || currentPath.endsWith('index.html') || currentPath.endsWith('/') || currentPath === '';
+    const isLoginPage = currentPath.endsWith('/index') || currentPath.endsWith('/') || currentPath === '';
     const hasActiveUser = localStorage.getItem('studentId');
 
     // Always wipe session data when landing on login page — ensures fresh start on revisit
@@ -410,7 +410,7 @@ async function initializeExamPage() {
     if (!studentExamId) {
         showToast('Error', 'Missing exam session ID. Redirecting to selection page...', 'error');
         setTimeout(() => {
-            window.location.href = 'selection.html';
+            window.location.href = '/selection';
         }, 2000);
         return;
     }
