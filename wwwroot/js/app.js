@@ -77,7 +77,7 @@ function clearAllStudentData() {
             localStorage.removeItem(k);
         }
     });
-    // NOTE: lastExamResult is intentionally kept so results.html.html can display after logout redirect
+    // NOTE: lastExamResult is intentionally kept so results can display after logout redirect
 }
 
 // --- Logout Handler ---
