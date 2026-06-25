@@ -236,8 +236,29 @@ async function handleLogin(event) {
     const password = document.getElementById('password').value.trim();
     const btn = document.getElementById('submitBtn');
     
-    if (!studentId || !password) {
-        showToast('Required', 'Please enter your student ID and password.', 'error');
+    // Clear previous validation states
+    clearValidationErrors();
+    
+    // Validate inputs
+    let hasError = false;
+    if (!studentId) {
+        showInputError('username', 'Student ID is required');
+        hasError = true;
+    } else if (studentId.length < 3) {
+        showInputError('username', 'Student ID must be at least 3 characters');
+        hasError = true;
+    }
+    
+    if (!password) {
+        showInputError('password', 'Password is required');
+        hasError = true;
+    } else if (password.length < 4) {
+        showInputError('password', 'Password must be at least 4 characters');
+        hasError = true;
+    }
+    
+    if (hasError) {
+        shakeForm();
         return;
     }
 
@@ -264,24 +285,106 @@ async function handleLogin(event) {
             }, 1000);
         } else if (response.status === 409) {
             const err = await response.json();
-            showToast('Already Logged In', err.error || 'This account is active on another device.', 'error');
+            showToast('Already Logged In', err.error || 'This account is active on another device. Ask the invigilator to reset your session.', 'error');
             resetLoginButton(btn);
+            shakeForm();
+        } else if (response.status === 401) {
+            const err = await response.json();
+            showToast('Login Failed', err.error || 'Invalid student ID or password. Please check your credentials.', 'error');
+            resetLoginButton(btn);
+            showInputError('password', 'Incorrect password');
+            shakeForm();
         } else {
             const err = await response.json();
-            showToast('Login Failed', err.error || 'Invalid credentials or account inactive.', 'error');
+            showToast('Login Failed', err.error || 'Unable to login. Your account may be inactive.', 'error');
             resetLoginButton(btn);
+            shakeForm();
         }
     } catch (error) {
         console.error('Login error:', error);
-        showToast('Connection Error', 'Unable to reach the server. Please try again later.', 'error');
+        showToast('Connection Error', 'Unable to reach the server. Check your internet connection and try again.', 'error');
         resetLoginButton(btn);
+        shakeForm();
     }
+}
+
+function showInputError(inputId, message) {
+    const input = document.getElementById(inputId);
+    const wrapper = input.closest('.input-wrapper');
+    
+    input.style.borderColor = '#ef4444';
+    input.setAttribute('aria-invalid', 'true');
+    
+    // Remove existing error message if any
+    const existingError = wrapper.querySelector('.error-message');
+    if (existingError) existingError.remove();
+    
+    // Add error message
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.textContent = message;
+    errorDiv.style.cssText = 'color: #ef4444; font-size: 12px; margin-top: 6px; font-weight: 500;';
+    wrapper.after(errorDiv);
+}
+
+function clearValidationErrors() {
+    const inputs = document.querySelectorAll('#loginForm input');
+    inputs.forEach(input => {
+        input.style.borderColor = '';
+        input.setAttribute('aria-invalid', 'false');
+    });
+    
+    const errorMessages = document.querySelectorAll('.error-message');
+    errorMessages.forEach(msg => msg.remove());
+}
+
+function shakeForm() {
+    const form = document.getElementById('loginForm');
+    form.style.animation = 'shake 0.5s ease-in-out';
+    setTimeout(() => {
+        form.style.animation = '';
+    }, 500);
 }
 
 function resetLoginButton(btn) {
     btn.disabled = false;
     btn.innerHTML = '<span>Sign In</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
 }
+
+// Add real-time validation on input
+document.addEventListener('DOMContentLoaded', () => {
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    
+    if (usernameInput) {
+        usernameInput.addEventListener('input', () => {
+            clearValidationErrors();
+        });
+        usernameInput.addEventListener('blur', () => {
+            const value = usernameInput.value.trim();
+            if (value && value.length < 3) {
+                showInputError('username', 'Student ID must be at least 3 characters');
+            }
+        });
+    }
+    
+    if (passwordInput) {
+        passwordInput.addEventListener('input', () => {
+            clearValidationErrors();
+        });
+        passwordInput.addEventListener('blur', () => {
+            const value = passwordInput.value.trim();
+            if (value && value.length < 4) {
+                showInputError('password', 'Password must be at least 4 characters');
+            }
+        });
+    }
+    
+    // Focus username field on page load
+    if (usernameInput) {
+        usernameInput.focus();
+    }
+});
 
 // --- Selection Page Logic ---
 async function initializeSelectionPage() {
