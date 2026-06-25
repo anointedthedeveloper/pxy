@@ -204,7 +204,7 @@ public static class ApiBootstrap
         app.MapControllers();
         app.MapHub<ExamHub>("/hubs/exam");
 
-        // SPA fallback — serve 404.html for unknown GET routes only.
+        // SPA fallback — serve index.html (login page) for unknown GET routes only.
         // Must be GET-only so POST/PUT/DELETE to unknown paths return 404
         // instead of 405 from the static file middleware.
         app.MapFallback(async ctx =>
@@ -212,7 +212,7 @@ public static class ApiBootstrap
             if (ctx.Request.Method == "GET")
             {
                 ctx.Response.ContentType = "text/html";
-                await ctx.Response.SendFileAsync(Path.Combine(wwwrootPath, "404.html"));
+                await ctx.Response.SendFileAsync(Path.Combine(wwwrootPath, "index.html"));
             }
             else
             {
