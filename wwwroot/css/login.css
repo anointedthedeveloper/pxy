@@ -538,6 +538,45 @@ body::after {
     100% { border-color: #16a34a; }
 }
 
+/* Validation Error Messages */
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #dc2626 !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    margin-top: 6px !important;
+    padding: 7px 12px;
+    background: #fef2f2;
+    border: 1.5px solid #fca5a5;
+    border-radius: 8px;
+    line-height: 1.4;
+    animation: errorShake 0.3s ease;
+}
+
+.error-message::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: #dc2626;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+@keyframes errorShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+}
+
+/* Input error state */
+.input-wrapper input.has-error {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
 .form-options {
     display: flex;
     justify-content: space-between;

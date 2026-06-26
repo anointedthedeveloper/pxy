@@ -401,31 +401,31 @@ function showInputError(inputId, message) {
     const input = document.getElementById(inputId);
     const wrapper = input.closest('.input-wrapper');
     
-    input.style.borderColor = '#ef4444';
+    input.classList.add('has-error');
     input.setAttribute('aria-invalid', 'true');
     
     // Remove existing error message if any
-    const existingError = wrapper.querySelector('.error-message');
+    const existingError = wrapper.parentElement.querySelector('.error-message');
     if (existingError) existingError.remove();
     
-    // Add error message
+    // Add error message with proper styled class
     const errorDiv = document.createElement('div');
     errorDiv.className = 'error-message';
     errorDiv.textContent = message;
-    errorDiv.style.cssText = 'color: #ef4444; font-size: 12px; margin-top: 6px; font-weight: 500;';
     wrapper.after(errorDiv);
 }
 
 function clearValidationErrors() {
     const inputs = document.querySelectorAll('#loginForm input');
     inputs.forEach(input => {
-        input.style.borderColor = '';
+        input.classList.remove('has-error');
+        input.removeAttribute('style'); // clear inline border overrides
         input.setAttribute('aria-invalid', 'false');
     });
     
     const errorMessages = document.querySelectorAll('.error-message');
     errorMessages.forEach(msg => msg.remove());
-}
+};
 
 function shakeForm() {
     const form = document.getElementById('loginForm');
@@ -608,7 +608,12 @@ async function fetchAndRenderExams() {
         const activeSessions = sessions.filter(s => s.isActive === true);
         
         if (activeSessions.length === 0) {
-            listContainer.innerHTML = '<div class="empty-state">No examination sessions are currently active.</div>';
+            listContainer.innerHTML = `
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.5" width="48" height="48" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <p><strong>No Active Sessions</strong></p>
+                    <p style="font-size:13px;">Your coordinator hasn't started any exam sessions yet. Please wait — this page refreshes automatically.</p>
+                </div>`;
             return;
         }
 
@@ -634,7 +639,12 @@ async function fetchAndRenderExams() {
         });
     } catch (error) {
         console.error('Fetch sessions error:', error);
-        listContainer.innerHTML = '<div class="error-state">Failed to load sessions. Please check your connection.</div>';
+        listContainer.innerHTML = `
+            <div class="error-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.5" width="48" height="48" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                <p><strong>Connection Error</strong></p>
+                <p style="font-size:13px;">Unable to load sessions. Check your network connection and try again.</p>
+            </div>`;
         showToast('Error', 'Failed to synchronize available sessions.', 'error');
     }
 }
@@ -658,15 +668,16 @@ function createSessionCard(session, isCompleted = false) {
     }
 
     div.innerHTML = `
-        <div class="exam-type-badge ${isCompleted ? 'gray' : ''}">${isCompleted ? 'COMPLETED' : 'ACTIVE'}</div>
+        <div class="exam-type-badge ${isCompleted ? 'gray' : ''}">${isCompleted ? 'COMPLETED' : 'LIVE'}</div>
         <h3>${escapeHtml(session.displayName || session.examTitle)}</h3>
         <div class="exam-meta-pills">
-            <span class="meta-pill">Code: ${escapeHtml(session.sessionCode)}</span>
-            <span class="meta-pill">${session.studentCount || 0} Students</span>
-            <span class="meta-pill">${session.isStarted ? 'Started' : 'Waiting'}</span>
+            <span class="meta-pill">📋 ${escapeHtml(session.sessionCode)}</span>
+            <span class="meta-pill">👥 ${session.studentCount || 0} Candidates</span>
+            ${session.durationMinutes ? `<span class="meta-pill">⏱ ${session.durationMinutes} min</span>` : ''}
+            <span class="meta-pill">${session.isStarted ? '🟢 Started' : '🟡 Waiting'}</span>
         </div>
-        <button class="action-btn" ${isCompleted ? 'disabled' : ''}>${isCompleted ? 'View Results' : 'Join Session'}</button>
-        ${isCompleted ? '<p class="exam-lock-reason">You have already completed this examination.</p>' : ''}
+        <button class="action-btn" ${isCompleted ? 'disabled' : ''}>${isCompleted ? 'Already Completed' : 'Join Exam'}</button>
+        ${isCompleted ? '<p class="exam-lock-reason">You have already sat this examination.</p>' : ''}
     `;
     
     return div;
