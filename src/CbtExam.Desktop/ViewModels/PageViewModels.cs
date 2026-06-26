@@ -4197,10 +4197,38 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
 
             var json = System.Text.Json.JsonSerializer.Serialize(data, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(settingsFile, json);
+
+            // Also save branding to database via API
+            _ = SaveBrandingToDatabaseAsync();
         }
         catch (Exception ex)
         {
             App.Log("Failed to save settings", ex);
+        }
+    }
+
+    private async Task SaveBrandingToDatabaseAsync()
+    {
+        try
+        {
+            string? schoolLogoBase64 = null;
+            if (!string.IsNullOrEmpty(SchoolLogoPath) && File.Exists(SchoolLogoPath))
+            {
+                var imageBytes = await File.ReadAllBytesAsync(SchoolLogoPath);
+                schoolLogoBase64 = Convert.ToBase64String(imageBytes);
+            }
+
+            var dto = new BrandingUpdateDto(SystemName, schoolLogoBase64);
+
+            var response = await api.PutAsync("Config/branding", dto);
+            if (!response.IsSuccessStatusCode)
+            {
+                App.Log("Failed to save branding to database");
+            }
+        }
+        catch (Exception ex)
+        {
+            App.Log("Failed to save branding to database", ex);
         }
     }
 }

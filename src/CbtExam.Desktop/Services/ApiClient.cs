@@ -86,6 +86,9 @@ public class ApiClient
     public Task<List<PendingJoinDto>?> GetPendingJoinsAsync(int sessionId) => IsReady ? _http.GetFromJsonAsync<List<PendingJoinDto>>($"api/sessions/{sessionId}/pending-joins") : Task.FromResult<List<PendingJoinDto>?>([]);
     public Task<HttpResponseMessage> ApproveJoinAsync(int studentExamId, bool approved) => IsReady ? _http.PostAsJsonAsync("api/sessions/approve-join", new { studentExamId, approved }) : OfflineResponse();
 
+    // Config
+    public Task<HttpResponseMessage> PutAsync(string endpoint, object dto) => IsReady ? _http.PutAsJsonAsync(endpoint, dto) : OfflineResponse();
+
     private static Task<HttpResponseMessage> OfflineResponse() =>
         Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
         {

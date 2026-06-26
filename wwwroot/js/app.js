@@ -85,14 +85,14 @@ function handleLogout() {
     if (confirm('Are you sure you want to logout?')) {
         clearAllStudentData();
         localStorage.removeItem('lastExamResult'); // Also clear results on logout
-        window.location.href = '/index';
+        window.location.href = '/login';
     }
 }
 
 // --- Smart User & Session Detection ---
 function runSmartSessionDetection() {
     const currentPath = window.location.pathname;
-    const isLoginPage = currentPath.endsWith('/index') || currentPath.endsWith('/') || currentPath === '';
+    const isLoginPage = currentPath.endsWith('/login') || currentPath.endsWith('/index') || currentPath.endsWith('/') || currentPath === '';
     const hasActiveUser = localStorage.getItem('studentId');
 
     // Always wipe session data when landing on login page — ensures fresh start on revisit
@@ -103,7 +103,7 @@ function runSmartSessionDetection() {
 
     if (!hasActiveUser) {
         if (window.location.protocol !== 'file:') {
-            window.location.href = '/index';
+            window.location.href = '/login';
             return true;
         }
     }
@@ -232,29 +232,49 @@ async function updateLoginStats() {
     }
 }
 
-function loadSchoolBranding() {
-    // Load school logo from localStorage
-    const schoolLogoData = localStorage.getItem('school_logo');
-    const schoolLogoContainer = document.getElementById('schoolLogoContainer');
-    const schoolLogoImg = document.getElementById('schoolLogo');
-    
-    if (schoolLogoData && schoolLogoContainer && schoolLogoImg) {
-        schoolLogoImg.src = schoolLogoData;
-        schoolLogoContainer.style.display = 'flex';
-    }
-    
-    // Load school name from localStorage
-    const schoolName = localStorage.getItem('school_name');
-    const schoolTitle = document.getElementById('schoolTitle');
-    const rightPanelTitle = document.querySelector('.right-panel h2');
-    
-    if (schoolName) {
-        if (schoolTitle) {
-            schoolTitle.innerHTML = `${schoolName}<br><span class="green-text">JAMB CBT Mock System</span>`;
+async function loadSchoolBranding() {
+    try {
+        // Fetch school branding from API
+        const response = await fetch(`${API_BASE}/Config/branding`);
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Load school logo
+            const schoolLogoContainer = document.getElementById('schoolLogoContainer');
+            const schoolLogoImg = document.getElementById('schoolLogo');
+            
+            if (data.schoolLogo && schoolLogoContainer && schoolLogoImg) {
+                schoolLogoImg.src = data.schoolLogo;
+                schoolLogoContainer.style.display = 'flex';
+            }
+            
+            // Load school name
+            if (data.systemName) {
+                const schoolTitle = document.getElementById('schoolTitle');
+                const rightPanelTitle = document.querySelector('.right-panel h2');
+                const tickerContent = document.getElementById('tickerContent');
+                
+                if (schoolTitle) {
+                    schoolTitle.innerHTML = `${data.systemName}<br><span class="green-text">JAMB CBT Mock System</span>`;
+                }
+                if (rightPanelTitle) {
+                    rightPanelTitle.textContent = `${data.systemName} JAMB CBT Mock System`;
+                }
+                if (tickerContent) {
+                    tickerContent.innerHTML = `
+                        <span>Welcome to ${data.systemName} CBT Mock Examination System</span>
+                        <span>•</span>
+                        <span>Ensure stable internet connection before starting</span>
+                        <span>•</span>
+                        <span>Have your student ID ready</span>
+                        <span>•</span>
+                        <span>Good luck with your examination</span>
+                    `;
+                }
+            }
         }
-        if (rightPanelTitle) {
-            rightPanelTitle.textContent = `${schoolName} JAMB CBT Mock System`;
-        }
+    } catch (e) {
+        console.warn('Could not fetch school branding:', e);
     }
 }
 
@@ -325,9 +345,6 @@ async function handleLogin(event) {
     
     if (!password) {
         showInputError('password', 'Password is required');
-        hasError = true;
-    } else if (password.length < 4) {
-        showInputError('password', 'Password must be at least 4 characters');
         hasError = true;
     }
     
@@ -476,12 +493,6 @@ document.addEventListener('DOMContentLoaded', () => {
         passwordInput.addEventListener('input', () => {
             clearValidationErrors();
         });
-        passwordInput.addEventListener('blur', () => {
-            const value = passwordInput.value.trim();
-            if (value && value.length < 4) {
-                showInputError('password', 'Password must be at least 4 characters');
-            }
-        });
     }
     
     // Focus username field on page load
@@ -521,6 +532,7 @@ function checkBrowserCompatibility() {
 
 function updateNetworkStatus() {
     const networkStatus = document.getElementById('networkStatus');
+    const connectionText = document.getElementById('connectionText');
     if (!networkStatus) return;
     
     const wifiIcon = document.getElementById('wifiIcon');
@@ -536,6 +548,7 @@ function updateNetworkStatus() {
         if (wifiIcon) wifiIcon.style.display = 'none';
         if (noWifiIcon) noWifiIcon.style.display = 'block';
         if (lanIcon) lanIcon.style.display = 'none';
+        if (connectionText) connectionText.style.display = 'none';
     } else {
         // Online - determine connection type
         networkStatus.classList.remove('offline');
@@ -554,11 +567,19 @@ function updateNetworkStatus() {
             if (wifiIcon) wifiIcon.style.display = 'none';
             if (noWifiIcon) noWifiIcon.style.display = 'none';
             if (lanIcon) lanIcon.style.display = 'block';
+            if (connectionText) {
+                connectionText.style.display = 'block';
+                connectionText.textContent = 'Connected via LAN';
+            }
         } else {
             networkStatus.title = 'Online - Connected to server';
             if (wifiIcon) wifiIcon.style.display = 'block';
             if (noWifiIcon) noWifiIcon.style.display = 'none';
             if (lanIcon) lanIcon.style.display = 'none';
+            if (connectionText) {
+                connectionText.style.display = 'block';
+                connectionText.textContent = 'Connected to server';
+            }
         }
     }
 }

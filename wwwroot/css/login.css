@@ -271,7 +271,7 @@ body::after {
     justify-content: space-around;
     align-items: center;
     margin-top: auto;
-    margin-bottom: 40px;
+    margin-bottom: 60px;
     position: relative;
     z-index: 3;
     padding: 20px;
@@ -416,7 +416,7 @@ body::after {
     display: flex;
     animation: tickerScroll 30s linear infinite;
     white-space: nowrap;
-    padding-left: 100%;
+    width: max-content;
 }
 
 .ticker-content span {
@@ -427,7 +427,7 @@ body::after {
 }
 
 @keyframes tickerScroll {
-    0% { transform: translateX(0); }
+    0% { transform: translateX(100%); }
     100% { transform: translateX(-100%); }
 }
 
@@ -496,7 +496,7 @@ body::after {
     font-size: 15px;
     font-weight: 500;
     color: var(--text-dark);
-    outline: none;
+    outline: 3px solid transparent;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -508,6 +508,29 @@ body::after {
     border-color: #16a34a;
     box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12), 0 4px 12px rgba(22, 163, 74, 0.08);
     transform: translateY(-1px);
+    outline-color: rgba(22, 163, 74, 0.3);
+    animation: inputPulse 0.3s ease;
+}
+
+.input-wrapper input:focus::placeholder {
+    color: #16a34a;
+    opacity: 0.7;
+}
+
+.input-wrapper input:not(:placeholder-shown) {
+    animation: typingHighlight 0.5s ease;
+}
+
+@keyframes inputPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+@keyframes typingHighlight {
+    0% { border-color: var(--input-border); }
+    50% { border-color: #22c55e; }
+    100% { border-color: #16a34a; }
 }
 
 .form-options {
@@ -618,6 +641,13 @@ input:-webkit-autofill:focus {
     background: linear-gradient(135deg, #15803d 0%, #166534 100%);
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(22, 163, 74, 0.4);
+    animation: sharpGradient 0.5s ease;
+}
+
+@keyframes sharpGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 .submit-btn svg {

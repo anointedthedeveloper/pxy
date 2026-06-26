@@ -22,4 +22,10 @@ public class AdminConfig
     
     [MaxLength(500)]
     public string? Notes { get; set; }
+    
+    [MaxLength(200)]
+    public string? SystemName { get; set; }
+    
+    [MaxLength(1000)]
+    public string? SchoolLogo { get; set; }
 }

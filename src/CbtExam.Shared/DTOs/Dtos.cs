@@ -92,3 +92,6 @@ public record PendingJoinDto(int Id, string FullName, string StudentId, DateTime
 
 // --- Retake management ---
 public record SubmittedStudentDto(int Id, string FullName, string StudentId, DateTime? SubmittedAt, int Score);
+
+// --- Config/Settings ---
+public record BrandingUpdateDto(string? SystemName, string? SchoolLogo);
