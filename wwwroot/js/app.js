@@ -117,6 +117,12 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDynamicYear();
     initConnectionSettings();
     
+    // Update login page stats if on login page
+    if (document.getElementById('activeExams')) {
+        updateLoginStats();
+        loadSchoolBranding();
+    }
+    
     // Check if we are on the selection page
     if (document.getElementById('examList')) {
         initializeSelectionPage();
@@ -182,6 +188,74 @@ function updateDynamicYear() {
     const yearElements = document.querySelectorAll('#currentYear');
     const year = new Date().getFullYear();
     yearElements.forEach(el => el.textContent = year);
+}
+
+async function updateLoginStats() {
+    try {
+        // Update exam year
+        const examYearEl = document.getElementById('examYear');
+        if (examYearEl) {
+            examYearEl.textContent = new Date().getFullYear();
+        }
+
+        // Fetch active sessions count
+        const activeExamsEl = document.getElementById('activeExams');
+        if (activeExamsEl) {
+            try {
+                const response = await fetch(`${API_BASE}/Sessions`);
+                if (response.ok) {
+                    const sessions = await response.json();
+                    const activeSessions = sessions.filter(s => s.isActive === true);
+                    activeExamsEl.textContent = activeSessions.length;
+                }
+            } catch (e) {
+                console.warn('Could not fetch active exams count:', e);
+            }
+        }
+
+        // Fetch total questions count (this would need a new API endpoint)
+        const totalQuestionsEl = document.getElementById('totalQuestions');
+        if (totalQuestionsEl) {
+            try {
+                const response = await fetch(`${API_BASE}/Questions/count`);
+                if (response.ok) {
+                    const data = await response.json();
+                    totalQuestionsEl.textContent = data.count || 0;
+                }
+            } catch (e) {
+                console.warn('Could not fetch total questions count:', e);
+                totalQuestionsEl.textContent = '0';
+            }
+        }
+    } catch (e) {
+        console.warn('Error updating login stats:', e);
+    }
+}
+
+function loadSchoolBranding() {
+    // Load school logo from localStorage
+    const schoolLogoData = localStorage.getItem('school_logo');
+    const schoolLogoContainer = document.getElementById('schoolLogoContainer');
+    const schoolLogoImg = document.getElementById('schoolLogo');
+    
+    if (schoolLogoData && schoolLogoContainer && schoolLogoImg) {
+        schoolLogoImg.src = schoolLogoData;
+        schoolLogoContainer.style.display = 'flex';
+    }
+    
+    // Load school name from localStorage
+    const schoolName = localStorage.getItem('school_name');
+    const schoolTitle = document.getElementById('schoolTitle');
+    const rightPanelTitle = document.querySelector('.right-panel h2');
+    
+    if (schoolName) {
+        if (schoolTitle) {
+            schoolTitle.innerHTML = `${schoolName}<br><span class="green-text">JAMB CBT Mock System</span>`;
+        }
+        if (rightPanelTitle) {
+            rightPanelTitle.textContent = `${schoolName} JAMB CBT Mock System`;
+        }
+    }
 }
 
 function togglePasswordVisibility() {

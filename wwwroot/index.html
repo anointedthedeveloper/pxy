@@ -72,11 +72,16 @@
             <div class="wave-decor"></div>
             
             <div class="left-content-top">
-                <div class="jamb-logo-container">
-                    <img src="/img/prep4jamb.png" alt="Prep4JAMB Logo" class="main-logo-img">
+                <div class="logo-row">
+                    <div class="jamb-logo-container">
+                        <img src="/img/prep4jamb.png" alt="Prep4JAMB Logo" class="main-logo-img">
+                    </div>
+                    <div class="school-logo-container" id="schoolLogoContainer" style="display: none;">
+                        <img id="schoolLogo" src="" alt="School Logo" class="school-logo-img">
+                    </div>
                 </div>
 
-                <h1>Secure. Reliable.<br><span class="green-text">Built for Excellence.</span></h1>
+                <h1 id="schoolTitle">Secure. Reliable.<br><span class="green-text">Built for Excellence.</span></h1>
                 <p class="tagline">Access your CBT exam with confidence in a secure and trusted environment.</p>
                 
                 <div class="features-grid">
@@ -106,16 +111,16 @@
 
             <div class="stats-container">
                 <div class="stat-item">
-                    <div class="stat-number">10K+</div>
-                    <div class="stat-label">Students</div>
+                    <div class="stat-number" id="examYear">2026</div>
+                    <div class="stat-label">Exam Year</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-number">99.9%</div>
-                    <div class="stat-label">Uptime</div>
+                    <div class="stat-number" id="activeExams">0</div>
+                    <div class="stat-label">Active Exams</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-number">24/7</div>
-                    <div class="stat-label">Support</div>
+                    <div class="stat-number" id="totalQuestions">0</div>
+                    <div class="stat-label">Total Questions</div>
                 </div>
             </div>
 
@@ -128,6 +133,18 @@
             <div class="bottom-decoration">
                 <div class="deco-line"></div>
                 <div class="deco-dots"></div>
+            </div>
+
+            <div class="ticker-container">
+                <div class="ticker-content" id="tickerContent">
+                    <span>Welcome to the CBT(Mock Examination System</span>
+                    <span>•</span>
+                    <span>Ensure stable internet connection before starting</span>
+                    <span>•</span>
+                    <span>Have your student ID ready</span>
+                    <span>•</span>
+                    <span>Good luck with your examination</span>
+                </div>
             </div>
 
         </div>
@@ -215,7 +232,7 @@
             </div>
 
             <footer class="workspace-footer" style="margin-top: 30px; padding-top: 20px; border-top: 1.5px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
-                <div class="copyright">© <span id="currentYear"></span> Anobyte Technologies</div>
+                <div class="copyright">© <span id="currentYear"></span> <span class="anobyte-text">Anobyte Technologies</span></div>
             </footer>
 
         </div>
