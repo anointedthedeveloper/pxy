@@ -234,22 +234,27 @@ async function updateLoginStats() {
 
 async function loadSchoolBranding() {
     try {
-        // Fetch school branding from API
+        console.log('Fetching school branding from:', `${API_BASE}/Config/branding`);
         const response = await fetch(`${API_BASE}/Config/branding`);
+        console.log('Branding response status:', response.status);
+        
         if (response.ok) {
             const data = await response.json();
+            console.log('Branding data received:', data);
             
             // Load school logo
             const schoolLogoContainer = document.getElementById('schoolLogoContainer');
             const schoolLogoImg = document.getElementById('schoolLogo');
             
             if (data.schoolLogo && schoolLogoContainer && schoolLogoImg) {
-                schoolLogoImg.src = data.schoolLogo;
+                console.log('Setting school logo');
+                schoolLogoImg.src = 'data:image/png;base64,' + data.schoolLogo;
                 schoolLogoContainer.style.display = 'flex';
             }
             
             // Load school name
             if (data.systemName) {
+                console.log('Setting school name:', data.systemName);
                 const schoolTitle = document.getElementById('schoolTitle');
                 const rightPanelTitle = document.querySelector('.right-panel h2');
                 const tickerContent = document.getElementById('tickerContent');
@@ -260,21 +265,14 @@ async function loadSchoolBranding() {
                 if (rightPanelTitle) {
                     rightPanelTitle.textContent = `${data.systemName} JAMB CBT Mock System`;
                 }
-                if (tickerContent) {
-                    tickerContent.innerHTML = `
-                        <span>Welcome to ${data.systemName} CBT Mock Examination System</span>
-                        <span>•</span>
-                        <span>Ensure stable internet connection before starting</span>
-                        <span>•</span>
-                        <span>Have your student ID ready</span>
-                        <span>•</span>
-                        <span>Good luck with your examination</span>
-                    `;
-                }
+            } else {
+                console.log('No system name in branding data');
             }
+        } else {
+            console.error('Failed to fetch branding:', response.status);
         }
     } catch (e) {
-        console.warn('Could not fetch school branding:', e);
+        console.error('Could not fetch school branding:', e);
     }
 }
 
@@ -383,7 +381,7 @@ async function handleLogin(event) {
             const err = await response.json();
             showToast('Login Failed', err.error || 'Invalid student ID or password. Please check your credentials.', 'error');
             resetLoginButton(btn);
-            showInputError('password', 'Incorrect password');
+            showInputError('username', 'Invalid student ID or password');
             shakeForm();
         } else {
             const err = await response.json();

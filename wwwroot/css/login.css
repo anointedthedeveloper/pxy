@@ -412,9 +412,14 @@ body::after {
     padding: 8px 0;
 }
 
+.ticker-container {
+    overflow: hidden;
+    white-space: nowrap;
+}
+
 .ticker-content {
     display: flex;
-    animation: tickerScroll 30s linear infinite;
+    animation: tickerScroll 60s linear infinite;
     white-space: nowrap;
     width: max-content;
 }
@@ -427,8 +432,8 @@ body::after {
 }
 
 @keyframes tickerScroll {
-    0% { transform: translateX(100%); }
-    100% { transform: translateX(-100%); }
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
 }
 
 /* --- RIGHT SIDE PANEL (FORM) --- */
@@ -915,6 +920,7 @@ input:-webkit-autofill:focus {
     justify-content: center;
     color: rgba(255,255,255,0.7);
     transition: all 0.2s;
+    opacity: 1;
 }
 
 .network-status.online {
