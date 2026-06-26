@@ -234,6 +234,7 @@ async function handleLogin(event) {
     
     const studentId = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value.trim();
+    const rememberMe = document.getElementById('rememberMe').checked;
     const btn = document.getElementById('submitBtn');
     
     // Clear previous validation states
@@ -277,6 +278,15 @@ async function handleLogin(event) {
             const user = await response.json();
             localStorage.setItem('studentName', user.fullName);
             localStorage.setItem('studentId', user.studentId);
+            
+            // Handle remember me
+            if (rememberMe) {
+                localStorage.setItem('rememberMe', 'true');
+                localStorage.setItem('savedUsername', studentId);
+            } else {
+                localStorage.removeItem('rememberMe');
+                localStorage.removeItem('savedUsername');
+            }
             
             showToast('Success', `Welcome back, ${user.fullName.split(' ')[0]}!`, 'success');
             
@@ -351,10 +361,56 @@ function resetLoginButton(btn) {
     btn.innerHTML = '<span>Sign In</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
 }
 
+// Help Modal Functions
+function showHelpModal(event) {
+    if (event) event.preventDefault();
+    const modal = document.getElementById('helpModal');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeHelpModal() {
+    const modal = document.getElementById('helpModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+// Close modal on overlay click
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('helpModal');
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeHelpModal();
+            }
+        });
+    }
+    
+    // Close modal on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeHelpModal();
+        }
+    });
+});
+
 // Add real-time validation on input
 document.addEventListener('DOMContentLoaded', () => {
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
+    const rememberMeCheckbox = document.getElementById('rememberMe');
+    
+    // Browser compatibility check
+    checkBrowserCompatibility();
+    
+    // Load remembered credentials
+    if (rememberMeCheckbox && localStorage.getItem('rememberMe') === 'true') {
+        const savedUsername = localStorage.getItem('savedUsername');
+        if (savedUsername) {
+            usernameInput.value = savedUsername;
+            rememberMeCheckbox.checked = true;
+        }
+    }
     
     if (usernameInput) {
         usernameInput.addEventListener('input', () => {
@@ -384,7 +440,51 @@ document.addEventListener('DOMContentLoaded', () => {
     if (usernameInput) {
         usernameInput.focus();
     }
+    
+    // Initialize network status
+    updateNetworkStatus();
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
 });
+
+function checkBrowserCompatibility() {
+    const ua = navigator.userAgent;
+    let isCompatible = true;
+    let message = '';
+    
+    // Check for IE
+    if (ua.indexOf('MSIE') > -1 || ua.indexOf('Trident') > -1) {
+        isCompatible = false;
+        message = 'Internet Explorer is not supported. Please use Chrome, Firefox, or Edge.';
+    }
+    
+    // Check for very old browsers
+    const isOldSafari = /^((?!chrome|android).)*safari/i.test(ua) && 
+                       (parseInt(ua.match(/Version\/(\d+)/)?.[1] || '0') < 14);
+    if (isOldSafari) {
+        isCompatible = false;
+        message = 'Please update your Safari browser to version 14 or higher.';
+    }
+    
+    if (!isCompatible) {
+        showToast('Browser Not Supported', message, 'error');
+    }
+}
+
+function updateNetworkStatus() {
+    const networkStatus = document.getElementById('networkStatus');
+    if (!networkStatus) return;
+    
+    if (navigator.onLine) {
+        networkStatus.classList.remove('offline');
+        networkStatus.classList.add('online');
+        networkStatus.title = 'Online - Connected to server';
+    } else {
+        networkStatus.classList.remove('online');
+        networkStatus.classList.add('offline');
+        networkStatus.title = 'Offline - No internet connection';
+    }
+}
 
 // --- Selection Page Logic ---
 async function initializeSelectionPage() {

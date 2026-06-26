@@ -160,20 +160,20 @@ body::after {
 }
 
 .left-panel h1 {
-    font-size: clamp(24px, 3.5vw, 36px);
-    font-weight: 300; /* Lighter weight for main words */
-    line-height: 1.2;
-    color: rgba(255, 255, 255, 0.7); /* Muted silver/white */
-    margin-bottom: 8px;
+    font-size: clamp(26px, 3.5vw, 38px);
+    font-weight: 300;
+    line-height: 1.15;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 12px;
     letter-spacing: -0.5px;
 }
 
 .left-panel h1 span.green-text {
     color: #10b981;
-    font-weight: 800; /* Bold weight for emphasis */
+    font-weight: 800;
     display: block;
-    margin-top: 4px;
-    text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+    margin-top: 6px;
+    text-shadow: 0 0 25px rgba(16, 185, 129, 0.4);
 }
 
 .left-panel p.tagline {
@@ -357,15 +357,17 @@ body::after {
 }
 
 .form-group {
-    margin-bottom: 16px;
+    margin-bottom: 20px;
 }
 
 .form-group label {
     display: block;
-    font-size: 14px;
-    font-weight: 600;
-    color: #334155;
-    margin-bottom: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .input-wrapper {
@@ -376,16 +378,16 @@ body::after {
 
 .input-wrapper input {
     width: 100%;
-    height: 56px;
+    height: 52px;
     background-color: #ffffff;
-    border: 1.5px solid var(--input-border);
-    border-radius: 14px;
+    border: 2px solid var(--input-border);
+    border-radius: 12px;
     padding: 0 16px 0 48px;
     font-size: 15px;
     font-weight: 500;
     color: var(--text-dark);
     outline: none;
-    transition: all 0.3s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .input-wrapper input::placeholder {
@@ -394,7 +396,46 @@ body::after {
 
 .input-wrapper input:focus {
     border-color: #16a34a;
-    box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.1);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12), 0 4px 12px rgba(22, 163, 74, 0.08);
+    transform: translateY(-1px);
+}
+
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+    user-select: none;
+}
+
+.remember-me input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #16a34a;
+    cursor: pointer;
+}
+
+.forgot-password {
+    font-size: 13px;
+    color: #16a34a;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.forgot-password:hover {
+    color: #15803d;
+    text-decoration: underline;
 }
 
 /* Fix browser autofill tint */
@@ -443,10 +484,10 @@ input:-webkit-autofill:focus {
 
 .submit-btn {
     width: 100%;
-    height: 58px;
-    background: #16a34a;
+    height: 54px;
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
     border: none;
-    border-radius: 14px;
+    border-radius: 12px;
     color: #ffffff;
     font-size: 16px;
     font-weight: 700;
@@ -455,16 +496,18 @@ input:-webkit-autofill:focus {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    margin-top: 28px;
-    margin-bottom: 28px;
+    margin-top: 24px;
+    margin-bottom: 24px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 8px 24px rgba(22, 163, 74, 0.25);
+    box-shadow: 0 4px 14px rgba(22, 163, 74, 0.3);
+    position: relative;
+    overflow: hidden;
 }
 
 .submit-btn:hover {
-    background: #15803d;
-    transform: translateY(-3px);
-    box-shadow: 0 12px 36px rgba(22, 163, 74, 0.35);
+    background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(22, 163, 74, 0.4);
 }
 
 .submit-btn svg {
@@ -478,9 +521,158 @@ input:-webkit-autofill:focus {
 }
 
 .submit-btn:active {
-    transform: translateY(1px);
-    background: #14532d;
-    box-shadow: 0 4px 10px rgba(22, 163, 74, 0.2);
+    transform: translateY(0);
+    background: linear-gradient(135deg, #14532d 0%, #166534 100%);
+    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
+}
+
+.submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+    background: #94a3b8;
+    box-shadow: none;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.modal-header h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 8px;
+    transition: background 0.2s;
+    color: #64748b;
+}
+
+.modal-close:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.modal-close svg {
+    width: 20px;
+    height: 20px;
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.help-item {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.help-item:last-child {
+    margin-bottom: 0;
+}
+
+.help-icon {
+    width: 40px;
+    height: 40px;
+    background: #f0fdf4;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #16a34a;
+    flex-shrink: 0;
+}
+
+.help-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.help-text h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 4px 0;
+}
+
+.help-text p {
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.modal-btn {
+    background: #16a34a;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.modal-btn:hover {
+    background: #15803d;
 }
 
 .divider-container {
@@ -572,11 +764,36 @@ input:-webkit-autofill:focus {
     color: white;
 }
 
+.network-status {
+    background: rgba(255,255,255,0.1);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.7);
+    transition: all 0.2s;
+}
+
+.network-status.online {
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.3);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.network-status.offline {
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.1);
+}
+
 /* Spinner for Loading State */
 .spinner {
-    width: 20px;
-    height: 20px;
-    border: 3px solid rgba(255,255,255,0.3);
+    width: 18px;
+    height: 18px;
+    border: 2.5px solid rgba(255,255,255,0.3);
     border-radius: 50%;
     border-top-color: #fff;
     animation: spin 0.8s linear infinite;
@@ -605,7 +822,9 @@ input:-webkit-autofill:focus {
     body { overflow-y: auto; height: auto; display: block; }
     .left-panel { display: none; }
     .login-card { width: 100vw; height: auto; margin: 0; max-height: none; }
-    .right-panel { padding: 48px 32px; min-height: 100vh; }
+    .right-panel { padding: 40px 28px; min-height: 100vh; }
+    .right-panel h2 { font-size: 28px; }
+    .welcome-badge { font-size: 13px; }
 }
 
 /* Fullscreen adjustments */

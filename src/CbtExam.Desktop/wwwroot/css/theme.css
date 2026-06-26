@@ -1,0 +1,156 @@
+/* Theme CSS - Dark/Light Mode Support */
+:root {
+  /* Light Mode (Default) */
+  --theme-bg: #ffffff;
+  --theme-bg-secondary: #f8fafc;
+  --theme-bg-tertiary: #f1f5f9;
+  --theme-text: #0f172a;
+  --theme-text-muted: #64748b;
+  --theme-text-light: #94a3b8;
+  --theme-border: #e2e8f0;
+  --theme-border-light: #f1f5f9;
+  --theme-card: #ffffff;
+  --theme-card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --theme-input-bg: #ffffff;
+  --theme-hover-bg: #f1f5f9;
+  --theme-focus-ring: rgba(22, 163, 74, 0.1);
+  
+  /* Brand colors - consistent across themes */
+  --brand-primary: #16a34a;
+  --brand-primary-dark: #15803d;
+  --brand-primary-light: #22c55e;
+  --brand-accent: #10b981;
+  --brand-accent-dark: #059669;
+  --brand-accent-light: #ecfdf5;
+  --brand-danger: #ef4444;
+  --brand-danger-bg: #fef2f2;
+  --brand-warning: #f59e0b;
+  --brand-warning-bg: #fffbeb;
+  --brand-info: #3b82f6;
+  --brand-info-bg: #eff6ff;
+  
+  /* Theme transition */
+  --theme-transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+[data-theme="dark"] {
+  /* Dark Mode */
+  --theme-bg: #0f172a;
+  --theme-bg-secondary: #1e293b;
+  --theme-bg-tertiary: #334155;
+  --theme-text: #f1f5f9;
+  --theme-text-muted: #94a3b8;
+  --theme-text-light: #64748b;
+  --theme-border: #334155;
+  --theme-border-light: #1e293b;
+  --theme-card: #1e293b;
+  --theme-card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --theme-input-bg: #1e293b;
+  --theme-hover-bg: #334155;
+  --theme-focus-ring: rgba(34, 197, 94, 0.15);
+}
+
+/* Apply theme variables to common elements */
+body {
+  background-color: var(--theme-bg);
+  color: var(--theme-text);
+  transition: var(--theme-transition);
+}
+
+.card, .login-card, .join-card, .q-card, .review-card, .status-details-card {
+  background-color: var(--theme-card);
+  box-shadow: var(--theme-card-shadow);
+  border-color: var(--theme-border);
+  transition: var(--theme-transition);
+}
+
+.input-wrapper input, .form-group input, textarea, select {
+  background-color: var(--theme-input-bg);
+  color: var(--theme-text);
+  border-color: var(--theme-border);
+  transition: var(--theme-transition);
+}
+
+.input-wrapper input:focus, .form-group input:focus, textarea:focus, select:focus {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 4px var(--theme-focus-ring);
+}
+
+.input-wrapper input::placeholder, .form-group input::placeholder, textarea::placeholder {
+  color: var(--theme-text-light);
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--theme-card);
+  border: 1.5px solid var(--theme-border);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px;
+  z-index: 1000;
+  transition: var(--theme-transition);
+  box-shadow: var(--theme-card-shadow);
+}
+
+.theme-toggle:hover {
+  background: var(--theme-hover-bg);
+  border-color: var(--brand-primary);
+}
+
+.theme-toggle svg {
+  width: 20px;
+  height: 20px;
+  color: var(--theme-text);
+  transition: var(--theme-transition);
+}
+
+.theme-toggle .sun-icon {
+  display: block;
+}
+
+.theme-toggle .moon-icon {
+  display: none;
+}
+
+[data-theme="dark"] .theme-toggle .sun-icon {
+  display: none;
+}
+
+[data-theme="dark"] .theme-toggle .moon-icon {
+  display: block;
+}
+
+/* For pages with headers, position toggle relative to header */
+body.has-header .theme-toggle {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+/* Ensure theme toggle doesn't overlap with logout button */
+body.has-header .theme-toggle {
+  right: 60px;
+}
+
+/* Responsive positioning */
+@media (max-width: 768px) {
+  .theme-toggle {
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+  }
+  
+  body.has-header .theme-toggle {
+    right: 56px;
+  }
+}

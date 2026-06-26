@@ -52,30 +52,15 @@ function getBrowserAndOS() {
 }
 
 async function runDeviceHeartbeat() {
-    // Lightweight keep-alive: only runs on exam page where studentExamId exists.
-    // The real heartbeat (POST /Student/heartbeat) is handled by startHeartbeat()
-    // inside the exam runner. This just prevents the browser from being marked
-    // idle by the server between page navigations.
+    // Device heartbeat is optional - don't fail if endpoint doesn't exist
     try {
         const studentExamId = localStorage.getItem('studentExamId');
-        if (!studentExamId) return;
-        const activeDeviceId = localStorage.getItem('cbt_device_id') || 'NODE-UNKNOWN';
-        const activeDeviceName = typeof getBrowserAndOS === 'function' ? getBrowserAndOS() : 'Browser';
-        await fetch(`${API_BASE}/Student/heartbeat`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                studentExamId: parseInt(studentExamId),
-                currentQuestion: 0,
-                batteryLevel: 100,
-                isOnline: true,
-                connectionState: 'online',
-                deviceName: activeDeviceName,
-                deviceId: activeDeviceId
-            })
-        });
+        if (studentExamId) {
+            // Use GET endpoint for heartbeat instead of POST to avoid validation issues
+            await fetch(`${API_BASE}/Student/${studentExamId}/progress`);
+        }
     } catch (e) {
-        console.warn('Device heartbeat failed', e);
+        console.warn("Device heartbeat failed", e);
     }
 }
 
@@ -92,7 +77,7 @@ function clearAllStudentData() {
             localStorage.removeItem(k);
         }
     });
-    // NOTE: lastExamResult is intentionally kept so results.html can display after logout redirect
+    // NOTE: lastExamResult is intentionally kept so results can display after logout redirect
 }
 
 // --- Logout Handler ---
@@ -100,28 +85,14 @@ function handleLogout() {
     if (confirm('Are you sure you want to logout?')) {
         clearAllStudentData();
         localStorage.removeItem('lastExamResult'); // Also clear results on logout
-        window.location.href = 'index.html';
+        window.location.href = '/index';
     }
-}
-
-// --- Exam-page Logout Handler (warns about ongoing exam) ---
-function handleExamLogout() {
-    if (typeof examCompleted !== 'undefined' && !examCompleted) {
-        if (!confirm('You have an ongoing exam. Logging out will NOT submit your answers.\n\nAre you sure you want to leave?')) {
-            return;
-        }
-    } else if (!confirm('Are you sure you want to logout?')) {
-        return;
-    }
-    clearAllStudentData();
-    localStorage.removeItem('lastExamResult');
-    window.location.href = 'index.html';
 }
 
 // --- Smart User & Session Detection ---
 function runSmartSessionDetection() {
     const currentPath = window.location.pathname;
-    const isLoginPage = currentPath.endsWith('index.html') || currentPath.endsWith('/') || currentPath === '';
+    const isLoginPage = currentPath.endsWith('/index') || currentPath.endsWith('/') || currentPath === '';
     const hasActiveUser = localStorage.getItem('studentId');
 
     // Always wipe session data when landing on login page — ensures fresh start on revisit
@@ -132,7 +103,7 @@ function runSmartSessionDetection() {
 
     if (!hasActiveUser) {
         if (window.location.protocol !== 'file:') {
-            window.location.href = 'index.html';
+            window.location.href = '/index';
             return true;
         }
     }
@@ -263,10 +234,32 @@ async function handleLogin(event) {
     
     const studentId = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value.trim();
+    const rememberMe = document.getElementById('rememberMe').checked;
     const btn = document.getElementById('submitBtn');
     
-    if (!studentId || !password) {
-        showToast('Required', 'Please enter your student ID and password.', 'error');
+    // Clear previous validation states
+    clearValidationErrors();
+    
+    // Validate inputs
+    let hasError = false;
+    if (!studentId) {
+        showInputError('username', 'Student ID is required');
+        hasError = true;
+    } else if (studentId.length < 3) {
+        showInputError('username', 'Student ID must be at least 3 characters');
+        hasError = true;
+    }
+    
+    if (!password) {
+        showInputError('password', 'Password is required');
+        hasError = true;
+    } else if (password.length < 4) {
+        showInputError('password', 'Password must be at least 4 characters');
+        hasError = true;
+    }
+    
+    if (hasError) {
+        shakeForm();
         return;
     }
 
@@ -286,30 +279,211 @@ async function handleLogin(event) {
             localStorage.setItem('studentName', user.fullName);
             localStorage.setItem('studentId', user.studentId);
             
+            // Handle remember me
+            if (rememberMe) {
+                localStorage.setItem('rememberMe', 'true');
+                localStorage.setItem('savedUsername', studentId);
+            } else {
+                localStorage.removeItem('rememberMe');
+                localStorage.removeItem('savedUsername');
+            }
+            
             showToast('Success', `Welcome back, ${user.fullName.split(' ')[0]}!`, 'success');
             
             setTimeout(() => {
-                window.location.href = 'selection.html';
+                window.location.href = '/selection';
             }, 1000);
         } else if (response.status === 409) {
             const err = await response.json();
-            showToast('Already Logged In', err.error || 'This account is active on another device.', 'error');
+            showToast('Already Logged In', err.error || 'This account is active on another device. Ask the invigilator to reset your session.', 'error');
             resetLoginButton(btn);
+            shakeForm();
+        } else if (response.status === 401) {
+            const err = await response.json();
+            showToast('Login Failed', err.error || 'Invalid student ID or password. Please check your credentials.', 'error');
+            resetLoginButton(btn);
+            showInputError('password', 'Incorrect password');
+            shakeForm();
         } else {
             const err = await response.json();
-            showToast('Login Failed', err.error || 'Invalid credentials or account inactive.', 'error');
+            showToast('Login Failed', err.error || 'Unable to login. Your account may be inactive.', 'error');
             resetLoginButton(btn);
+            shakeForm();
         }
     } catch (error) {
         console.error('Login error:', error);
-        showToast('Connection Error', 'Unable to reach the server. Please try again later.', 'error');
+        showToast('Connection Error', 'Unable to reach the server. Check your internet connection and try again.', 'error');
         resetLoginButton(btn);
+        shakeForm();
     }
+}
+
+function showInputError(inputId, message) {
+    const input = document.getElementById(inputId);
+    const wrapper = input.closest('.input-wrapper');
+    
+    input.style.borderColor = '#ef4444';
+    input.setAttribute('aria-invalid', 'true');
+    
+    // Remove existing error message if any
+    const existingError = wrapper.querySelector('.error-message');
+    if (existingError) existingError.remove();
+    
+    // Add error message
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.textContent = message;
+    errorDiv.style.cssText = 'color: #ef4444; font-size: 12px; margin-top: 6px; font-weight: 500;';
+    wrapper.after(errorDiv);
+}
+
+function clearValidationErrors() {
+    const inputs = document.querySelectorAll('#loginForm input');
+    inputs.forEach(input => {
+        input.style.borderColor = '';
+        input.setAttribute('aria-invalid', 'false');
+    });
+    
+    const errorMessages = document.querySelectorAll('.error-message');
+    errorMessages.forEach(msg => msg.remove());
+}
+
+function shakeForm() {
+    const form = document.getElementById('loginForm');
+    form.style.animation = 'shake 0.5s ease-in-out';
+    setTimeout(() => {
+        form.style.animation = '';
+    }, 500);
 }
 
 function resetLoginButton(btn) {
     btn.disabled = false;
     btn.innerHTML = '<span>Sign In</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+}
+
+// Help Modal Functions
+function showHelpModal(event) {
+    if (event) event.preventDefault();
+    const modal = document.getElementById('helpModal');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeHelpModal() {
+    const modal = document.getElementById('helpModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+// Close modal on overlay click
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('helpModal');
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeHelpModal();
+            }
+        });
+    }
+    
+    // Close modal on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeHelpModal();
+        }
+    });
+});
+
+// Add real-time validation on input
+document.addEventListener('DOMContentLoaded', () => {
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const rememberMeCheckbox = document.getElementById('rememberMe');
+    
+    // Browser compatibility check
+    checkBrowserCompatibility();
+    
+    // Load remembered credentials
+    if (rememberMeCheckbox && localStorage.getItem('rememberMe') === 'true') {
+        const savedUsername = localStorage.getItem('savedUsername');
+        if (savedUsername) {
+            usernameInput.value = savedUsername;
+            rememberMeCheckbox.checked = true;
+        }
+    }
+    
+    if (usernameInput) {
+        usernameInput.addEventListener('input', () => {
+            clearValidationErrors();
+        });
+        usernameInput.addEventListener('blur', () => {
+            const value = usernameInput.value.trim();
+            if (value && value.length < 3) {
+                showInputError('username', 'Student ID must be at least 3 characters');
+            }
+        });
+    }
+    
+    if (passwordInput) {
+        passwordInput.addEventListener('input', () => {
+            clearValidationErrors();
+        });
+        passwordInput.addEventListener('blur', () => {
+            const value = passwordInput.value.trim();
+            if (value && value.length < 4) {
+                showInputError('password', 'Password must be at least 4 characters');
+            }
+        });
+    }
+    
+    // Focus username field on page load
+    if (usernameInput) {
+        usernameInput.focus();
+    }
+    
+    // Initialize network status
+    updateNetworkStatus();
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
+});
+
+function checkBrowserCompatibility() {
+    const ua = navigator.userAgent;
+    let isCompatible = true;
+    let message = '';
+    
+    // Check for IE
+    if (ua.indexOf('MSIE') > -1 || ua.indexOf('Trident') > -1) {
+        isCompatible = false;
+        message = 'Internet Explorer is not supported. Please use Chrome, Firefox, or Edge.';
+    }
+    
+    // Check for very old browsers
+    const isOldSafari = /^((?!chrome|android).)*safari/i.test(ua) && 
+                       (parseInt(ua.match(/Version\/(\d+)/)?.[1] || '0') < 14);
+    if (isOldSafari) {
+        isCompatible = false;
+        message = 'Please update your Safari browser to version 14 or higher.';
+    }
+    
+    if (!isCompatible) {
+        showToast('Browser Not Supported', message, 'error');
+    }
+}
+
+function updateNetworkStatus() {
+    const networkStatus = document.getElementById('networkStatus');
+    if (!networkStatus) return;
+    
+    if (navigator.onLine) {
+        networkStatus.classList.remove('offline');
+        networkStatus.classList.add('online');
+        networkStatus.title = 'Online - Connected to server';
+    } else {
+        networkStatus.classList.remove('online');
+        networkStatus.classList.add('offline');
+        networkStatus.title = 'Offline - No internet connection';
+    }
 }
 
 // --- Selection Page Logic ---
@@ -371,46 +545,34 @@ async function fetchAndRenderExams() {
 
 function createSessionCard(session, isCompleted = false) {
     const div = document.createElement('div');
-    // Use customSessionName if set, otherwise fall back to examTitle
-    const displayName = (session.customSessionName && session.customSessionName.trim())
-        ? session.customSessionName.trim()
-        : (session.examTitle || 'Examination');
-
-    const isOngoing = session.isStarted && session.isActive;
-    const statusLabel  = isCompleted ? 'COMPLETED' : isOngoing ? 'ONGOING' : 'WAITING';
-    const badgeClass   = isCompleted ? 'gray' : isOngoing ? 'ongoing' : '';
-    // Top accent colour: green for waiting, amber for ongoing, grey for completed
-    const accentColor  = isCompleted ? '#94a3b8' : isOngoing ? '#f59e0b' : '#16a34a';
-
     div.className = 'exam-card-modern' + (isCompleted ? ' locked' : '');
-    div.style.setProperty('--card-accent', accentColor);
-
+    
     if (isCompleted) {
-        div.onclick = () => showToast('Already Completed', 'You have already taken this exam. View your results instead.', 'info');
+        div.onclick = () => {
+            showToast('Already Completed', 'You have already taken this exam. View your results instead.', 'info');
+        };
     } else {
         div.onclick = () => {
-            localStorage.setItem('selectedSessionId',   session.id);
+            localStorage.setItem('selectedSessionId', session.id);
             localStorage.setItem('selectedSessionCode', session.sessionCode);
-            localStorage.setItem('selectedExamId',      session.examId);
-            localStorage.setItem('selectedExamTitle',   displayName);
-            window.location.href = 'waiting.html';
+            localStorage.setItem('selectedExamId', session.examId);
+            localStorage.setItem('selectedExamTitle', session.displayName || session.examTitle);
+            window.location.href = '/waiting';
         };
     }
 
     div.innerHTML = `
-        <div class="exam-type-badge ${badgeClass}" style="background:${accentColor}22;color:${accentColor};">${statusLabel}</div>
-        <h3>${escapeHtml(displayName)}</h3>
+        <div class="exam-type-badge ${isCompleted ? 'gray' : ''}">${isCompleted ? 'COMPLETED' : 'ACTIVE'}</div>
+        <h3>${escapeHtml(session.displayName || session.examTitle)}</h3>
         <div class="exam-meta-pills">
             <span class="meta-pill">Code: ${escapeHtml(session.sessionCode)}</span>
             <span class="meta-pill">${session.studentCount || 0} Students</span>
-            <span class="meta-pill" style="color:${accentColor};font-weight:700;">${isOngoing ? '● In Progress' : isCompleted ? 'Done' : '○ Waiting'}</span>
+            <span class="meta-pill">${session.isStarted ? 'Started' : 'Waiting'}</span>
         </div>
-        <button class="action-btn" ${isCompleted ? 'disabled' : ''} style="background:${isCompleted ? '' : accentColor};">
-            ${isCompleted ? 'Completed' : isOngoing ? 'Join Ongoing Exam' : 'Enter Waiting Room'}
-        </button>
+        <button class="action-btn" ${isCompleted ? 'disabled' : ''}>${isCompleted ? 'View Results' : 'Join Session'}</button>
         ${isCompleted ? '<p class="exam-lock-reason">You have already completed this examination.</p>' : ''}
     `;
-
+    
     return div;
 }
 
@@ -451,7 +613,7 @@ async function initializeExamPage() {
     if (!studentExamId) {
         showToast('Error', 'Missing exam session ID. Redirecting to selection page...', 'error');
         setTimeout(() => {
-            window.location.href = 'selection.html';
+            window.location.href = '/selection';
         }, 2000);
         return;
     }
@@ -1259,22 +1421,13 @@ function closeModalOnOuterClick(event, modalId) {
 
 async function submitExam(manual = true) {
     if (examCompleted) return;
-
-    // Re-read from localStorage in case the module-level var was never set
-    if (!studentExamId) studentExamId = localStorage.getItem('studentExamId');
-    const seId = parseInt(studentExamId);
-    if (!seId || isNaN(seId)) {
-        showToast('Error', 'Missing exam session ID. Please return to the selection page and rejoin.', 'error');
-        setTimeout(() => { window.location.href = 'selection.html'; }, 2500);
-        return;
-    }
-
     examCompleted = true;
+
     closeSubmitConfirm();
     clearInterval(timerInterval);
     clearInterval(heartbeatInterval);
 
-    // Collect answered questions
+    // Collect all answers (including unanswered questions for completeness)
     const answersList = [];
     questions.forEach(q => {
         const ans = responses[q.questionId];
@@ -1282,6 +1435,13 @@ async function submitExam(manual = true) {
             answersList.push({ questionId: q.questionId, selectedAnswer: ans });
         }
     });
+
+    const seId = parseInt(studentExamId);
+    if (!seId || isNaN(seId)) {
+        showToast('Error', 'Missing exam session ID. Please rejoin.', 'error');
+        examCompleted = false;
+        return;
+    }
 
     // Always compute score offline first
     const offlineResult = computeScoreOffline(questions, answersList);
@@ -1347,5 +1507,49 @@ async function submitExam(manual = true) {
 
 function exitExamPortal() {
     clearAllStudentData();
-    window.location.href = 'results.html';
+    window.location.href = '/results';
 }
+
+// ── Theme Toggle Logic ──
+function initTheme() {
+    const savedTheme = localStorage.getItem('cbt_theme_mode') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    
+    // Add theme toggle button to body if it doesn't exist
+    if (!document.querySelector('.theme-toggle')) {
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'theme-toggle';
+        toggleBtn.setAttribute('aria-label', 'Toggle dark/light mode');
+        toggleBtn.onclick = toggleTheme;
+        toggleBtn.innerHTML = `
+            <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+        `;
+        document.body.appendChild(toggleBtn);
+    }
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('cbt_theme_mode', newTheme);
+}
+
+// Initialize theme on DOM load
+document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+});
