@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Waiting Room | CBT Portal</title>
-    <script>try { const t = localStorage.getItem('selectedExamTitle'); if(t) document.title = 'Waiting — ' + t; } catch(e){}</script>
+    <script>try { const t = localStorage.getItem('selectedExamTitle'); if (t) document.title = 'Waiting — ' + t; } catch (e) { }</script>
     <link rel="icon" type="image/png" href="/img/prep4jamb.png">
     <link rel="stylesheet" href="/css/style.css" />
     <link rel="stylesheet" href="/css/login.css" />
@@ -61,8 +61,8 @@
                                 <stop offset="100%" style="stop-color:#064e3b;stop-opacity:0.8" />
                             </linearGradient>
                         </defs>
-                        <path d="M25,2 L45,10 L45,30 C45,45 25,58 25,58 C25,58 5,45 5,30 L5,10 Z" fill="url(#shieldGrad)"
-                            stroke="#10b981" stroke-width="2" />
+                        <path d="M25,2 L45,10 L45,30 C45,45 25,58 25,58 C25,58 5,45 5,30 L5,10 Z"
+                            fill="url(#shieldGrad)" stroke="#10b981" stroke-width="2" />
                         <path d="M18,30 L23,35 L33,25" fill="none" stroke="#ffffff" stroke-width="4"
                             stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
@@ -75,7 +75,12 @@
             <div class="waiting-header">
                 <div class="welcome-badge">UTME Preparation Portal</div>
                 <button class="logout-btn-mini" onclick="handleLogout()" title="Logout">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" x2="9" y1="12" y2="12" />
+                    </svg>
                 </button>
             </div>
             <h2 id="wait-page-heading">Session Synchronization</h2>
@@ -89,7 +94,10 @@
                         <h3 style="display:flex; align-items:center; gap:8px;">
                             <span id="wait-candidate-name">Loading...</span>
                             <span id="wait-joined-check" style="display:none; color:#10b981;">
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+                                    stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
                             </span>
                         </h3>
                     </div>
@@ -196,14 +204,16 @@
                     </svg>
                 </div>
                 <div class="info-alert-text">
-                    Do not refresh this page. You will be automatically redirected to the exam page once the coordinator starts the session.
+                    Do not refresh this page. You will be automatically redirected to the exam page once the coordinator
+                    starts the session.
                 </div>
             </div>
 
             <footer class="workspace-footer"
                 style="margin-top: auto; padding-top: 20px; border-top: 1.5px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
                 <div class="copyright">© <span id="currentYear"></span> Anobyte Technologies</div>
-                <button class="submit-btn" id="btn-leave-room" style="background: #ef4444; padding: 10px 20px; font-size: 13px;" onclick="leaveWaitingRoom()">
+                <button class="submit-btn" id="btn-leave-room"
+                    style="background: #ef4444; padding: 10px 20px; font-size: 13px;" onclick="leaveWaitingRoom()">
                     <span>Leave Waiting Room</span>
                 </button>
             </footer>
@@ -217,7 +227,7 @@
         async function decryptAes(cipherTextBase64, keyString) {
             if (window.crypto && window.crypto.subtle) {
                 const keyBytes = new TextEncoder().encode(keyString.padEnd(32).substring(0, 32));
-                const ivBytes  = new TextEncoder().encode(keyString.padEnd(16).substring(0, 16));
+                const ivBytes = new TextEncoder().encode(keyString.padEnd(16).substring(0, 16));
                 const key = await crypto.subtle.importKey('raw', keyBytes, { name: 'AES-CBC' }, false, ['decrypt']);
                 const encryptedBytes = Uint8Array.from(atob(cipherTextBase64), c => c.charCodeAt(0));
                 const decryptedBuffer = await crypto.subtle.decrypt({ name: 'AES-CBC', iv: ivBytes }, key, encryptedBytes);
@@ -287,7 +297,7 @@
             connection.on('SessionEnded', async () => {
                 if (typeof showToast === 'function')
                     showToast('Session Ended', 'This session has been ended by the coordinator. Auto-submitting...', 'error');
-                
+
                 // Auto-submit before redirecting
                 try {
                     const studentExamId = parseInt(localStorage.getItem('studentExamId'));
@@ -303,7 +313,7 @@
                                 if (saved) responses[q.questionId] = saved;
                             });
                         }
-                        
+
                         if (Object.keys(responses).length > 0) {
                             await fetch(`${API_BASE}/Student/${studentExamId}/submit`, {
                                 method: 'POST',
@@ -315,17 +325,17 @@
                 } catch (e) {
                     console.error('Auto-submit failed:', e);
                 }
-                
+
                 setTimeout(() => { window.location.href = '/selection'; }, 3000);
             });
 
             // Expose joiner early so startExamProcess can call it regardless of connection timing
             window._signalRJoinStudents = (code) => {
                 if (connection.state === signalR.HubConnectionState.Connected) {
-                    connection.invoke('JoinStudentGroup', code).catch(() => {});
+                    connection.invoke('JoinStudentGroup', code).catch(() => { });
                 } else {
                     // Queue for when connection is established
-                    connection.onreconnected(() => connection.invoke('JoinStudentGroup', code).catch(() => {}));
+                    connection.onreconnected(() => connection.invoke('JoinStudentGroup', code).catch(() => { }));
                 }
             };
 
@@ -333,9 +343,9 @@
                 .then(() => {
                     signalRStarted = true;
                     // Join student group using the selected session code
-                    if (selectedSessionCode) connection.invoke('JoinStudentGroup', selectedSessionCode).catch(() => {});
+                    if (selectedSessionCode) connection.invoke('JoinStudentGroup', selectedSessionCode).catch(() => { });
                 })
-                .catch(() => {});
+                .catch(() => { });
             // ----------------------------------------------------
 
             function leaveWaitingRoom() {
@@ -432,7 +442,7 @@
                             percentText.textContent = '100%';
                             btn.innerHTML = '<span>Connected to Room</span>';
                             btn.disabled = true;
-                            
+
                             // Set up heartbeat and wait for exam start
                             const seid = parseInt(existingStudentExamId);
                             const did = localStorage.getItem('cbt_device_id') || 'NODE-UNKNOWN';
@@ -480,7 +490,7 @@
                     if (!joinRes.ok) throw new Error('Failed to join');
                     const joinData = await joinRes.json();
                     const studentExamId = joinData.studentExamId;
-                    
+
                     // Save context
                     localStorage.setItem('studentExamId', studentExamId);
                     localStorage.setItem('sessionId', joinData.sessionId);
@@ -594,12 +604,12 @@
                                     imageUrls.add(q.imageUrl.trim());
                                 }
                             });
-                            
+
                             // Also save exam duration if provided
                             if (plainData.durationMinutes) {
                                 localStorage.setItem('examDuration', plainData.durationMinutes);
                             }
-                            
+
                             // Download images in background without blocking exam entry
                             if (imageUrls.size > 0) {
                                 console.log('[Waiting Room] Starting background image download for', imageUrls.size, 'images');
@@ -623,7 +633,7 @@
                         statusText.style.color = '#f59e0b';
                         btn.innerHTML = '<span>Pending Approval</span>';
                         btn.disabled = true;
-                        
+
                         // Poll for approval status
                         const approvalInterval = setInterval(async () => {
                             try {
@@ -639,10 +649,10 @@
                                         statusText.textContent = 'Securely Hydrated – Awaiting Activation Lock Signal...';
                                         statusText.style.color = '#10b981';
                                         btn.innerHTML = '<span>Connected to Room (Offline-Hydrated)</span><div class="spinner"></div>';
-                                        
+
                                         const checkIcon = document.getElementById('wait-joined-check');
                                         if (checkIcon) checkIcon.style.display = 'inline-block';
-                                        
+
                                         heartbeatInterval = setInterval(() => {
                                             pollHeartbeatSignal(studentExamId, activeDeviceId, activeDeviceName);
                                         }, 3000);
@@ -663,10 +673,10 @@
 
                     statusText.textContent = 'Securely Hydrated – Awaiting Activation Lock Signal...';
                     statusText.style.color = '#10b981';
-                    
+
                     const checkIcon = document.getElementById('wait-joined-check');
                     if (checkIcon) checkIcon.style.display = 'inline-block';
-                    
+
                     btn.innerHTML = '<span>Connected to Room (Offline-Hydrated)</span><div class="spinner"></div>';
 
                     // If the exam was already started when we joined, skip the heartbeat loop
@@ -754,7 +764,7 @@
                     }
                     if (statusEl) { statusEl.textContent = 'Sync Status: Ready'; statusEl.style.color = '#10b981'; }
                     const data = await res.json();
-                    
+
                     if (data.broadcastMessage) {
                         const lastBroadcast = localStorage.getItem('last_broadcast_msg');
                         if (lastBroadcast !== data.broadcastMessage) {
@@ -766,14 +776,14 @@
                     if (data.isStarted && data.decryptionKey) {
                         starting = true;
                         clearInterval(heartbeatInterval);
-                        
+
                         try {
                             const encryptedData = localStorage.getItem('encryptedQuestions');
                             if (!encryptedData) throw new Error('No encrypted questions cached!');
-                            
+
                             const decrypted = await decryptAes(encryptedData, data.decryptionKey);
                             localStorage.setItem('cachedQuestions', decrypted);
-                            
+
                             triggerCountdown();
                         } catch (decryptErr) {
                             console.error('Decryption failed:', decryptErr);
@@ -800,30 +810,30 @@
                 overlay.style.justifyContent = 'center';
                 overlay.style.alignItems = 'center';
                 overlay.style.color = 'white';
-                
+
                 const title = document.createElement('h2');
                 title.textContent = 'PREPARE TO BEGIN';
                 title.style.fontSize = '2rem';
                 title.style.color = '#10b981';
                 title.style.letterSpacing = '5px';
                 title.style.marginBottom = '2rem';
-                
+
                 const count = document.createElement('div');
                 count.style.fontSize = '12rem';
                 count.style.fontWeight = '900';
                 count.style.lineHeight = '1';
                 count.style.textShadow = '0 0 40px rgba(16, 185, 129, 0.5)';
-                
+
                 overlay.appendChild(title);
                 overlay.appendChild(count);
                 document.body.appendChild(overlay);
-                
+
                 let time = 5;
                 count.textContent = time;
-                
+
                 const int = setInterval(() => {
                     time--;
-                    if(time > 0) {
+                    if (time > 0) {
                         count.textContent = time;
                         count.style.transform = 'scale(1.2)';
                         setTimeout(() => count.style.transform = 'scale(1)', 200);
@@ -839,7 +849,7 @@
             function updateProgress(percent) {
                 progressBar.style.width = percent + '%';
                 percentText.textContent = percent + '%';
-                if(percent === 100) {
+                if (percent === 100) {
                     progressBar.style.background = '#10b981';
                     progressBar.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.4)';
                 }

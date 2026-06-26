@@ -90,15 +90,16 @@ body::after {
 
 /* --- LEFT SIDE PANEL --- */
 .left-panel {
-    flex: 1.1;
+    flex: 1.25;
     background: var(--panel-left-bg);
     position: relative;
-    padding: 6vh 48px;
+    padding: 5vh 52px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     overflow: hidden;
     color: #ffffff;
+    min-width: 0;
 }
 
 .flowing-gradient {
@@ -438,15 +439,17 @@ body::after {
 
 /* --- RIGHT SIDE PANEL (FORM) --- */
 .right-panel {
-    flex: 0.9;
+    flex: 0.75;
     background-color: #ffffff;
-    padding: 48px 56px;
+    padding: 44px 52px;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     position: relative;
-    min-height: 0; /* Fix flex overflow issue */
-    overflow-y: auto; /* Enable scrolling for small window heights */
+    min-height: 0;
+    overflow-y: auto;
+    min-width: 380px;
+    max-width: 520px;
 }
 
 .welcome-badge {
@@ -1028,20 +1031,24 @@ input:-webkit-autofill:focus {
         box-shadow: none;
         color: #94a3b8;
     }
-    
+
     .login-card {
         max-width: 100vw;
         max-height: 100vh;
     }
-    
+
+    /* In fullscreen — left branding panel takes much more space */
     .left-panel {
-        flex: 1.2;
-        padding: 8vh 60px;
+        flex: 1.6;
+        padding: 8vh 64px;
     }
-    
+
+    /* Right form panel is narrow and centered-feeling in fullscreen */
     .right-panel {
-        flex: 0.8;
-        padding: 60px 70px;
+        flex: 0.6;
+        min-width: 380px;
+        max-width: 480px;
+        padding: 56px 52px;
     }
 }
 
