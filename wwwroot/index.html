@@ -104,38 +104,30 @@
                 </div>
             </div>
 
-            <div class="shield-container">
-                <div class="shield-base"></div>
-                <div class="shield-3d">
-                    <svg viewBox="0 0 50 60" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.3" />
-                                <stop offset="100%" style="stop-color:#064e3b;stop-opacity:0.8" />
-                            </linearGradient>
-                        </defs>
-                        <path d="M25,2 L45,10 L45,30 C45,45 25,58 25,58 C25,58 5,45 5,30 L5,10 Z" fill="url(#shieldGrad)" stroke="#10b981" stroke-width="2"/>
-                        <path d="M18,30 L23,35 L33,25" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+            <div class="stats-container">
+                <div class="stat-item">
+                    <div class="stat-number">10K+</div>
+                    <div class="stat-label">Students</div>
                 </div>
-                <div class="globe-container">
-                    <div class="globe-ring"></div>
-                    <div class="globe">
-                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                                <linearGradient id="globeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.8" />
-                                    <stop offset="100%" style="stop-color:#064e3b;stop-opacity:0.4" />
-                                </linearGradient>
-                            </defs>
-                            <circle cx="50" cy="50" r="45" fill="none" stroke="url(#globeGrad)" stroke-width="2"/>
-                            <ellipse cx="50" cy="50" rx="45" ry="20" fill="none" stroke="url(#globeGrad)" stroke-width="1.5" opacity="0.6"/>
-                            <ellipse cx="50" cy="50" rx="20" ry="45" fill="none" stroke="url(#globeGrad)" stroke-width="1.5" opacity="0.6"/>
-                            <ellipse cx="50" cy="50" rx="35" ry="35" fill="none" stroke="url(#globeGrad)" stroke-width="1" opacity="0.4" transform="rotate(45 50 50)"/>
-                            <circle cx="50" cy="50" r="8" fill="#10b981" opacity="0.3"/>
-                        </svg>
-                    </div>
+                <div class="stat-item">
+                    <div class="stat-number">99.9%</div>
+                    <div class="stat-label">Uptime</div>
                 </div>
+                <div class="stat-item">
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">Support</div>
+                </div>
+            </div>
+
+            <div class="floating-elements">
+                <div class="float-circle float-1"></div>
+                <div class="float-circle float-2"></div>
+                <div class="float-circle float-3"></div>
+            </div>
+
+            <div class="bottom-decoration">
+                <div class="deco-line"></div>
+                <div class="deco-dots"></div>
             </div>
 
         </div>
@@ -172,10 +164,6 @@
                 </div>
 
                 <div class="form-options">
-                    <label class="remember-me">
-                        <input type="checkbox" id="rememberMe" name="rememberMe">
-                        <span>Remember me</span>
-                    </label>
                     <a href="#" class="forgot-password" onclick="showHelpModal(event)">Need help?</a>
                 </div>
 
@@ -208,7 +196,9 @@
 
             <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 10px; align-items: center;">
                 <div id="networkStatus" class="network-status" title="Network status">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                    <svg id="wifiIcon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                    <svg id="noWifiIcon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                    <svg id="lanIcon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
                 </div>
                 <button class="logout-btn-mini" onclick="handleLogout()" title="Logout">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>

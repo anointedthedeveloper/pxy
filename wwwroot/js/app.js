@@ -234,7 +234,6 @@ async function handleLogin(event) {
     
     const studentId = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value.trim();
-    const rememberMe = document.getElementById('rememberMe').checked;
     const btn = document.getElementById('submitBtn');
     
     // Clear previous validation states
@@ -245,10 +244,10 @@ async function handleLogin(event) {
     if (!studentId) {
         showInputError('username', 'Student ID is required');
         hasError = true;
-    } else if (studentId.length < 3) {
-        showInputError('username', 'Student ID must be at least 3 characters');
-        hasError = true;
     }
+    
+    // Normalize student ID (remove leading zeros for comparison)
+    const normalizedStudentId = studentId.replace(/^0+/, '') || '0';
     
     if (!password) {
         showInputError('password', 'Password is required');
@@ -271,22 +270,13 @@ async function handleLogin(event) {
         const response = await fetch(`${API_BASE}/Student/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ studentId, password, deviceId })
+            body: JSON.stringify({ studentId: normalizedStudentId, password, deviceId })
         });
 
         if (response.ok) {
             const user = await response.json();
             localStorage.setItem('studentName', user.fullName);
             localStorage.setItem('studentId', user.studentId);
-            
-            // Handle remember me
-            if (rememberMe) {
-                localStorage.setItem('rememberMe', 'true');
-                localStorage.setItem('savedUsername', studentId);
-            } else {
-                localStorage.removeItem('rememberMe');
-                localStorage.removeItem('savedUsername');
-            }
             
             showToast('Success', `Welcome back, ${user.fullName.split(' ')[0]}!`, 'success');
             
@@ -398,29 +388,13 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', () => {
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
-    const rememberMeCheckbox = document.getElementById('rememberMe');
     
     // Browser compatibility check
     checkBrowserCompatibility();
     
-    // Load remembered credentials
-    if (rememberMeCheckbox && localStorage.getItem('rememberMe') === 'true') {
-        const savedUsername = localStorage.getItem('savedUsername');
-        if (savedUsername) {
-            usernameInput.value = savedUsername;
-            rememberMeCheckbox.checked = true;
-        }
-    }
-    
     if (usernameInput) {
         usernameInput.addEventListener('input', () => {
             clearValidationErrors();
-        });
-        usernameInput.addEventListener('blur', () => {
-            const value = usernameInput.value.trim();
-            if (value && value.length < 3) {
-                showInputError('username', 'Student ID must be at least 3 characters');
-            }
         });
     }
     
@@ -475,14 +449,43 @@ function updateNetworkStatus() {
     const networkStatus = document.getElementById('networkStatus');
     if (!networkStatus) return;
     
-    if (navigator.onLine) {
-        networkStatus.classList.remove('offline');
-        networkStatus.classList.add('online');
-        networkStatus.title = 'Online - Connected to server';
-    } else {
+    const wifiIcon = document.getElementById('wifiIcon');
+    const noWifiIcon = document.getElementById('noWifiIcon');
+    const lanIcon = document.getElementById('lanIcon');
+    
+    if (!navigator.onLine) {
+        // Offline - show no wifi icon
         networkStatus.classList.remove('online');
         networkStatus.classList.add('offline');
         networkStatus.title = 'Offline - No internet connection';
+        
+        if (wifiIcon) wifiIcon.style.display = 'none';
+        if (noWifiIcon) noWifiIcon.style.display = 'block';
+        if (lanIcon) lanIcon.style.display = 'none';
+    } else {
+        // Online - determine connection type
+        networkStatus.classList.remove('offline');
+        networkStatus.classList.add('online');
+        
+        // Try to detect connection type using Network Information API
+        let connectionType = 'wifi'; // default to wifi
+        
+        if (navigator.connection && navigator.connection.type) {
+            connectionType = navigator.connection.type;
+        }
+        
+        // Show appropriate icon based on connection type
+        if (connectionType === 'ethernet' || connectionType === 'lan') {
+            networkStatus.title = 'Online - Connected via LAN';
+            if (wifiIcon) wifiIcon.style.display = 'none';
+            if (noWifiIcon) noWifiIcon.style.display = 'none';
+            if (lanIcon) lanIcon.style.display = 'block';
+        } else {
+            networkStatus.title = 'Online - Connected to server';
+            if (wifiIcon) wifiIcon.style.display = 'block';
+            if (noWifiIcon) noWifiIcon.style.display = 'none';
+            if (lanIcon) lanIcon.style.display = 'none';
+        }
     }
 }
 
