@@ -3418,7 +3418,7 @@ public class ErrorGuideViewModel : BaseViewModel
 
     public ObservableCollection<CommonIssue> CommonIssues { get; } = [
         new CommonIssue("Server Not Starting", "The CBT server fails to start when launching the application.", 
-            "1. Check if port 5000 is available\n2. Restart the application\n3. Check Windows Firewall settings\n4. Run as Administrator", 
+            "1. Check if port 7031 is available\n2. Restart the application\n3. Check Windows Firewall settings\n4. Run as Administrator", 
             "&#xE946;"),
         new CommonIssue("Database Locked", "The database file is locked by another process.", 
             "1. Close all other instances of CBT Exam System\n2. Check Task Manager for CbtExam.exe processes\n3. Restart the computer", 
@@ -3507,7 +3507,7 @@ public class SettingsViewModel : BaseViewModel, IRefreshable
     private readonly ApiClient api;
     private readonly EmbeddedServerService _server;
 
-    private int _port = 5000;
+    private int _port = 7031;
     public int Port { get => _port; set { Set(ref _port, value); SaveSettings(); } }
 
     public string LocalIp { get; } = EmbeddedServerService.GetLocalIp();

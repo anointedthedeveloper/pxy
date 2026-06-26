@@ -9,11 +9,17 @@ echo.
 set PROJECT=src\CbtExam.Desktop\CbtExam.Desktop.csproj
 set OUTPUT=publish\CbtExam
 
-echo [1/3] Closing running instances of CbtExam.exe...
+echo [1/4] Syncing wwwroot folders...
+echo   Copying from main wwwroot to embedded wwwroot...
+robocopy "wwwroot" "src\CbtExam.Desktop\wwwroot" /E /NFL /NDL /NJH /NJS >nul 2>&1
+echo   Sync complete.
+echo.
+
+echo [2/4] Closing running instances of CbtExam.exe...
 taskkill /F /IM CbtExam.exe /T >nul 2>&1
 timeout /t 1 /nobreak >nul
 
-echo [2/3] Preparing clean output directory...
+echo [3/5] Preparing clean output directory...
 if exist "%OUTPUT%" (
     echo   Cleaning %OUTPUT%...
     rd /s /q "%OUTPUT%" >nul 2>&1
@@ -24,11 +30,11 @@ if exist "%OUTPUT%" (
 )
 if not exist "%OUTPUT%" mkdir "%OUTPUT%"
 
-echo [3/4] Restoring NuGet packages...
+echo [4/5] Restoring NuGet packages...
 "C:\Program Files\dotnet\dotnet.exe" restore CbtExam.sln
 "C:\Program Files\dotnet\dotnet.exe" restore "%PROJECT%" --runtime win-x64 --force
 
-echo [4/4] Building and Publishing (Release win-x64)...
+echo [5/5] Building and Publishing (Release win-x64)...
 "C:\Program Files\dotnet\dotnet.exe" publish "%PROJECT%" ^
   --configuration Release ^
   --runtime win-x64 ^
@@ -36,6 +42,10 @@ echo [4/4] Building and Publishing (Release win-x64)...
   -p:PublishSingleFile=true ^
   -p:IncludeNativeLibrariesForSelfExtract=true ^
   --output "%OUTPUT%"
+
+echo [Post-Build] Unblocking executable for Windows Smart App Control...
+powershell -Command "Unblock-File -Path '%OUTPUT%\CbtExam.exe' -ErrorAction SilentlyContinue"
+echo   Executable unblocked.
 
 if %errorlevel% neq 0 (
     echo.

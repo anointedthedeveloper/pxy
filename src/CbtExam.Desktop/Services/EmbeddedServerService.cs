@@ -10,7 +10,7 @@ public class EmbeddedServerService
     public bool IsRunning { get; private set; }
     public string ServerUrl { get; private set; } = string.Empty;
 
-    public async Task StartAsync(string dbPath, string wwwrootPath, int port = 5000)
+    public async Task StartAsync(string dbPath, string wwwrootPath, int port = 7031)
     {
         if (IsRunning) return;
 

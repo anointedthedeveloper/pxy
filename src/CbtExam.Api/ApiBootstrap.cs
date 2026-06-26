@@ -10,7 +10,7 @@ namespace CbtExam.Api;
 
 public static class ApiBootstrap
 {
-    public static async Task<WebApplication> BuildApp(string dbPath, string wwwrootPath, int port = 5000)
+    public static async Task<WebApplication> BuildApp(string dbPath, string wwwrootPath, int port = 7031)
     {
         // Empty args + suppress default console/hosting noise inside WPF
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
