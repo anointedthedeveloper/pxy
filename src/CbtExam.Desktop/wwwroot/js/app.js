@@ -215,11 +215,11 @@ async function updateLoginStats() {
             }
         }
 
-        // Fetch total questions count (this would need a new API endpoint)
+        // Fetch total questions count
         const totalQuestionsEl = document.getElementById('totalQuestions');
         if (totalQuestionsEl) {
             try {
-                const response = await fetch(`${API_BASE}/Questions/count`);
+                const response = await fetch(`${API_BASE}/QuestionBank/count`);
                 if (response.ok) {
                     const data = await response.json();
                     totalQuestionsEl.textContent = data.count || 0;
