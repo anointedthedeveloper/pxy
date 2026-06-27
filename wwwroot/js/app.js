@@ -121,6 +121,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('activeExams')) {
         updateLoginStats();
         loadSchoolBranding();
+        // Poll for stats updates every 5 seconds
+        setInterval(updateLoginStats, 5000);
     }
     
     // Check if we are on the selection page
@@ -511,6 +513,8 @@ document.addEventListener('DOMContentLoaded', () => {
     updateNetworkStatus();
     window.addEventListener('online', updateNetworkStatus);
     window.addEventListener('offline', updateNetworkStatus);
+    // Poll server connectivity every 5 seconds
+    setInterval(updateNetworkStatus, 5000);
 });
 
 function checkBrowserCompatibility() {
@@ -537,7 +541,25 @@ function checkBrowserCompatibility() {
     }
 }
 
-function updateNetworkStatus() {
+async function checkServerConnection() {
+    try {
+        // Ping the server with a timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        
+        const response = await fetch(`${API_BASE}/Sessions`, {
+            method: 'GET',
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        return response.ok;
+    } catch (e) {
+        return false;
+    }
+}
+
+async function updateNetworkStatus() {
     const networkStatus = document.getElementById('networkStatus');
     const connectionText = document.getElementById('connectionText');
     if (!networkStatus) return;
@@ -557,35 +579,52 @@ function updateNetworkStatus() {
         if (lanIcon) lanIcon.style.display = 'none';
         if (connectionText) connectionText.style.display = 'none';
     } else {
-        // Online - determine connection type
-        networkStatus.classList.remove('offline');
-        networkStatus.classList.add('online');
+        // Check actual server connectivity
+        const serverConnected = await checkServerConnection();
         
-        // Try to detect connection type using Network Information API
-        let connectionType = 'wifi'; // default to wifi
-        
-        if (navigator.connection && navigator.connection.type) {
-            connectionType = navigator.connection.type;
-        }
-        
-        // Show appropriate icon based on connection type
-        if (connectionType === 'ethernet' || connectionType === 'lan') {
-            networkStatus.title = 'Online - Connected via LAN';
-            if (wifiIcon) wifiIcon.style.display = 'none';
-            if (noWifiIcon) noWifiIcon.style.display = 'none';
-            if (lanIcon) lanIcon.style.display = 'block';
-            if (connectionText) {
-                connectionText.style.display = 'block';
-                connectionText.textContent = 'Connected via LAN';
+        if (serverConnected) {
+            networkStatus.classList.remove('offline');
+            networkStatus.classList.add('online');
+            
+            // Try to detect connection type using Network Information API
+            let connectionType = 'wifi'; // default to wifi
+            
+            if (navigator.connection && navigator.connection.type) {
+                connectionType = navigator.connection.type;
+            }
+            
+            // Show appropriate icon based on connection type
+            if (connectionType === 'ethernet' || connectionType === 'lan') {
+                networkStatus.title = 'Online - Connected via LAN';
+                if (wifiIcon) wifiIcon.style.display = 'none';
+                if (noWifiIcon) noWifiIcon.style.display = 'none';
+                if (lanIcon) lanIcon.style.display = 'block';
+                if (connectionText) {
+                    connectionText.style.display = 'block';
+                    connectionText.textContent = 'Connected via LAN';
+                }
+            } else {
+                networkStatus.title = 'Online - Connected to server';
+                if (wifiIcon) wifiIcon.style.display = 'block';
+                if (noWifiIcon) noWifiIcon.style.display = 'none';
+                if (lanIcon) lanIcon.style.display = 'none';
+                if (connectionText) {
+                    connectionText.style.display = 'block';
+                    connectionText.textContent = 'Connected to server';
+                }
             }
         } else {
-            networkStatus.title = 'Online - Connected to server';
-            if (wifiIcon) wifiIcon.style.display = 'block';
-            if (noWifiIcon) noWifiIcon.style.display = 'none';
+            // Browser online but server unreachable
+            networkStatus.classList.remove('online');
+            networkStatus.classList.add('offline');
+            networkStatus.title = 'Server not reachable';
+            
+            if (wifiIcon) wifiIcon.style.display = 'none';
+            if (noWifiIcon) noWifiIcon.style.display = 'block';
             if (lanIcon) lanIcon.style.display = 'none';
             if (connectionText) {
                 connectionText.style.display = 'block';
-                connectionText.textContent = 'Connected to server';
+                connectionText.textContent = 'Server not connected';
             }
         }
     }

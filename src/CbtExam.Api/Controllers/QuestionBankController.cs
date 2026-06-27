@@ -31,6 +31,13 @@ public class QuestionBankController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> GetYears([FromQuery] string subject) =>
         Ok(await db.QuestionBank.Where(q => q.Subject == subject).Select(q => q.Year).Distinct().OrderBy(y => y).ToListAsync());
 
+    [HttpGet("count")]
+    public async Task<IActionResult> GetCount()
+    {
+        var count = await db.QuestionBank.CountAsync();
+        return Ok(new { count });
+    }
+
     [HttpPost]
     public async Task<IActionResult> Add(QuestionBankCreateDto dto)
     {
