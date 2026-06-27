@@ -716,7 +716,13 @@ function createSessionCard(session, isCompleted = false) {
     }
 
     div.innerHTML = `
-        <div class="exam-type-badge ${isCompleted ? 'gray' : ''}">${isCompleted ? 'COMPLETED' : 'LIVE'}</div>
+        <div class="exam-card-header">
+            <div class="exam-type-badge ${isCompleted ? 'gray' : ''}">${isCompleted ? 'COMPLETED' : 'LIVE'}</div>
+            <span class="meta-pill ${session.isStarted ? 'status-started' : 'status-waiting'}">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                ${session.isStarted ? 'Started' : 'Waiting'}
+            </span>
+        </div>
         <h3>${escapeHtml(session.displayName || session.examTitle)}</h3>
         <div class="exam-meta-pills">
             <span class="meta-pill">
@@ -727,10 +733,6 @@ function createSessionCard(session, isCompleted = false) {
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 ${session.durationMinutes} min
             </span>` : ''}
-            <span class="meta-pill ${session.isStarted ? 'status-started' : 'status-waiting'}">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                ${session.isStarted ? 'Started' : 'Waiting'}
-            </span>
         </div>
         <button class="action-btn" ${isCompleted ? 'disabled' : ''}>${isCompleted ? 'Already Completed' : 'Join Exam'}</button>
         ${isCompleted ? '<p class="exam-lock-reason">You have already sat this examination.</p>' : ''}

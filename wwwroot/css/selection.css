@@ -272,6 +272,14 @@
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 
+/* Card header for badges on same line */
+.exam-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 /* Top accent bar */
 .exam-card-modern::before {
     content: '';
@@ -419,6 +427,8 @@
     box-shadow: 0 3px 10px rgba(22, 163, 74, 0.2);
     position: relative;
     overflow: hidden;
+    flex-shrink: 0;
+    min-height: 48px;
 }
 
 .action-btn::before {
