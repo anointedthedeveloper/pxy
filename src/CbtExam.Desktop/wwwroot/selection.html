@@ -23,13 +23,12 @@
                 <div class="jamb-logo-container">
                     <img class="main-logo-img" src="/img/prep4jamb.png" alt="Prep4JAMB Logo">
                 </div>
-                <h1>Exam Readiness.<br><span class="green-text">Pick. Start. Excel.</span></h1>
-                <p class="tagline">Choose your session below. Every mock exam is a step closer to your desired UTME score. Confirm your readiness before joining.</p>
+                <h1>Exam Readiness. <br><span class="green-text">Success. Excellence.</span></h1>
+                <p class="tagline">Choose your session below. Every mock exam is a step closer to your desired UTME score. Ensure you are ready before clicking 'Join Exam'.</p>
 
                 <div class="features-grid">
                     <div class="feature-item">
                         <div class="feature-icon">
-                            <!-- Shield / Proctoring -->
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                         </div>
                         <div class="feature-title">Secure Mode</div>
@@ -37,7 +36,6 @@
                     </div>
                     <div class="feature-item">
                         <div class="feature-icon">
-                            <!-- Lightning / Real-time -->
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                         </div>
                         <div class="feature-title">Real-time Sync</div>
@@ -45,7 +43,6 @@
                     </div>
                     <div class="feature-item">
                         <div class="feature-icon">
-                            <!-- Clock / Timer -->
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         </div>
                         <div class="feature-title">Timed Sessions</div>
@@ -54,28 +51,12 @@
                 </div>
             </div>
 
-            <!-- Selection-specific visual: Target / Exam picker graphic -->
-            <div class="sel-visual-container">
-                <!-- Orbit rings + target icon representing "picking an exam" -->
-                <div class="sel-orbit-outer">
-                    <div class="sel-orbit-inner">
-                        <div class="sel-core">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="34" height="34">
-                                <!-- Target / bullseye -->
-                                <circle cx="12" cy="12" r="10"/>
-                                <circle cx="12" cy="12" r="6"/>
-                                <circle cx="12" cy="12" r="2"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <!-- Orbiting dots -->
-                    <div class="sel-dot sel-dot-1"></div>
-                    <div class="sel-dot sel-dot-2"></div>
-                    <div class="sel-dot sel-dot-3"></div>
+            <div class="shield-container">
+                <div class="shield-base"></div>
+                <div class="shield-3d">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                 </div>
-                <div class="sel-visual-label">Choose your exam session</div>
             </div>
-
         </div>
 
         <!-- RIGHT PANEL (CONTENT) -->
@@ -101,7 +82,7 @@
             <div class="content-body">
                 <div class="welcome-badge">Available Examinations</div>
                 <h2>Select Your Session</h2>
-                <p class="instruction-text">Pick one of the active exam sessions listed below. The timer begins the moment you join — be ready!</p>
+                <p class="instruction-text">Please pick one of the active exam sessions listed below to proceed.</p>
 
                 <div class="candidate-notes-modern">
                     <div class="note-header">
@@ -125,11 +106,11 @@
             </div>
 
             <footer class="workspace-footer">
-                <button class="btn-back" onclick="handleLogout()">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                <button class="btn-back" onclick="location.href='/index'">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                     Sign Out
                 </button>
-                <div class="copyright">© <span id="currentYear"></span> <span class="anobyte-text">Anobyte Technologies</span></div>
+                <div class="copyright">© <span id="currentYear"></span> Anobyte Technologies</div>
             </footer>
         </div>
     </div>
