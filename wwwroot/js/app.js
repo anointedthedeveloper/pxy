@@ -400,19 +400,28 @@ async function handleLogin(event) {
 function showInputError(inputId, message) {
     const input = document.getElementById(inputId);
     const wrapper = input.closest('.input-wrapper');
+    const formGroup = input.closest('.form-group');
     
     input.classList.add('has-error');
     input.setAttribute('aria-invalid', 'true');
     
-    // Remove existing error message if any
-    const existingError = wrapper.parentElement.querySelector('.error-message');
-    if (existingError) existingError.remove();
+    // Remove all existing error messages from the form
+    const existingErrors = document.querySelectorAll('#loginForm .error-message');
+    existingErrors.forEach(err => err.remove());
     
-    // Add error message with proper styled class
+    // Add error message between the form fields (after the password form group)
+    const passwordFormGroup = document.getElementById('password').closest('.form-group');
     const errorDiv = document.createElement('div');
     errorDiv.className = 'error-message';
     errorDiv.textContent = message;
-    wrapper.after(errorDiv);
+    
+    // Insert error message after the password field's form group
+    if (passwordFormGroup && passwordFormGroup.nextSibling) {
+        passwordFormGroup.parentNode.insertBefore(errorDiv, passwordFormGroup.nextSibling);
+    } else {
+        // Fallback: insert after the form
+        document.getElementById('loginForm').appendChild(errorDiv);
+    }
 }
 
 function clearValidationErrors() {

@@ -184,7 +184,8 @@ h2 { font-size: 24px; font-weight: 800; color: var(--theme-text); margin-bottom:
     pointer-events: auto;
     min-width: 300px;
     max-width: 450px;
-    background: var(--theme-card);
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
     border-left: 5px solid var(--brand-primary);
     border-radius: 12px;
     padding: 16px 20px;

@@ -495,13 +495,14 @@ body::after {
     width: 100%;
     height: 52px;
     background-color: #ffffff;
-    border: 2px solid var(--input-border);
+    border: 2.5px solid #16a34a;
     border-radius: 12px;
     padding: 0 16px 0 48px;
     font-size: 15px;
     font-weight: 500;
     color: var(--text-dark);
-    outline: 3px solid transparent;
+    outline: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05), inset 0 1px 2px rgba(0, 0, 0, 0.02);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -510,10 +511,9 @@ body::after {
 }
 
 .input-wrapper input:focus {
-    border-color: #16a34a;
-    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12), 0 4px 12px rgba(22, 163, 74, 0.08);
+    border-color: #15803d;
+    box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.15), 0 4px 12px rgba(22, 163, 74, 0.1), 0 2px 4px rgba(0, 0, 0, 0.05);
     transform: translateY(-1px);
-    outline-color: rgba(22, 163, 74, 0.3);
     animation: inputPulse 0.3s ease;
 }
 
@@ -544,15 +544,16 @@ body::after {
     align-items: center;
     gap: 6px;
     color: #dc2626 !important;
-    font-size: 12px !important;
+    font-size: 13px !important;
     font-weight: 600 !important;
-    margin-top: 6px !important;
-    padding: 7px 12px;
+    margin: 16px 0 !important;
+    padding: 10px 14px;
     background: #fef2f2;
-    border: 1.5px solid #fca5a5;
-    border-radius: 8px;
+    border: 2px solid #fca5a5;
+    border-radius: 10px;
     line-height: 1.4;
     animation: errorShake 0.3s ease;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
 }
 
 .error-message::before {
