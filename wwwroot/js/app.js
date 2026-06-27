@@ -655,6 +655,12 @@ async function fetchAndRenderExams() {
         // Filter for active sessions only
         const activeSessions = sessions.filter(s => s.isActive === true);
         
+        // Sort: waiting exams first, then ongoing exams
+        activeSessions.sort((a, b) => {
+            if (a.isStarted === b.isStarted) return 0;
+            return a.isStarted ? 1 : -1; // waiting (false) comes before started (true)
+        });
+        
         if (activeSessions.length === 0) {
             listContainer.innerHTML = `
                 <div class="empty-state">
@@ -723,7 +729,7 @@ function createSessionCard(session, isCompleted = false) {
                 ${session.isStarted ? 'Started' : 'Waiting'}
             </span>
         </div>
-        <h3>${escapeHtml(session.displayName || session.examTitle)}</h3>
+        <h3>${escapeHtml(session.displayName || session.examTitle)} <span class="session-code-badge">${escapeHtml(session.sessionCode)}</span></h3>
         <div class="exam-meta-pills">
             <span class="meta-pill">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>

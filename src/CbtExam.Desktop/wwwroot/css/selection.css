@@ -368,6 +368,21 @@
     color: #0f172a;
     margin: 0;
     line-height: 1.35;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.session-code-badge {
+    font-size: 12px;
+    font-weight: 800;
+    color: #15803d;
+    background: #dcfce7;
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid #86efac;
+    letter-spacing: 0.5px;
 }
 
 /* ── Meta Pills ── */
