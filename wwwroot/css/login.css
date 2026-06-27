@@ -1044,6 +1044,15 @@ input:-webkit-autofill:focus {
         flex: 1.02;
         padding: 60px 70px;
     }
+
+    /* Selection page fullscreen adjustments */
+    .internal-workspace {
+        padding: 40px 60px !important;
+    }
+
+    .exam-list-modern {
+        max-height: calc(100vh - 400px);
+    }
 }
 
 /* Fix for console opening causing layout issues */

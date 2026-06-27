@@ -3,6 +3,8 @@
     padding: 40px 48px !important;
     display: flex;
     flex-direction: column;
+    position: relative;
+    z-index: 4;
 }
 
 /* ── Workspace Header ── */
@@ -218,13 +220,33 @@
 /* ── Exam List Grid ── */
 .exam-list-modern {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 18px;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
     flex: 1;
     overflow-y: auto;
-    padding-right: 6px;
-    padding-bottom: 8px;
+    padding-right: 8px;
+    padding-bottom: 12px;
     min-height: 0;
+    max-height: calc(100vh - 380px);
+}
+
+/* Limit to max 3 columns for better readability */
+@media (min-width: 1400px) {
+    .exam-list-modern {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1000px) and (max-width: 1399px) {
+    .exam-list-modern {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 999px) {
+    .exam-list-modern {
+        grid-template-columns: 1fr;
+    }
 }
 
 .exam-list-modern::-webkit-scrollbar { width: 5px; }
@@ -343,7 +365,7 @@
 /* ── Meta Pills ── */
 .exam-meta-pills {
     display: flex;
-    gap: 6px;
+    gap: 8px;
     flex-wrap: wrap;
 }
 
@@ -352,12 +374,28 @@
     font-weight: 600;
     color: #475569;
     background: #f8fafc;
-    padding: 4px 10px;
+    padding: 5px 12px;
     border-radius: 20px;
     border: 1px solid #e2e8f0;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
+}
+
+.meta-pill svg {
+    flex-shrink: 0;
+}
+
+.meta-pill.status-started {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #86efac;
+}
+
+.meta-pill.status-waiting {
+    background: #fef3c7;
+    color: #92400e;
+    border-color: #fcd34d;
 }
 
 /* ── Action Button ── */
