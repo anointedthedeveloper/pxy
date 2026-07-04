@@ -1,4 +1,4 @@
-import https from 'https';
+const https = require('https');
 
 const ACCESS_CODE = process.env.ACCESS_CODE || 'JAMB2024';
 const GITHUB_REPO = process.env.GITHUB_REPO || 'anointedthedeveloper/Q2';
@@ -63,7 +63,7 @@ function checkAccessCode(req) {
 }
 
 // Vercel serverless handler
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
     // Enable CORS
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -150,8 +150,4 @@ export default async function handler(req, res) {
     } catch (error) {
         res.status(500).json({ error: 'Internal Server Error', message: error.message });
     }
-}
-
-export const config = {
-    runtime: 'nodejs',
 };
