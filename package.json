@@ -1,0 +1,17 @@
+{
+  "name": "jamb-questions-proxy",
+  "version": "1.0.0",
+  "description": "Proxy server for JAMB exam questions with access code authentication",
+  "main": "questions-proxy.js",
+  "scripts": {
+    "start": "node questions-proxy.js",
+    "dev": "node questions-proxy.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
