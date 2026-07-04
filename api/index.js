@@ -1,14 +1,9 @@
-const express = require('express');
 const https = require('https');
 
-const app = express();
 const ACCESS_CODE = process.env.ACCESS_CODE || 'JAMB2024';
-const USE_GITHUB = process.env.USE_GITHUB === 'true';
 const GITHUB_REPO = process.env.GITHUB_REPO || 'anointedthedeveloper/Q2';
 const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'main';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-
-app.use(express.json());
 
 // Fetch file from GitHub
 async function fetchFromGitHub(filePath) {
@@ -61,95 +56,98 @@ async function getSubjects() {
         .map(file => file.name.replace('.json', ''));
 }
 
-// Middleware to check access code
-const checkAccessCode = (req, res, next) => {
-    const providedCode = req.headers['x-access-code'] || req.query.access_code;
-    
-    if (!providedCode || providedCode !== ACCESS_CODE) {
-        return res.status(401).json({ 
-            error: 'Unauthorized',
-            message: 'Invalid or missing access code'
-        });
-    }
-    next();
-};
+// Check access code
+function checkAccessCode(req) {
+    const providedCode = req.headers['x-access-code'] || (req.query && req.query.access_code);
+    return providedCode === ACCESS_CODE;
+}
 
-// Get list of available subjects
-app.get('/subjects', checkAccessCode, async (req, res) => {
-    try {
-        const subjects = await getSubjects();
-        res.json({ subjects });
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to read subjects', message: error.message });
-    }
-});
+// Vercel serverless handler
+module.exports = async (req, res) => {
+    // Enable CORS
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'X-Access-Code, Content-Type');
 
-// Get questions for a specific subject
-app.get('/questions/:subject', checkAccessCode, async (req, res) => {
-    try {
-        const { subject } = req.params;
-        const questions = await getQuestions(subject);
-        
-        res.json({ 
-            subject,
-            count: questions.length,
-            questions
-        });
-    } catch (error) {
-        res.status(500).json({ 
-            error: 'Failed to load questions',
-            message: error.message
-        });
+    if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
     }
-});
 
-// Get all questions (with optional limit)
-app.get('/questions', checkAccessCode, async (req, res) => {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const path = url.pathname;
+
     try {
-        const limit = parseInt(req.query.limit) || 0;
-        const subjects = await getSubjects();
-        
-        let allQuestions = [];
-        
-        for (const subject of subjects) {
+        // Root endpoint
+        if (path === '/') {
+            res.json({
+                message: 'JAMB Questions Proxy API',
+                version: '1.0.0',
+                endpoints: {
+                    health: 'GET /health',
+                    subjects: 'GET /subjects (requires access code)',
+                    questionsBySubject: 'GET /questions/:subject (requires access code)',
+                    allQuestions: 'GET /questions?limit=N (requires access code)'
+                },
+                authentication: 'Provide access code via X-Access-Code header or access_code query parameter'
+            });
+            return;
+        }
+
+        // Health check
+        if (path === '/health') {
+            res.json({ status: 'ok', timestamp: new Date().toISOString() });
+            return;
+        }
+
+        // Get subjects
+        if (path === '/subjects') {
+            if (!checkAccessCode(req)) {
+                res.status(401).json({ error: 'Unauthorized', message: 'Invalid or missing access code' });
+                return;
+            }
+            const subjects = await getSubjects();
+            res.json({ subjects });
+            return;
+        }
+
+        // Get questions for specific subject
+        const questionsMatch = path.match(/^\/questions\/(.+)$/);
+        if (questionsMatch) {
+            if (!checkAccessCode(req)) {
+                res.status(401).json({ error: 'Unauthorized', message: 'Invalid or missing access code' });
+                return;
+            }
+            const subject = decodeURIComponent(questionsMatch[1]);
             const questions = await getQuestions(subject);
-            allQuestions = allQuestions.concat(questions);
+            res.json({ subject, count: questions.length, questions });
+            return;
         }
-        
-        if (limit > 0) {
-            allQuestions = allQuestions.slice(0, limit);
+
+        // Get all questions
+        if (path === '/questions') {
+            if (!checkAccessCode(req)) {
+                res.status(401).json({ error: 'Unauthorized', message: 'Invalid or missing access code' });
+                return;
+            }
+            const limit = parseInt(url.searchParams.get('limit')) || 0;
+            const subjects = await getSubjects();
+            let allQuestions = [];
+            for (const subject of subjects) {
+                const questions = await getQuestions(subject);
+                allQuestions = allQuestions.concat(questions);
+            }
+            if (limit > 0) {
+                allQuestions = allQuestions.slice(0, limit);
+            }
+            res.json({ count: allQuestions.length, questions: allQuestions });
+            return;
         }
-        
-        res.json({ 
-            count: allQuestions.length,
-            questions: allQuestions
-        });
+
+        // 404
+        res.status(404).json({ error: 'Not Found' });
     } catch (error) {
-        res.status(500).json({ 
-            error: 'Failed to load questions',
-            message: error.message
-        });
+        res.status(500).json({ error: 'Internal Server Error', message: error.message });
     }
-});
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// Root endpoint
-app.get('/', (req, res) => {
-    res.json({
-        message: 'JAMB Questions Proxy API',
-        version: '1.0.0',
-        endpoints: {
-            health: 'GET /health',
-            subjects: 'GET /subjects (requires access code)',
-            questionsBySubject: 'GET /questions/:subject (requires access code)',
-            allQuestions: 'GET /questions?limit=N (requires access code)'
-        },
-        authentication: 'Provide access code via X-Access-Code header or access_code query parameter'
-    });
-});
-
-module.exports = app;
+};
