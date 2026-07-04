@@ -11,8 +11,5 @@
       "src": "/(.*)",
       "dest": "/questions-proxy.js"
     }
-  ],
-  "env": {
-    "ACCESS_CODE": "@access-code"
-  }
+  ]
 }
