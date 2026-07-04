@@ -1,15 +1,9 @@
 {
   "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "questions-proxy.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/questions-proxy.js"
+      "source": "/(.*)",
+      "destination": "/questions-proxy.js"
     }
   ]
 }
