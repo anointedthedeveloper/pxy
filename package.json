@@ -2,6 +2,7 @@
   "name": "jamb-questions-proxy",
   "version": "1.0.0",
   "description": "Proxy server for JAMB exam questions with access code authentication",
+  "type": "module",
   "scripts": {
     "start": "node api/index.js"
   },
