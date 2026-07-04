@@ -1,6 +1,6 @@
 import https from 'https';
 
-const ACCESS_CODE = process.env.ACCESS_CODE || 'JAMB2027';
+const ACCESS_CODE = process.env.ACCESS_CODE || 'JAMB2024';
 const GITHUB_REPO = process.env.GITHUB_REPO || 'anointedthedeveloper/Q2';
 const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'main';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
@@ -80,7 +80,7 @@ export default async function handler(req, res) {
 
     try {
         // Root endpoint
-        if (path === '/' || path === '/api') {
+        if (path === '/') {
             res.json({
                 message: 'JAMB Questions Proxy API',
                 version: '1.0.0',
@@ -151,7 +151,3 @@ export default async function handler(req, res) {
         res.status(500).json({ error: 'Internal Server Error', message: error.message });
     }
 }
-
-export const config = {
-    runtime: 'nodejs',
-};
