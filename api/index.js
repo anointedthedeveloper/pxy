@@ -1,22 +1,13 @@
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
-const cors = require('cors');
 const https = require('https');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 const ACCESS_CODE = process.env.ACCESS_CODE || 'JAMB2024';
-
-// Use local questions directory or GitHub
 const USE_GITHUB = process.env.USE_GITHUB === 'true';
 const GITHUB_REPO = process.env.GITHUB_REPO || 'anointedthedeveloper/Q2';
 const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'main';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
-const QUESTIONS_DIR = path.join(__dirname, '../questions');
-
-app.use(cors());
 app.use(express.json());
 
 // Fetch file from GitHub
@@ -55,32 +46,19 @@ async function fetchFromGitHub(filePath) {
     });
 }
 
-// Get questions (from local or GitHub)
+// Get questions (from GitHub)
 async function getQuestions(subject) {
-    if (USE_GITHUB) {
-        const content = await fetchFromGitHub(`questions/${subject}.json`);
-        return JSON.parse(content);
-    } else {
-        const filePath = path.join(QUESTIONS_DIR, `${subject}.json`);
-        const data = fs.readFileSync(filePath, 'utf8');
-        return JSON.parse(data);
-    }
+    const content = await fetchFromGitHub(`questions/${subject}.json`);
+    return JSON.parse(content);
 }
 
-// Get all subjects (from local or GitHub)
+// Get all subjects (from GitHub)
 async function getSubjects() {
-    if (USE_GITHUB) {
-        const content = await fetchFromGitHub('questions');
-        const files = JSON.parse(content);
-        return files
-            .filter(file => file.name.endsWith('.json') && file.size > 100)
-            .map(file => file.name.replace('.json', ''));
-    } else {
-        const files = fs.readdirSync(QUESTIONS_DIR);
-        return files
-            .filter(file => file.endsWith('.json') && fs.statSync(path.join(QUESTIONS_DIR, file)).size > 100)
-            .map(file => file.replace('.json', ''));
-    }
+    const content = await fetchFromGitHub('questions');
+    const files = JSON.parse(content);
+    return files
+        .filter(file => file.name.endsWith('.json') && file.size > 100)
+        .map(file => file.name.replace('.json', ''));
 }
 
 // Middleware to check access code
@@ -174,5 +152,4 @@ app.get('/', (req, res) => {
     });
 });
 
-// Export for Vercel serverless function
 module.exports = app;
