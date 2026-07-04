@@ -97,7 +97,7 @@ const checkAccessCode = (req, res, next) => {
 };
 
 // Get list of available subjects
-app.get('/api/subjects', checkAccessCode, async (req, res) => {
+app.get('/subjects', checkAccessCode, async (req, res) => {
     try {
         const subjects = await getSubjects();
         res.json({ subjects });
@@ -107,7 +107,7 @@ app.get('/api/subjects', checkAccessCode, async (req, res) => {
 });
 
 // Get questions for a specific subject
-app.get('/api/questions/:subject', checkAccessCode, async (req, res) => {
+app.get('/questions/:subject', checkAccessCode, async (req, res) => {
     try {
         const { subject } = req.params;
         const questions = await getQuestions(subject);
@@ -126,7 +126,7 @@ app.get('/api/questions/:subject', checkAccessCode, async (req, res) => {
 });
 
 // Get all questions (with optional limit)
-app.get('/api/questions', checkAccessCode, async (req, res) => {
+app.get('/questions', checkAccessCode, async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 0;
         const subjects = await getSubjects();
@@ -166,9 +166,9 @@ app.get('/', (req, res) => {
         version: '1.0.0',
         endpoints: {
             health: 'GET /health',
-            subjects: 'GET /api/subjects (requires access code)',
-            questionsBySubject: 'GET /api/questions/:subject (requires access code)',
-            allQuestions: 'GET /api/questions?limit=N (requires access code)'
+            subjects: 'GET /subjects (requires access code)',
+            questionsBySubject: 'GET /questions/:subject (requires access code)',
+            allQuestions: 'GET /questions?limit=N (requires access code)'
         },
         authentication: 'Provide access code via X-Access-Code header or access_code query parameter'
     });
