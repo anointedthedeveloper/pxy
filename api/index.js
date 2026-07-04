@@ -1,4 +1,4 @@
-const https = require('https');
+import https from 'https';
 
 const ACCESS_CODE = process.env.ACCESS_CODE || 'JAMB2024';
 const GITHUB_REPO = process.env.GITHUB_REPO || 'anointedthedeveloper/Q2';
